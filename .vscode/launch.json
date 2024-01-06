@@ -1,0 +1,17 @@
+{
+  "version": "0.2.0",
+  "configurations": [
+    {
+      "name": "xplore (development)",
+      "request": "launch",
+      "type": "dart",
+      "flutterMode": "debug"
+    },
+    {
+      "name": "xplore (profile)",
+      "request": "launch",
+      "type": "dart",
+      "flutterMode": "profile"
+    },
+  ]
+}

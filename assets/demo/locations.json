@@ -1,0 +1,36 @@
+{
+  "locations": {
+    "ph4kd": {
+      "4a4e3da7-6b62-4ff6-af32-eeed317d5e50": {
+        "id": "4a4e3da7-6b62-4ff6-af32-eeed317d5e50",
+        "lat": 40.7178,
+        "lng": -73.956,
+        "last_updated": "2024-01-22T08:00:00.000Z"
+      },
+      "7d125e54-9de9-4a5c-bb15-29efacda4f9a": {
+        "id": "7d125e54-9de9-4a5c-bb15-29efacda4f9a",
+        "lat": 40.7171,
+        "lng": -73.9573,
+        "last_updated": "2024-01-23T12:30:00.000Z"
+      },
+      "f05c01e9-dcf8-4c17-84cf-3b7ed21fb792": {
+        "id": "f05c01e9-dcf8-4c17-84cf-3b7ed21fb792",
+        "lat": 40.7144,
+        "lng": -73.9669,
+        "last_updated": "2024-01-24T09:45:00.000Z"
+      },
+      "2d6bb6e2-cdc7-48fc-9d9a-bbf3f8d99277": {
+        "id": "2d6bb6e2-cdc7-48fc-9d9a-bbf3f8d99277",
+        "lat": 40.7149,
+        "lng": -73.9603,
+        "last_updated": "2024-01-25T15:15:00.000Z"
+      },
+      "9f4d7e32-8bc3-4a9e-bc4a-1f86a2a4db18": {
+        "id": "9f4d7e32-8bc3-4a9e-bc4a-1f86a2a4db18",
+        "lat": 40.7122,
+        "lng": -73.9657,
+        "last_updated": "2024-01-26T11:00:00.000Z"
+      }
+    }
+  }
+}

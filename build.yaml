@@ -1,0 +1,24 @@
+targets:
+  $default:
+    sources:
+      - lib/**
+      - pubspec.*
+      - $package$
+      - test/**.dart
+
+    builders:
+      json_serializable:
+        options:
+          # Options configure how source code is generated for every
+          # `@JsonSerializable`-annotated class in the package.
+          #
+          # The default value for each is listed.
+          explicit_to_json: true
+      source_gen|combining_builder:
+        options:
+          build_extensions:
+            "^lib/{{}}.dart": "lib/generated/{{}}.g.dart"
+      freezed:
+        options:
+          build_extensions:
+            "^lib/{{}}.dart": "lib/generated/{{}}.freezed.dart"

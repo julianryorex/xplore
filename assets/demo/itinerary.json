@@ -1,0 +1,80 @@
+{
+  "itineraries": [
+    {
+      "ph4kd": {
+        "id": "ph4kd",
+        "last_updated": "2023-06-15T08:30:00Z",
+        "invitees": [
+          "4a4e3da7-6b62-4ff6-af32-eeed317d5e50",
+          "7d125e54-9de9-4a5c-bb15-29efacda4f9a",
+          "f05c01e9-dcf8-4c17-84cf-3b7ed21fb792",
+          "2d6bb6e2-cdc7-48fc-9d9a-bbf3f8d99277",
+          "9f4d7e32-8bc3-4a9e-bc4a-1f86a2a4db18"
+        ],
+        "daily_plans": [
+          {
+            "title": "SkyTree Day",
+            "location": "Tokyo",
+            "plan": {
+              "favorited": [
+                "f47ac10b-58cc-4372-a567-0e02b2ded479",
+                "f47ac10b-58cc-4372-a567-0e02b2c3d426"
+              ],
+              "locations": [
+                {
+                  "name": "Tsukiji Fish Market",
+                  "completed": true,
+                  "place_id": "ChIJISz8h9hx5kcRR6Ko1HuQAg4",
+                  "description": "Tsukiji Market, formerly Tokyo's iconic fish market, was renowned for its bustling seafood auctions and fresh fish stalls, offering a vibrant culinary experience. Although the inner wholesale market moved to Toyosu, Tsukiji's outer market continues to attract visitors with its diverse array of sushi restaurants, street food vendors, and traditional shops."
+                },
+                {
+                  "name": "Senso-ji Temple & Nakamise-dori",
+                  "completed": false,
+                  "place_id": "ChIJISz8h9hx5kcRR6Ko1HuQAg4",
+                  "description": "description for Senso-ji Temple & Nakamise-dori"
+                },
+                {
+                  "name": "Ramen Lunch",
+                  "completed": false,
+                  "place_id": "ChIJT1E_Y9EjZUgR4b1FkYy7_O0",
+                  "description": "description for Ramen Lunch"
+                },
+                {
+                  "name": "Tokyo SkyTree",
+                  "completed": false,
+                  "place_id": "ChIJYcn13B5sDogRA7SofTkj_oo",
+                  "description": "description for Tokyo SkyTree"
+                },
+                {
+                  "name": "Dinner @ SkyTree",
+                  "completed": false,
+                  "place_id": "ChIJSdUH8Dmu5kcRjpIuzbGAgsE",
+                  "description": "description for Dinner @ SkyTree"
+                }
+              ]
+            }
+          },
+          {
+            "title": "Shinjuku Day",
+            "location": "Tokyo",
+            "plan": {
+              "favorited": [
+                "f47ac10b-58cc-4372-a567-0e02b2ded479"
+              ],
+              "locations": [
+                {
+                  "name": "TODO Name this",
+                  "completed": true,
+                  "place_id": "ChIJISz8h9hx5kcRR6Ko1HuQAg4",
+                  "description": ""
+                }
+                
+              ]
+            }
+          }
+        ],
+        "pins": []
+      }
+    }
+  ]
+}
