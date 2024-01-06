@@ -2,6 +2,8 @@ import 'dart:developer';
 
 import 'package:flutter/material.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
+import 'package:xplore/constants/theme.dart';
+import 'package:xplore/routes.dart';
 
 Future<void> init() async {
   try {
@@ -23,21 +25,29 @@ class MyApp extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
-      title: 'Xplore',
-      theme: ThemeData(
-        colorScheme: ColorScheme.fromSeed(seedColor: Colors.deepPurple),
-        useMaterial3: true,
-      ),
-      home: const MyHomePage(),
+      debugShowCheckedModeBanner: false,
+      theme: getTheme(),
+      onGenerateRoute: RouteGenerator.generateRoute,
     );
+
+    // return MultiBlocProvider(
+    //   providers: const [
+    //     // BlocProvider<AuthCubit>(create: (_) => AuthCubit(), lazy: false),
+    //   ],
+    //   child: MaterialApp(
+    //     debugShowCheckedModeBanner: false,
+    //     theme: getTheme(),
+    //     onGenerateRoute: RouteGenerator.generateRoute,
+    //   ),
+    // );
   }
 }
 
-class MyHomePage extends StatelessWidget {
-  const MyHomePage({super.key});
+class HomePage extends StatelessWidget {
+  const HomePage({super.key});
 
   @override
   Widget build(BuildContext context) {
-    return const Placeholder();
+    return Container(color: Colors.red);
   }
 }
