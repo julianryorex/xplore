@@ -1,10 +1,14 @@
 import 'package:xplore/constants/extensions.dart';
 
 class XploreColors {
-  static final primary = '2D2936'.toColor();
-  static final secondary = '2BA0A0'.toColor();
-  static final tertiary = '483E4B'.toColor();
-  static final alternate = 'C71585'.toColor();
+  static final primary = '54D08E'.toColor();
+  static final secondary = '31A55E'.toColor();
+  static final tertiary = 'A2DEB4'.toColor();
+  static final alternate = 'A6B9B1'.toColor();
+
+  static final accent1 = '265A3A'.toColor();
+  static final accent2 = '08120E'.toColor();
+  static final accent3 = 'CEE5E0'.toColor();
 
   static final primaryText = '2D2936'.toColor();
   static final secondaryText = '2BA0A0'.toColor();
@@ -20,9 +24,4 @@ class XploreColors {
   static final lineColor = 'DBE2E7'.toColor();
   static final darkBg = '1A1F24'.toColor();
   static final black = '131619'.toColor();
-
-  static final accent1 = 'FF4081'.toColor();
-  static final accent2 = 'DBE2E7'.toColor();
-  static final accent3 = '1A1F24'.toColor();
-  static final accent4 = '131619'.toColor();
 }
