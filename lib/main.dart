@@ -1,10 +1,12 @@
 import 'dart:developer';
 
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:xplore/constants/constants.dart';
 import 'package:xplore/constants/extensions.dart';
 import 'package:xplore/constants/theme.dart';
+import 'package:xplore/core/header.dart';
 import 'package:xplore/core/icon_button.dart';
 import 'package:xplore/routes.dart';
 import 'package:xplore/utilities/utilities.dart';
@@ -72,7 +74,7 @@ class HomePage extends StatelessWidget {
                           children: [
                             Text('Daily Plans', style: context.pText.headlineMedium),
                             TextButton(
-                              onPressed: () {},
+                              onPressed: null,
                               child: Text(
                                 'See all',
                                 style: context.pText.bodySmall?.copyWith(color: XploreColors.alternate),
@@ -81,15 +83,24 @@ class HomePage extends StatelessWidget {
                           ],
                         ),
                         const SizedBox(height: paddingUnit),
+
                         //! Daily Plans Section Containers
-                        Row(
-                          children: [
-                            Container(height: 291, width: 230, color: XploreColors.alternate),
-                            const SizedBox(width: 10),
-                            Container(height: 291, width: 230, color: XploreColors.alternate),
-                          ],
+                        SingleChildScrollView(
+                          scrollDirection: Axis.horizontal,
+                          child: Row(
+                            children: [
+                              ItineraryCard(
+                                title: 'SkyTree Day',
+                                location: 'Tokyo',
+                                onTap: () => Navigator.pushNamed(context, Paths.itineraryOverview),
+                              ),
+                              const SizedBox(width: 10),
+                              ItineraryCard(title: 'Shinjuku Day', location: 'Tokyo', onTap: () {}),
+                            ],
+                          ),
                         ),
                         const SizedBox(height: paddingUnit),
+
                         //! Gallery Section Header
                         Row(
                           mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -98,6 +109,7 @@ class HomePage extends StatelessWidget {
                           ],
                         ),
                         const SizedBox(height: paddingUnit),
+
                         //! Gallery options
                         Row(
                           children: [
@@ -134,29 +146,78 @@ class HomePage extends StatelessWidget {
   }
 }
 
-class Header extends StatelessWidget {
-  const Header({super.key});
+class ItineraryCard extends StatelessWidget {
+  final String title;
+  final String location;
+  final void Function() onTap;
+
+  const ItineraryCard({
+    required this.title,
+    required this.location,
+    required this.onTap,
+    super.key,
+  });
 
   @override
   Widget build(BuildContext context) {
-    return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: paddingUnit * 2),
-      child: Row(
-        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-        children: [
-          XploreIconBtn(
-            onTapCallback: () {
-              print('tapped');
-            },
-            icon: Icons.person_2_outlined,
+    return Container(
+      height: 291,
+      width: 230,
+      decoration: BoxDecoration(
+        borderRadius: BorderRadius.circular(20),
+        color: XploreColors.alternate,
+      ),
+      child: Material(
+        shape: const RoundedRectangleBorder(
+          borderRadius: BorderRadius.all(Radius.circular(20)),
+        ),
+        clipBehavior: Clip.hardEdge,
+        color: Colors.transparent,
+        child: InkWell(
+          onTap: () {
+            HapticFeedback.mediumImpact();
+            onTap();
+          },
+          child: Padding(
+            padding: const EdgeInsets.all(paddingUnit),
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.end,
+                  children: [
+                    XploreIconBtn(
+                      onTapCallback: () => print('liked!'),
+                      bgColor: XploreColors.tertiary,
+                      icon: Icon(
+                        Icons.favorite_border_rounded,
+                        color: XploreColors.alternate,
+                        size: 25,
+                      ),
+                    ),
+                  ],
+                ),
+                SizedBox(
+                  width: double.infinity,
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    mainAxisAlignment: MainAxisAlignment.end,
+                    children: [
+                      Text(
+                        title,
+                        style: context.pText.headlineSmall?.copyWith(height: 1),
+                      ),
+                      Text(
+                        location,
+                        style: context.pText.headlineSmall?.copyWith(fontSize: 20, height: 1.3),
+                      ),
+                    ],
+                  ),
+                ),
+              ],
+            ),
           ),
-          XploreIconBtn(
-            onTapCallback: () {
-              print('tapped');
-            },
-            icon: Icons.notifications,
-          ),
-        ],
+        ),
       ),
     );
   }

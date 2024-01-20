@@ -13,17 +13,19 @@ import 'package:xplore/constants/constants.dart';
 /// `name`: if [XploreIconBtn] has a name, it will be displayed under the button
 ///
 class XploreIconBtn extends StatelessWidget {
-  final IconData icon;
+  final Icon icon;
   final Function() onTapCallback;
   final double size;
   final String? name;
   final bool hasVibrations;
+  final Color? bgColor;
 
   const XploreIconBtn({
     required this.icon,
     required this.onTapCallback,
     this.hasVibrations = false,
     this.size = 46.0,
+    this.bgColor,
     this.name,
     super.key,
   });
@@ -61,7 +63,7 @@ class XploreIconBtn extends StatelessWidget {
       height: size,
       width: size,
       decoration: BoxDecoration(
-        color: XploreColors.alternate,
+        color: bgColor ?? XploreColors.alternate,
         borderRadius: BorderRadius.circular(10),
         boxShadow: [
           BoxShadow(
@@ -80,7 +82,7 @@ class XploreIconBtn extends StatelessWidget {
         color: Colors.transparent,
         child: InkWell(
           onTap: _onTapCallback,
-          child: Icon(icon, color: Colors.white),
+          child: icon,
         ),
       ),
     );
