@@ -3,6 +3,7 @@ import 'package:flutter_svg/flutter_svg.dart';
 import 'package:xplore/constants/constants.dart';
 import 'package:xplore/constants/extensions.dart';
 import 'package:xplore/core/header.dart';
+import 'package:xplore/core/icon_button.dart';
 import 'package:xplore/utilities/utilities.dart';
 
 class ErrorScreen extends StatelessWidget {
@@ -15,7 +16,13 @@ class ErrorScreen extends StatelessWidget {
         child: Center(
           child: Stack(
             children: [
-              const Header(),
+              Header(
+                leadingWidget: XploreIconBtn(
+                  bgColor: XploreColors.darkBg,
+                  onTapCallback: () => Navigator.pop(context),
+                  icon: const Icon(Icons.arrow_back, size: 45),
+                ),
+              ),
               Column(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [

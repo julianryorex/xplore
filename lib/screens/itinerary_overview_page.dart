@@ -50,13 +50,14 @@ class ItineraryOverviewPage extends StatelessWidget {
               ),
             ),
             SafeArea(
-                child: Header(
-              leadingWidget: XploreIconBtn(
-                bgColor: XploreColors.darkBg,
-                onTapCallback: () => Navigator.pop(context),
-                icon: const Icon(Icons.arrow_back, size: 45),
+              child: Header(
+                leadingWidget: XploreIconBtn(
+                  bgColor: XploreColors.darkBg,
+                  onTapCallback: () => Navigator.pop(context),
+                  icon: const Icon(Icons.arrow_back, size: 45),
+                ),
               ),
-            )),
+            ),
           ],
         ),
       ),

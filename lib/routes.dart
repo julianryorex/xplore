@@ -5,6 +5,7 @@ import 'package:xplore/features/itinerary/models/itinerary_models.dart';
 import 'package:xplore/main.dart';
 import 'package:xplore/screens/gallery_page.dart';
 import 'package:xplore/screens/generic_error_page.dart';
+import 'package:xplore/screens/itinerary_focus_page.dart';
 import 'package:xplore/screens/itinerary_overview_page.dart';
 
 class Paths {
@@ -36,6 +37,17 @@ class RouteGenerator {
             }
 
             log('argument is not of type "DailyPlanModel"');
+            return const ErrorScreen();
+          },
+        );
+      case Paths.itineraryFocusView:
+        return MaterialPageRoute(
+          builder: (_) {
+            if (args is LocationPlanModel) {
+              return ItineraryFocusPage(locationPlan: args);
+            }
+
+            log('argument is not of type "LocationPlanModel"');
             return const ErrorScreen();
           },
         );

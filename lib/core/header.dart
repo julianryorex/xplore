@@ -5,6 +5,8 @@ class Header extends StatelessWidget {
   final Widget? leadingWidget;
   final Widget? trailingWidget;
 
+  static const padding = paddingUnit * 5;
+
   const Header({
     this.leadingWidget,
     this.trailingWidget,
@@ -14,7 +16,7 @@ class Header extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return SizedBox(
-      height: paddingUnit * 5,
+      height: padding,
       child: Padding(
         padding: const EdgeInsets.symmetric(horizontal: paddingUnit * 2),
         child: Row(
