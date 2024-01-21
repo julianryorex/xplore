@@ -3,6 +3,7 @@ import 'package:xplore/constants/constants.dart';
 import 'package:xplore/constants/extensions.dart';
 import 'package:xplore/core/header.dart';
 import 'package:xplore/core/icon_button.dart';
+import 'package:xplore/core/layout_padding.dart';
 import 'package:xplore/features/itinerary/models/itinerary_models.dart';
 
 class ItineraryFocusPage extends StatelessWidget {
@@ -20,8 +21,7 @@ class ItineraryFocusPage extends StatelessWidget {
         child: Stack(
           children: [
             SingleChildScrollView(
-              child: Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 20, vertical: Header.padding + 30),
+              child: LayoutPadding(
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [

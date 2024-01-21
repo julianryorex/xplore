@@ -3,6 +3,7 @@ import 'package:xplore/constants/constants.dart';
 import 'package:xplore/constants/extensions.dart';
 import 'package:xplore/core/header.dart';
 import 'package:xplore/core/icon_button.dart';
+import 'package:xplore/core/layout_padding.dart';
 import 'package:xplore/features/itinerary/models/itinerary_models.dart';
 import 'package:xplore/features/itinerary/widgets/itinerary_tile.dart';
 import 'package:xplore/utilities/utilities.dart';
@@ -35,8 +36,8 @@ class ItineraryOverviewPage extends StatelessWidget {
                       ),
                     ),
                   ),
-                  Padding(
-                    padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 30),
+                  LayoutPadding(
+                    enableHeaderPadding: false,
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
