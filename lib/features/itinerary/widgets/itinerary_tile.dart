@@ -1,12 +1,15 @@
 import 'package:flutter/material.dart';
 import 'package:xplore/constants/constants.dart';
 import 'package:xplore/constants/extensions.dart';
+import 'package:xplore/features/itinerary/models/itinerary_models.dart';
 
 class ItineraryTile extends StatelessWidget {
+  final LocationPlanModel locationPlan;
   final double width;
   final double height;
 
   const ItineraryTile({
+    required this.locationPlan,
     required this.width,
     required this.height,
     super.key,
@@ -23,24 +26,33 @@ class ItineraryTile extends StatelessWidget {
       ),
       child: Padding(
         padding: const EdgeInsets.symmetric(horizontal: paddingUnit),
-        child: Row(
-          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-          children: [
-            Text(
-              'Tsukiji Fish Market',
-              style: context.pText.bodySmall?.copyWith(
-                fontWeight: FontWeight.w600,
-                fontSize: 14,
-              ),
-            ),
-            Row(
-              mainAxisAlignment: MainAxisAlignment.end,
+        child: LayoutBuilder(
+          builder: (context, bc) {
+            return Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
-                _buildIconBtn(Icons.map_rounded, () {}),
-                _buildIconBtn(Icons.info, () {}),
+                SizedBox(
+                  width: bc.maxWidth * 0.67,
+                  child: Text(
+                    locationPlan.name,
+                    softWrap: true,
+                    maxLines: 3,
+                    style: context.pText.bodySmall?.copyWith(
+                      fontWeight: FontWeight.w600,
+                      fontSize: 14,
+                    ),
+                  ),
+                ),
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.end,
+                  children: [
+                    _buildIconBtn(Icons.map_rounded, () {}),
+                    _buildIconBtn(Icons.info, () {}),
+                  ],
+                ),
               ],
-            ),
-          ],
+            );
+          },
         ),
       ),
     );

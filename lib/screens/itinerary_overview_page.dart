@@ -3,11 +3,17 @@ import 'package:xplore/constants/constants.dart';
 import 'package:xplore/constants/extensions.dart';
 import 'package:xplore/core/header.dart';
 import 'package:xplore/core/icon_button.dart';
+import 'package:xplore/features/itinerary/models/itinerary_models.dart';
 import 'package:xplore/features/itinerary/widgets/itinerary_tile.dart';
 import 'package:xplore/utilities/utilities.dart';
 
 class ItineraryOverviewPage extends StatelessWidget {
-  const ItineraryOverviewPage({super.key});
+  final DailyPlanModel dailyPlan;
+
+  const ItineraryOverviewPage({
+    required this.dailyPlan,
+    super.key,
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -34,49 +40,9 @@ class ItineraryOverviewPage extends StatelessWidget {
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        Text('SkyTree Day', style: context.pText.headlineMedium),
+                        Text(dailyPlan.title, style: context.pText.headlineMedium),
                         const SizedBox(height: 30),
-
-                        //! Checklist goes here
-                        LayoutBuilder(
-                          builder: (context, bc) {
-                            const rowSize = 60.0;
-
-                            return SizedBox(
-                              width: bc.maxWidth,
-                              child: Row(
-                                children: [
-                                  Column(
-                                    children: [
-                                      //* checklist Column
-                                      XploreIconBtn(
-                                        icon: const Icon(Icons.abc),
-                                        onTapCallback: () {},
-                                        size: rowSize,
-                                        borderRadius: 100,
-                                      ),
-                                      const SizedBox(height: 50),
-                                      XploreIconBtn(
-                                        icon: const Icon(Icons.abc),
-                                        onTapCallback: () {},
-                                        size: rowSize,
-                                        borderRadius: 100,
-                                      ),
-                                    ],
-                                  ),
-                                  const SizedBox(width: paddingUnit * 2),
-                                  Column(
-                                    children: [
-                                      ItineraryTile(width: bc.maxWidth, height: rowSize),
-                                      const SizedBox(height: 30),
-                                      ItineraryTile(width: bc.maxWidth, height: rowSize),
-                                    ],
-                                  ),
-                                ],
-                              ),
-                            );
-                          },
-                        ),
+                        _renderChecklist(),
                       ],
                     ),
                   ),
@@ -87,6 +53,54 @@ class ItineraryOverviewPage extends StatelessWidget {
           ],
         ),
       ),
+    );
+  }
+
+  Widget _renderChecklist() {
+    return LayoutBuilder(
+      builder: (context, bc) {
+        const rowSize = 60.0;
+
+        return SizedBox(
+          width: bc.maxWidth,
+          child: Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Column(
+                mainAxisAlignment: MainAxisAlignment.start,
+                children: [
+                  ...dailyPlan.plan.locations.map(
+                    (el) => Padding(
+                      padding: const EdgeInsets.only(top: 10, bottom: 40),
+                      child: XploreIconBtn(
+                        icon: Icon(Icons.check, color: XploreColors.darkBg, size: 30),
+                        onTapCallback: () {},
+                        size: rowSize,
+                        borderRadius: 100,
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+              const SizedBox(width: paddingUnit * 2),
+              Column(
+                children: [
+                  ...dailyPlan.plan.locations.map(
+                    (el) => Padding(
+                      padding: const EdgeInsets.only(bottom: 30),
+                      child: ItineraryTile(
+                        locationPlan: el,
+                        width: bc.maxWidth,
+                        height: rowSize,
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ],
+          ),
+        );
+      },
     );
   }
 }

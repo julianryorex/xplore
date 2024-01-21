@@ -3,24 +3,23 @@ import 'package:flutter/services.dart';
 import 'package:xplore/constants/constants.dart';
 import 'package:xplore/constants/extensions.dart';
 import 'package:xplore/core/icon_button.dart';
+import 'package:xplore/features/itinerary/models/itinerary_models.dart';
+import 'package:xplore/routes.dart';
 
 class ItineraryCard extends StatelessWidget {
-  final String title;
-  final String location;
-  final void Function() onTap;
+  final DailyPlanModel dailyPlan;
+
+  static const width = 230.0;
+  static const height = 300.0;
 
   const ItineraryCard({
-    required this.title,
-    required this.location,
-    required this.onTap,
+    required this.dailyPlan,
     super.key,
   });
 
   @override
   Widget build(BuildContext context) {
     return Container(
-      height: 291,
-      width: 230,
       decoration: BoxDecoration(
         borderRadius: BorderRadius.circular(20),
         color: XploreColors.alternate,
@@ -34,7 +33,7 @@ class ItineraryCard extends StatelessWidget {
         child: InkWell(
           onTap: () {
             HapticFeedback.mediumImpact();
-            onTap();
+            Navigator.pushNamed(context, Paths.itineraryOverview, arguments: dailyPlan);
           },
           child: Padding(
             padding: const EdgeInsets.all(paddingUnit),
@@ -62,11 +61,11 @@ class ItineraryCard extends StatelessWidget {
                     mainAxisAlignment: MainAxisAlignment.end,
                     children: [
                       Text(
-                        title,
+                        dailyPlan.title,
                         style: context.pText.headlineSmall?.copyWith(height: 1),
                       ),
                       Text(
-                        location,
+                        dailyPlan.location,
                         style: context.pText.headlineSmall?.copyWith(fontSize: 20, height: 1.3),
                       ),
                     ],

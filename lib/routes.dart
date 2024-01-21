@@ -1,6 +1,10 @@
+import 'dart:developer';
+
 import 'package:flutter/material.dart';
+import 'package:xplore/features/itinerary/models/itinerary_models.dart';
 import 'package:xplore/main.dart';
 import 'package:xplore/screens/gallery_page.dart';
+import 'package:xplore/screens/generic_error_page.dart';
 import 'package:xplore/screens/itinerary_overview_page.dart';
 
 class Paths {
@@ -15,7 +19,7 @@ class Paths {
 
 class RouteGenerator {
   static Route<dynamic> generateRoute(RouteSettings settings) {
-    // final args = settings.arguments;
+    final args = settings.arguments;
 
     switch (settings.name) {
       case Paths.home:
@@ -25,10 +29,19 @@ class RouteGenerator {
       case Paths.gallery:
         return MaterialPageRoute(builder: (_) => const GalleryPage());
       case Paths.itineraryOverview:
-        return MaterialPageRoute(builder: (_) => const ItineraryOverviewPage());
+        return MaterialPageRoute(
+          builder: (_) {
+            if (args is DailyPlanModel) {
+              return ItineraryOverviewPage(dailyPlan: args);
+            }
+
+            log('argument is not of type "DailyPlanModel"');
+            return const ErrorScreen();
+          },
+        );
 
       default:
-        return MaterialPageRoute(builder: (_) => Container());
+        return MaterialPageRoute(builder: (_) => const ErrorScreen());
     }
   }
 }

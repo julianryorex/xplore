@@ -83,20 +83,29 @@ class HomePage extends StatelessWidget {
                         BlocBuilder<ItineraryCubit, ItineraryStates>(
                           builder: (context, state) {
                             if (state is InitialItineraryState) {
-                              return Container(color: Colors.red);
+                              return const SizedBox(
+                                height: 300,
+                                width: 230,
+                                child: Center(child: CircularProgressIndicator()),
+                              );
                             }
+
+                            final itinerary = (state as LoadedItineraryState).itinerary;
 
                             return SingleChildScrollView(
                               scrollDirection: Axis.horizontal,
                               child: Row(
                                 children: [
-                                  ItineraryCard(
-                                    title: 'SkyTree Day',
-                                    location: 'Tokyo',
-                                    onTap: () => Navigator.pushNamed(context, Paths.itineraryOverview),
+                                  ...itinerary.dailyPlans.map(
+                                    (dailyPlan) => Padding(
+                                      padding: const EdgeInsets.only(right: 10),
+                                      child: SizedBox(
+                                        width: ItineraryCard.width,
+                                        height: ItineraryCard.height,
+                                        child: ItineraryCard(dailyPlan: dailyPlan),
+                                      ),
+                                    ),
                                   ),
-                                  const SizedBox(width: 10),
-                                  ItineraryCard(title: 'Shinjuku Day', location: 'Tokyo', onTap: () {}),
                                 ],
                               ),
                             );

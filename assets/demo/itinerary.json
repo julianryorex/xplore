@@ -53,6 +53,24 @@
                 }
               ]
             }
+          },
+          {
+            "title": "Shinjuku Day",
+            "location": "Tokyo",
+            "plan": {
+              "favorited": [
+                "f47ac10b-58cc-4372-a567-0e02b2ded479"
+              ],
+              "locations": [
+                {
+                  "name": "TODO Name this",
+                  "completed": true,
+                  "place_id": "ChIJISz8h9hx5kcRR6Ko1HuQAg4",
+                  "description": ""
+                }
+                
+              ]
+            }
           }
         ],
         "pins": []
