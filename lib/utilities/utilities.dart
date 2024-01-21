@@ -1,3 +1,5 @@
+import 'dart:convert';
+import 'dart:developer';
 import 'dart:ui' as ui;
 
 import 'package:flutter/material.dart';
@@ -34,3 +36,15 @@ Future<Uint8List> getBytesFromAsset(String path, int width) async {
 }
 
 void unfocusKeyboard() => WidgetsBinding.instance.focusManager.primaryFocus?.unfocus();
+
+Future<T> loadJsonAsset<T>(String pathToAsset) async {
+  try {
+    final jsonResponse = await rootBundle.loadString(pathToAsset);
+    final T decodedObj = await json.decode(jsonResponse);
+    log('Loaded json from asset: "$pathToAsset"');
+
+    return decodedObj;
+  } catch (err, stackTrace) {
+    return Future.error(err, stackTrace);
+  }
+}

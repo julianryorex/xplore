@@ -1,13 +1,14 @@
 import 'dart:developer';
 
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:xplore/constants/constants.dart';
 import 'package:xplore/constants/extensions.dart';
 import 'package:xplore/constants/theme.dart';
 import 'package:xplore/core/header.dart';
-import 'package:xplore/core/icon_button.dart';
+import 'package:xplore/features/itinerary/bloc/itinerary_cubit.dart';
+import 'package:xplore/features/itinerary/widgets/itinerary_card.dart';
 import 'package:xplore/routes.dart';
 import 'package:xplore/utilities/utilities.dart';
 
@@ -30,22 +31,16 @@ class MyApp extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return MaterialApp(
-      debugShowCheckedModeBanner: false,
-      theme: getTheme(),
-      onGenerateRoute: RouteGenerator.generateRoute,
+    return MultiBlocProvider(
+      providers: [
+        BlocProvider<ItineraryCubit>(create: (_) => ItineraryCubit()),
+      ],
+      child: MaterialApp(
+        debugShowCheckedModeBanner: false,
+        theme: getTheme(),
+        onGenerateRoute: RouteGenerator.generateRoute,
+      ),
     );
-
-    // return MultiBlocProvider(
-    //   providers: const [
-    //     // BlocProvider<AuthCubit>(create: (_) => AuthCubit(), lazy: false),
-    //   ],
-    //   child: MaterialApp(
-    //     debugShowCheckedModeBanner: false,
-    //     theme: getTheme(),
-    //     onGenerateRoute: RouteGenerator.generateRoute,
-    //   ),
-    // );
   }
 }
 
@@ -85,19 +80,27 @@ class HomePage extends StatelessWidget {
                         const SizedBox(height: paddingUnit),
 
                         //! Daily Plans Section Containers
-                        SingleChildScrollView(
-                          scrollDirection: Axis.horizontal,
-                          child: Row(
-                            children: [
-                              ItineraryCard(
-                                title: 'SkyTree Day',
-                                location: 'Tokyo',
-                                onTap: () => Navigator.pushNamed(context, Paths.itineraryOverview),
+                        BlocBuilder<ItineraryCubit, ItineraryStates>(
+                          builder: (context, state) {
+                            if (state is InitialItineraryState) {
+                              return Container(color: Colors.red);
+                            }
+
+                            return SingleChildScrollView(
+                              scrollDirection: Axis.horizontal,
+                              child: Row(
+                                children: [
+                                  ItineraryCard(
+                                    title: 'SkyTree Day',
+                                    location: 'Tokyo',
+                                    onTap: () => Navigator.pushNamed(context, Paths.itineraryOverview),
+                                  ),
+                                  const SizedBox(width: 10),
+                                  ItineraryCard(title: 'Shinjuku Day', location: 'Tokyo', onTap: () {}),
+                                ],
                               ),
-                              const SizedBox(width: 10),
-                              ItineraryCard(title: 'Shinjuku Day', location: 'Tokyo', onTap: () {}),
-                            ],
-                          ),
+                            );
+                          },
                         ),
                         const SizedBox(height: paddingUnit),
 
@@ -124,7 +127,9 @@ class HomePage extends StatelessWidget {
                             ),
                             const SizedBox(width: paddingUnit),
                             OutlinedButton(
-                              onPressed: () {},
+                              onPressed: () async {
+                                await context.read<ItineraryCubit>().loadDemoItinerary();
+                              },
                               child: Text(
                                 'Upload',
                                 style: context.pText.bodySmall?.copyWith(fontWeight: FontWeight.w500),
@@ -140,83 +145,6 @@ class HomePage extends StatelessWidget {
             ),
             const SizedBox(height: paddingUnit * 4, child: Header()),
           ],
-        ),
-      ),
-    );
-  }
-}
-
-class ItineraryCard extends StatelessWidget {
-  final String title;
-  final String location;
-  final void Function() onTap;
-
-  const ItineraryCard({
-    required this.title,
-    required this.location,
-    required this.onTap,
-    super.key,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      height: 291,
-      width: 230,
-      decoration: BoxDecoration(
-        borderRadius: BorderRadius.circular(20),
-        color: XploreColors.alternate,
-      ),
-      child: Material(
-        shape: const RoundedRectangleBorder(
-          borderRadius: BorderRadius.all(Radius.circular(20)),
-        ),
-        clipBehavior: Clip.hardEdge,
-        color: Colors.transparent,
-        child: InkWell(
-          onTap: () {
-            HapticFeedback.mediumImpact();
-            onTap();
-          },
-          child: Padding(
-            padding: const EdgeInsets.all(paddingUnit),
-            child: Column(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.end,
-                  children: [
-                    XploreIconBtn(
-                      onTapCallback: () => print('liked!'),
-                      bgColor: XploreColors.tertiary,
-                      icon: Icon(
-                        Icons.favorite_border_rounded,
-                        color: XploreColors.alternate,
-                        size: 25,
-                      ),
-                    ),
-                  ],
-                ),
-                SizedBox(
-                  width: double.infinity,
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    mainAxisAlignment: MainAxisAlignment.end,
-                    children: [
-                      Text(
-                        title,
-                        style: context.pText.headlineSmall?.copyWith(height: 1),
-                      ),
-                      Text(
-                        location,
-                        style: context.pText.headlineSmall?.copyWith(fontSize: 20, height: 1.3),
-                      ),
-                    ],
-                  ),
-                ),
-              ],
-            ),
-          ),
         ),
       ),
     );

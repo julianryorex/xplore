@@ -19,12 +19,14 @@ class XploreIconBtn extends StatelessWidget {
   final String? name;
   final bool hasVibrations;
   final Color? bgColor;
+  final double borderRadius;
 
   const XploreIconBtn({
     required this.icon,
     required this.onTapCallback,
     this.hasVibrations = false,
     this.size = 46.0,
+    this.borderRadius = 10,
     this.bgColor,
     this.name,
     super.key,
@@ -64,7 +66,7 @@ class XploreIconBtn extends StatelessWidget {
       width: size,
       decoration: BoxDecoration(
         color: bgColor ?? XploreColors.alternate,
-        borderRadius: BorderRadius.circular(10),
+        borderRadius: BorderRadius.circular(borderRadius),
         boxShadow: [
           BoxShadow(
             color: Colors.black.withOpacity(0.2),
@@ -75,8 +77,8 @@ class XploreIconBtn extends StatelessWidget {
         ],
       ),
       child: Material(
-        shape: const RoundedRectangleBorder(
-          borderRadius: BorderRadius.all(Radius.circular(10.0)),
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.all(Radius.circular(borderRadius)),
         ),
         clipBehavior: Clip.hardEdge,
         color: Colors.transparent,

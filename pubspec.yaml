@@ -1,20 +1,21 @@
 name: xplore
 description: A new Flutter project.
-publish_to: 'none' # Remove this line if you wish to publish to pub.dev
+publish_to: "none" # Remove this line if you wish to publish to pub.dev
 
 version: 1.0.0+1
 
 environment:
-  sdk: '>=3.1.5 <4.0.0'
-
+  sdk: ">=3.1.5 <4.0.0"
 
 dependencies:
   flutter:
     sdk: flutter
+  collection: ^1.17.2
   cupertino_icons: ^1.0.2
   flutter_dotenv: ^5.1.0
   flutter_bloc: ^8.1.3
   freezed_annotation: ^2.4.1
+  json_annotation: ^4.6.0
 
 dev_dependencies:
   flutter_test:
@@ -22,15 +23,15 @@ dev_dependencies:
   flutter_lints: ^3.0.1
   freezed: ^2.4.6
   build_runner: ^2.4.5
-
+  json_serializable: ^6.3.0
 
 flutter:
-
   uses-material-design: true
 
   assets:
     - assets/.env
     - assets/placeholders/
+    - assets/demo/
 
   fonts:
     - family: Poppins
@@ -39,4 +40,3 @@ flutter:
           weight: 500
         - asset: assets/fonts/Poppins-SemiBold.ttf
           weight: 600
-
