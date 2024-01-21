@@ -53,13 +53,7 @@ class ItineraryTile extends StatelessWidget {
                         ),
                       ),
                     ),
-                    Row(
-                      mainAxisAlignment: MainAxisAlignment.end,
-                      children: [
-                        _buildIconBtn(Icons.map_rounded, () {}),
-                        _buildIconBtn(Icons.info, () {}),
-                      ],
-                    ),
+                    _buildIconBtn(Icons.map_rounded, () {}),
                   ],
                 );
               },
