@@ -7,6 +7,7 @@ import 'package:xplore/constants/constants.dart';
 import 'package:xplore/constants/extensions.dart';
 import 'package:xplore/constants/theme.dart';
 import 'package:xplore/core/header.dart';
+import 'package:xplore/core/icon_button.dart';
 import 'package:xplore/features/itinerary/bloc/itinerary_cubit.dart';
 import 'package:xplore/features/itinerary/widgets/itinerary_card.dart';
 import 'package:xplore/routes.dart';
@@ -152,7 +153,18 @@ class HomePage extends StatelessWidget {
                 ),
               ),
             ),
-            const SizedBox(height: paddingUnit * 4, child: Header()),
+            Header(
+              leadingWidget: XploreIconBtn(
+                onTapCallback: () => print('tapped'),
+                bgColor: XploreColors.darkBg,
+                icon: const Icon(Icons.person_2_outlined, size: 35),
+              ),
+              trailingWidget: XploreIconBtn(
+                bgColor: XploreColors.darkBg,
+                onTapCallback: () => print('tapped'),
+                icon: const Icon(Icons.notifications, size: 35),
+              ),
+            ),
           ],
         ),
       ),

@@ -49,7 +49,14 @@ class ItineraryOverviewPage extends StatelessWidget {
                 ],
               ),
             ),
-            const SafeArea(child: SizedBox(height: paddingUnit * 4, child: Header())),
+            SafeArea(
+                child: Header(
+              leadingWidget: XploreIconBtn(
+                bgColor: XploreColors.darkBg,
+                onTapCallback: () => Navigator.pop(context),
+                icon: const Icon(Icons.arrow_back, size: 45),
+              ),
+            )),
           ],
         ),
       ),
@@ -72,12 +79,7 @@ class ItineraryOverviewPage extends StatelessWidget {
                   ...dailyPlan.plan.locations.map(
                     (el) => Padding(
                       padding: const EdgeInsets.only(top: 10, bottom: 40),
-                      child: XploreIconBtn(
-                        icon: Icon(Icons.check, color: XploreColors.darkBg, size: 30),
-                        onTapCallback: () {},
-                        size: rowSize,
-                        borderRadius: 100,
-                      ),
+                      child: _renderCheckOrCircle(el, rowSize),
                     ),
                   ),
                 ],
@@ -101,6 +103,24 @@ class ItineraryOverviewPage extends StatelessWidget {
           ),
         );
       },
+    );
+  }
+
+  Widget _renderCheckOrCircle(LocationPlanModel locationPlan, double rowSize) {
+    if (locationPlan.completed) {
+      return XploreIconBtn(
+        icon: Icon(Icons.check, color: XploreColors.darkBg, size: 30),
+        onTapCallback: () {},
+        size: rowSize,
+        borderRadius: 100,
+      );
+    }
+    return XploreIconBtn(
+      onTapCallback: () {},
+      size: rowSize,
+      borderColor: XploreColors.alternate,
+      bgColor: XploreColors.darkBg,
+      borderRadius: 100,
     );
   }
 }

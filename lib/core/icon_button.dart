@@ -13,20 +13,22 @@ import 'package:xplore/constants/constants.dart';
 /// `name`: if [XploreIconBtn] has a name, it will be displayed under the button
 ///
 class XploreIconBtn extends StatelessWidget {
-  final Icon icon;
+  final Icon? icon;
   final Function() onTapCallback;
   final double size;
   final String? name;
   final bool hasVibrations;
   final Color? bgColor;
   final double borderRadius;
+  final Color? borderColor;
 
   const XploreIconBtn({
-    required this.icon,
     required this.onTapCallback,
+    this.icon,
     this.hasVibrations = false,
-    this.size = 46.0,
+    this.size = 60.0,
     this.borderRadius = 10,
+    this.borderColor,
     this.bgColor,
     this.name,
     super.key,
@@ -53,13 +55,6 @@ class XploreIconBtn extends StatelessWidget {
     );
   }
 
-  Widget _renderButtonName() {
-    return Container(
-      padding: const EdgeInsets.all(5),
-      child: Text(name!),
-    );
-  }
-
   Widget _renderButton() {
     return Container(
       height: size,
@@ -67,9 +62,10 @@ class XploreIconBtn extends StatelessWidget {
       decoration: BoxDecoration(
         color: bgColor ?? XploreColors.alternate,
         borderRadius: BorderRadius.circular(borderRadius),
+        border: borderColor != null ? Border.all(color: borderColor!, width: 2) : null,
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.2),
+            color: Colors.black.withOpacity(0.8),
             spreadRadius: 2,
             blurRadius: 5,
             offset: const Offset(0, 4),
@@ -87,6 +83,13 @@ class XploreIconBtn extends StatelessWidget {
           child: icon,
         ),
       ),
+    );
+  }
+
+  Widget _renderButtonName() {
+    return Container(
+      padding: const EdgeInsets.all(5),
+      child: Text(name!),
     );
   }
 }
