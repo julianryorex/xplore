@@ -13,7 +13,8 @@ class ItineraryCubit extends Cubit<ItineraryStates> {
     final Map<String, dynamic> demoData = await loadJsonAsset('assets/demo/itinerary.json');
 
     final itineraryList = demoData['itineraries'] as List<dynamic>;
-    final itinerary = itineraryList.firstWhere((el) => el.keys.first == 'ph4kd') as Map<String, dynamic>;
+    final itinerary =
+        itineraryList.firstWhere((el) => el.keys.first == 'ph4kd') as Map<String, dynamic>; // TODO: remove list
     print('itinerary');
     print(itinerary);
 

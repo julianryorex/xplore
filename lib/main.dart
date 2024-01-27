@@ -11,6 +11,7 @@ import 'package:xplore/core/header.dart';
 import 'package:xplore/core/icon_button.dart';
 import 'package:xplore/features/itinerary/bloc/itinerary_cubit.dart';
 import 'package:xplore/features/itinerary/widgets/itinerary_card.dart';
+import 'package:xplore/features/location/bloc/location_cubit.dart';
 import 'package:xplore/firebase_options.dart';
 import 'package:xplore/routes.dart';
 import 'package:xplore/utilities/utilities.dart';
@@ -41,6 +42,7 @@ class MyApp extends StatelessWidget {
     return MultiBlocProvider(
       providers: [
         BlocProvider<ItineraryCubit>(create: (_) => ItineraryCubit()),
+        BlocProvider<LocationCubit>(create: (_) => LocationCubit(), lazy: false),
       ],
       child: MaterialApp(
         debugShowCheckedModeBanner: false,
