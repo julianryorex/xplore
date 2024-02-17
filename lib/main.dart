@@ -44,10 +44,10 @@ class MyApp extends StatelessWidget {
   Widget build(BuildContext context) {
     return MultiBlocProvider(
       providers: [
-        BlocProvider<ItineraryCubit>(create: (_) => ItineraryCubit()),
         BlocProvider<LocationCubit>(create: (_) => LocationCubit(), lazy: false),
-        BlocProvider<MapCubit>(create: (_) => MapCubit()),
         BlocProvider<NavbarCubit>(create: (_) => NavbarCubit()),
+        BlocProvider<ItineraryCubit>(create: (_) => ItineraryCubit()),
+        BlocProvider<MapCubit>(create: (_) => MapCubit()),
       ],
       child: MaterialApp(
         debugShowCheckedModeBanner: false,

@@ -6,5 +6,8 @@ class InitialMapState extends MapStates {}
 
 @freezed
 class LoadedMapState extends MapStates with _$LoadedMapState {
-  const factory LoadedMapState() = _LoadedMapState;
+  const factory LoadedMapState({
+    required LatLng center,
+    @Default({}) Set<Marker> markers,
+  }) = _LoadedMapState;
 }
