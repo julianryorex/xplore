@@ -10,6 +10,7 @@ import 'package:xplore/screens/itinerary_overview_page.dart';
 
 class Paths {
   static const home = '/';
+  static const map = '/map';
   static const onboarding = '/onboarding-flow';
   static const gallery = '/gallery';
 
