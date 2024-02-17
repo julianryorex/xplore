@@ -3,7 +3,6 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:xplore/constants/constants.dart';
-import 'package:xplore/constants/extensions.dart';
 import 'package:xplore/features/nav/cubit/nav_cubit.dart';
 import 'package:xplore/routes.dart';
 
@@ -24,7 +23,7 @@ class Navbar extends StatelessWidget {
     }
 
     ctx.read<NavbarCubit>().setNavIndex(selectedIndex);
-    ctx.push(_navBarIcons.keys.toList()[selectedIndex]);
+    Navigator.pushReplacementNamed(ctx, _navBarIcons.keys.toList()[selectedIndex]);
   }
 
   @override
@@ -49,11 +48,11 @@ class Navbar extends StatelessWidget {
             children: _navBarIcons.entries
                 .mapIndexed(
                   (index, items) => IconButton(
-                    splashRadius: 10.0,
+                    highlightColor: Colors.transparent,
                     icon: Icon(items.value),
                     color: state == index ? XploreColors.secondary : XploreColors.white.withOpacity(0.3),
-                    iconSize: 25.0,
-                    onPressed: () => onIconClick(context, index),
+                    iconSize: 30.0,
+                    onPressed: state == index ? () {} : () => onIconClick(context, index),
                   ),
                 )
                 .toList(),

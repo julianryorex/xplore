@@ -7,6 +7,7 @@ import 'package:xplore/screens/gallery_page.dart';
 import 'package:xplore/screens/generic_error_page.dart';
 import 'package:xplore/screens/itinerary_focus_page.dart';
 import 'package:xplore/screens/itinerary_overview_page.dart';
+import 'package:xplore/screens/map_canvas.dart';
 
 class Paths {
   static const home = '/';
@@ -25,7 +26,9 @@ class RouteGenerator {
 
     switch (settings.name) {
       case Paths.home:
-        return MaterialPageRoute(builder: (_) => const HomePage());
+        return FadePageRoute(page: const HomePage());
+      case Paths.map:
+        return FadePageRoute(page: const MapCanvas());
       case Paths.onboarding:
         return MaterialPageRoute(builder: (_) => Container());
       case Paths.gallery:
@@ -57,4 +60,34 @@ class RouteGenerator {
         return MaterialPageRoute(builder: (_) => const ErrorScreen());
     }
   }
+}
+
+//! ---------------------------------------------------------------------------
+//! Custom Routes
+//! ---------------------------------------------------------------------------
+
+class FadePageRoute extends PageRouteBuilder {
+  final Widget page;
+
+  FadePageRoute({required this.page})
+      : super(
+          pageBuilder: (
+            BuildContext context,
+            Animation<double> animation,
+            Animation<double> secondaryAnimation,
+          ) {
+            return page;
+          },
+          transitionsBuilder: (
+            BuildContext context,
+            Animation<double> animation,
+            Animation<double> secondaryAnimation,
+            Widget child,
+          ) {
+            return FadeTransition(
+              opacity: animation,
+              child: child,
+            );
+          },
+        );
 }
