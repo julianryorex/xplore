@@ -1,3 +1,5 @@
+import 'dart:developer';
+
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:xplore/constants/constants.dart';
@@ -44,7 +46,7 @@ class ItineraryCard extends StatelessWidget {
                   mainAxisAlignment: MainAxisAlignment.end,
                   children: [
                     XploreIconBtn(
-                      onTapCallback: () => print('liked!'),
+                      onTapCallback: () => log('liked!'),
                       bgColor: XploreColors.tertiary,
                       icon: Icon(
                         Icons.favorite_border_rounded,

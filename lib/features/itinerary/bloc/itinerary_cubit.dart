@@ -1,3 +1,5 @@
+import 'dart:developer';
+
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:freezed_annotation/freezed_annotation.dart';
 import 'package:xplore/features/itinerary/models/itinerary_models.dart';
@@ -15,13 +17,13 @@ class ItineraryCubit extends Cubit<ItineraryStates> {
     final itineraryList = demoData['itineraries'] as List<dynamic>;
     final itinerary =
         itineraryList.firstWhere((el) => el.keys.first == 'ph4kd') as Map<String, dynamic>; // TODO: remove list
-    print('itinerary');
-    print(itinerary);
+    log('itinerary');
+    log(itinerary.toString());
 
     final itineraryModel = ItineraryModel.fromJson(itinerary['ph4kd']);
 
-    print('itineraryModel:');
-    print(itineraryModel);
+    log('itineraryModel:');
+    log(itineraryModel.toString());
     emit(LoadedItineraryState(itinerary: itineraryModel));
   }
 }

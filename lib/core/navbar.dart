@@ -3,7 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:xplore/constants/constants.dart';
-import 'package:xplore/features/nav/cubit/nav_cubit.dart';
+import 'package:xplore/features/nav/bloc/nav_cubit.dart';
 import 'package:xplore/routes.dart';
 
 final Map<String, IconData> _navBarIcons = {

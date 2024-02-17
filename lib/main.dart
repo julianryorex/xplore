@@ -13,7 +13,8 @@ import 'package:xplore/core/navbar.dart';
 import 'package:xplore/features/itinerary/bloc/itinerary_cubit.dart';
 import 'package:xplore/features/itinerary/widgets/itinerary_card.dart';
 import 'package:xplore/features/location/bloc/location_cubit.dart';
-import 'package:xplore/features/nav/cubit/nav_cubit.dart';
+import 'package:xplore/features/map/bloc/map_cubit.dart';
+import 'package:xplore/features/nav/bloc/nav_cubit.dart';
 import 'package:xplore/firebase_options.dart';
 import 'package:xplore/routes.dart';
 import 'package:xplore/utilities/utilities.dart';
@@ -43,9 +44,10 @@ class MyApp extends StatelessWidget {
   Widget build(BuildContext context) {
     return MultiBlocProvider(
       providers: [
-        BlocProvider<NavbarCubit>(create: (_) => NavbarCubit()),
         BlocProvider<ItineraryCubit>(create: (_) => ItineraryCubit()),
         BlocProvider<LocationCubit>(create: (_) => LocationCubit(), lazy: false),
+        BlocProvider<MapCubit>(create: (_) => MapCubit()),
+        BlocProvider<NavbarCubit>(create: (_) => NavbarCubit()),
       ],
       child: MaterialApp(
         debugShowCheckedModeBanner: false,
@@ -167,13 +169,13 @@ class HomePage extends StatelessWidget {
             ),
             Header(
               leadingWidget: XploreIconBtn(
-                onTapCallback: () => print('tapped'),
+                onTapCallback: () => log('tapped'),
                 bgColor: XploreColors.darkBg,
                 icon: const Icon(Icons.person_2_outlined, size: 35),
               ),
               trailingWidget: XploreIconBtn(
                 bgColor: XploreColors.darkBg,
-                onTapCallback: () => print('tapped'),
+                onTapCallback: () => log('tapped'),
                 icon: const Icon(Icons.notifications, size: 35),
               ),
             ),

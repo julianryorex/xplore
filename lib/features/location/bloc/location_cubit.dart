@@ -1,3 +1,5 @@
+import 'dart:developer';
+
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:freezed_annotation/freezed_annotation.dart';
 import 'package:xplore/features/location/models/location_models.dart';
@@ -22,7 +24,7 @@ class LocationCubit extends Cubit<LocationStates> {
       locationMap[loc.key] = LocationModel.fromJson(loc.value);
     });
 
-    print(locationMap);
+    log(locationMap.toString());
     emit(LoadedLocationState(locations: locationMap));
   }
 }
