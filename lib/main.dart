@@ -10,6 +10,7 @@ import 'package:xplore/constants/theme.dart';
 import 'package:xplore/core/header.dart';
 import 'package:xplore/core/icon_button.dart';
 import 'package:xplore/core/navbar.dart';
+import 'package:xplore/features/gallery/bloc/gallery_cubit.dart';
 import 'package:xplore/features/itinerary/bloc/itinerary_cubit.dart';
 import 'package:xplore/features/itinerary/widgets/itinerary_card.dart';
 import 'package:xplore/features/location/bloc/location_cubit.dart';
@@ -48,6 +49,7 @@ class MyApp extends StatelessWidget {
         BlocProvider<NavbarCubit>(create: (_) => NavbarCubit()),
         BlocProvider<ItineraryCubit>(create: (_) => ItineraryCubit()),
         BlocProvider<MapCubit>(create: (_) => MapCubit()),
+        BlocProvider<GalleryCubit>(create: (_) => GalleryCubit()),
       ],
       child: MaterialApp(
         debugShowCheckedModeBanner: false,
@@ -138,28 +140,42 @@ class HomePage extends StatelessWidget {
                         const SizedBox(height: paddingUnit),
 
                         //! Gallery options
-                        Row(
-                          children: [
-                            OutlinedButton(
-                              onPressed: () {
-                                context.push(Paths.gallery);
-                              },
-                              child: Text(
-                                'View gallery',
-                                style: context.pText.bodySmall?.copyWith(fontWeight: FontWeight.w500),
+                        SingleChildScrollView(
+                          scrollDirection: Axis.horizontal,
+                          child: Row(
+                            children: [
+                              OutlinedButton(
+                                onPressed: () {
+                                  context.push(Paths.gallery);
+                                },
+                                child: Text(
+                                  'View gallery',
+                                  style: context.pText.bodySmall?.copyWith(fontWeight: FontWeight.w500),
+                                ),
                               ),
-                            ),
-                            const SizedBox(width: paddingUnit),
-                            OutlinedButton(
-                              onPressed: () async {
-                                await context.read<ItineraryCubit>().loadDemoItinerary();
-                              },
-                              child: Text(
-                                'Upload',
-                                style: context.pText.bodySmall?.copyWith(fontWeight: FontWeight.w500),
+                              const SizedBox(width: paddingUnit),
+                              OutlinedButton(
+                                onPressed: () async {
+                                  await context.read<ItineraryCubit>().loadDemoItinerary();
+                                },
+                                child: Text(
+                                  'Load data',
+                                  style: context.pText.bodySmall?.copyWith(fontWeight: FontWeight.w500),
+                                ),
                               ),
-                            ),
-                          ],
+                              const SizedBox(width: paddingUnit),
+                              OutlinedButton(
+                                onPressed: () async {
+                                  context.push(Paths.gallery);
+                                  await context.read<GalleryCubit>().uploadToGallery();
+                                },
+                                child: Text(
+                                  'Upload',
+                                  style: context.pText.bodySmall?.copyWith(fontWeight: FontWeight.w500),
+                                ),
+                              ),
+                            ],
+                          ),
                         ),
                       ],
                     ),

@@ -1,4 +1,4 @@
-.PHONY: get build-ios pub-reset format check-format init gen quick-gen test-gold delete-gold test-cov prep-ipad prep-mac
+.PHONY: get build-ios pub-reset format check-format init gen quick-gen test-gold delete-gold test-cov prep-ipad prep-mac reboot
 
 
 clean: 
@@ -11,6 +11,9 @@ get:
 
 build-ios:
 	flutter build ios
+
+reboot:
+	@make clean && make get && make gen && make build-ios
 
 pub-reset:
 	@echo Cleaning pub cache from system
