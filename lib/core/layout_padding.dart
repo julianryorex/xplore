@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:xplore/core/header.dart';
 
+// TODO: add header within with flag as param
 class LayoutPadding extends StatelessWidget {
   final Widget child;
   final bool enableHeaderPadding;
