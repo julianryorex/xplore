@@ -15,7 +15,7 @@ class LayoutPadding extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Padding(
-      padding: EdgeInsets.symmetric(horizontal: 20, vertical: 30 + (enableHeaderPadding ? Header.padding : 0)),
+      padding: EdgeInsets.only(left: 20, right: 20, bottom: 20, top: 30 + (enableHeaderPadding ? Header.padding : 0)),
       child: child,
     );
   }
