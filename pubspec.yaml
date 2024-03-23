@@ -23,6 +23,7 @@ dependencies:
   dotted_border: ^2.1.0
   image_picker: ^1.0.7
   firebase_storage: ^11.6.5
+  logger: ^2.2.0
 
 dev_dependencies:
   flutter_test:
