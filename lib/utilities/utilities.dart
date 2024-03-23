@@ -2,9 +2,11 @@ import 'dart:convert';
 import 'dart:developer';
 import 'dart:ui' as ui;
 
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter/widgets.dart';
+import 'package:logger/logger.dart';
 
 /// gets the screen width of the current device
 ///
@@ -47,4 +49,33 @@ Future<T> loadJsonAsset<T>(String pathToAsset) async {
   } catch (err, stackTrace) {
     return Future.error(err, stackTrace);
   }
+}
+
+/// Logs are always enabled unless it's in release mode - then only info/warning/error logs are captured
+Logger createLogger(String pref) {
+  final prefix = '[$pref]';
+  return Logger(
+    level: kReleaseMode ? Level.info : Level.all,
+    printer: PrefixPrinter(
+      PrettyPrinter(
+        methodCount: 0,
+        errorMethodCount: 5,
+        colors: false,
+        printEmojis: !kReleaseMode,
+        noBoxingByDefault: true,
+        levelEmojis: {
+          Level.error: '📕',
+          Level.warning: '📙',
+          Level.info: '📘',
+          Level.debug: '📗',
+          Level.trace: '📓',
+        },
+      ),
+      error: prefix,
+      warning: prefix,
+      info: prefix,
+      debug: prefix,
+      trace: prefix,
+    ),
+  );
 }
