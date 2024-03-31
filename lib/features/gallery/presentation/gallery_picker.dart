@@ -10,44 +10,48 @@ class GalleryPicker extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return DottedBorder(
-      color: XploreColors.secondary,
-      strokeWidth: 5,
-      borderType: BorderType.RRect,
-      dashPattern: const [8, 6],
-      radius: const Radius.circular(20),
-      child: Container(
-        width: 350,
-        height: 100,
-        decoration: BoxDecoration(
-          color: XploreColors.secondary.withOpacity(0.2),
-          borderRadius: BorderRadius.circular(20),
-        ),
-        child: Material(
-          shape: const RoundedRectangleBorder(
-            borderRadius: BorderRadius.all(Radius.circular(20)),
-          ),
-          clipBehavior: Clip.hardEdge,
-          color: Colors.transparent,
-          child: InkWell(
-            splashColor: XploreColors.secondary.withOpacity(0.1),
-            highlightColor: XploreColors.secondary.withOpacity(0.1),
-            onTap: () async {
-              await context.read<GalleryCubit>().uploadToGallery();
-            }, // Open photos
-            child: Center(
-              child: Row(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  const Icon(Icons.add_rounded),
-                  const SizedBox(width: paddingUnit / 2),
-                  Text('Upload to trip', style: context.pText.labelSmall),
-                ],
+    return LayoutBuilder(
+      builder: (context, bc) {
+        return DottedBorder(
+          color: XploreColors.secondary,
+          strokeWidth: 5,
+          borderType: BorderType.RRect,
+          dashPattern: const [8, 6],
+          radius: const Radius.circular(20),
+          child: Container(
+            width: bc.maxWidth,
+            height: 100,
+            decoration: BoxDecoration(
+              color: XploreColors.secondary.withOpacity(0.2),
+              borderRadius: BorderRadius.circular(20),
+            ),
+            child: Material(
+              shape: const RoundedRectangleBorder(
+                borderRadius: BorderRadius.all(Radius.circular(20)),
+              ),
+              clipBehavior: Clip.hardEdge,
+              color: Colors.transparent,
+              child: InkWell(
+                splashColor: XploreColors.secondary.withOpacity(0.1),
+                highlightColor: XploreColors.secondary.withOpacity(0.1),
+                onTap: () async {
+                  await context.read<GalleryCubit>().uploadToGallery();
+                }, // Open photos
+                child: Center(
+                  child: Row(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      const Icon(Icons.add_rounded),
+                      const SizedBox(width: paddingUnit / 2),
+                      Text('Upload to trip', style: context.pText.labelSmall),
+                    ],
+                  ),
+                ),
               ),
             ),
           ),
-        ),
-      ),
+        );
+      },
     );
   }
 }

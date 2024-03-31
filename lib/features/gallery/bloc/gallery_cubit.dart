@@ -17,7 +17,7 @@ part 'gallery_states.dart';
 
 // gallery-meta
 // gallery-res
-
+// TODO: Add Hive repository
 class GalleryCubit extends Cubit<GalleryState> {
   late final Logger _logger;
 
@@ -29,6 +29,7 @@ class GalleryCubit extends Cubit<GalleryState> {
 
   Future<void> loadImgFromCache() async {
     _logger.d('Load cached gallery');
+    emit(state.copyWith(status: EBlocStatus.loading));
 
     final box = await Hive.openBox('gallery-meta');
     for (String imageId in box.keys) {
@@ -87,7 +88,7 @@ class GalleryCubit extends Cubit<GalleryState> {
         quality: 100,
       );
 
-      _logger.i('Ratio: ${(1 - (compressedImage!.length / file.lengthSync())) * 100}');
+      _logger.i('Ratio: ${((1 - (compressedImage!.length / file.lengthSync())) * 100).toStringAsFixed(2)}');
 
       final imageModel = ImageModel(
         id: const Uuid().v4(),
@@ -148,7 +149,6 @@ class GalleryCubit extends Cubit<GalleryState> {
   Future<void> cacheMetadata(ImageModel imageModel) async {
     final box = await Hive.openBox('gallery-meta'); // TODO: error handling
     await box.put(imageModel.id, imageModel);
-    _logger.d('Cached ${imageModel.id} in Hive');
   }
 
   /// Caches the actual non-compresed image in hive
@@ -159,14 +159,14 @@ class GalleryCubit extends Cubit<GalleryState> {
     _logger.d('Cached high resolution image $id');
   }
 
-  // TODO: improve image path in GCP
+  // TODO: Fetch current itinerary id
   @visibleForTesting
   Future<String> uploadImage(File imageFile, String imageName) async {
     try {
       FirebaseStorage storage = FirebaseStorage.instance;
-      Reference ref = storage.ref().child('gallery/$imageName');
+      Reference ref = storage.ref().child('gallery/ph4kd/$imageName');
       UploadTask uploadTask = ref.putFile(imageFile);
-      TaskSnapshot taskSnapshot = await uploadTask.whenComplete(() => null);
+      TaskSnapshot taskSnapshot = await uploadTask;
       String downloadURL = await taskSnapshot.ref.getDownloadURL();
       return downloadURL;
     } catch (e) {
@@ -184,5 +184,6 @@ class GalleryCubit extends Cubit<GalleryState> {
     await box1.deleteFromDisk();
     await box2.deleteFromDisk();
     _logger.d('Deleted boxes in Hive');
+    emit(const GalleryState(status: EBlocStatus.loaded));
   }
 }

@@ -189,6 +189,16 @@ class HomePage extends StatelessWidget {
                                   style: context.pText.bodySmall?.copyWith(fontWeight: FontWeight.w500),
                                 ),
                               ),
+                              const SizedBox(width: paddingUnit),
+                              OutlinedButton(
+                                onPressed: () async {
+                                  await context.read<GalleryCubit>().deleteAll();
+                                },
+                                child: Text(
+                                  'Delete Hive',
+                                  style: context.pText.bodySmall?.copyWith(fontWeight: FontWeight.w500),
+                                ),
+                              ),
                             ],
                           ),
                         ),

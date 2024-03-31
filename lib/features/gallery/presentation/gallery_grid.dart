@@ -13,6 +13,8 @@ class GalleryGrid extends StatelessWidget {
     super.key,
   });
 
+  static const itemSize = 85.0;
+
   @override
   Widget build(BuildContext context) {
     final itemNum = gallery.length;
@@ -22,7 +24,7 @@ class GalleryGrid extends StatelessWidget {
         const spacing = 3.0;
 
         final colWidth = bc.maxWidth; // padding
-        final colCalc = (colWidth / (85 + spacing));
+        final colCalc = (colWidth / (itemSize + spacing));
         final totalCol = colCalc.floor();
 
         final rowCalc = itemNum / totalCol;
@@ -38,7 +40,7 @@ class GalleryGrid extends StatelessWidget {
                   key: Key('row-$row'),
                   padding: const EdgeInsets.only(bottom: spacing),
                   child: SizedBox(
-                    height: 86,
+                    height: itemSize,
                     child: Row(
                       children: [
                         ...List.generate(min(itemsLeftInCurrentRow, totalCol), ((colIndex) => colIndex)).map(
@@ -50,11 +52,11 @@ class GalleryGrid extends StatelessWidget {
                             return Container(
                               key: Key('item-$currentItemIndex'),
                               margin: col == totalCol - 1 ? null : const EdgeInsets.only(right: spacing),
-                              height: 85,
-                              width: 85,
+                              height: itemSize,
+                              width: itemSize,
                               decoration: BoxDecoration(
                                 color: XploreColors.secondary
-                                    .withOpacity(currentItem.isUploading == EUploadStatus.uploading ? 0.5 : 1),
+                                    .withOpacity(currentItem.isUploading == EUploadStatus.uploading ? 0.4 : 1),
                                 border: Border.all(color: XploreColors.primary, width: 1),
                               ),
                               child: Builder(
@@ -66,13 +68,22 @@ class GalleryGrid extends StatelessWidget {
                                         child: SizedBox(
                                           height: 30,
                                           width: 30,
-                                          child: CircularProgressIndicator(color: XploreColors.primary),
+                                          child: CircularProgressIndicator(color: XploreColors.darkBg),
                                         ),
                                       );
                                     case EUploadStatus.complete:
                                       return Image.memory(gallery[currentItemIndex].lowResImage, fit: BoxFit.cover);
                                     case EUploadStatus.failed:
-                                      return Image.memory(gallery[currentItemIndex].lowResImage, fit: BoxFit.cover);
+                                      return Container(
+                                        color: XploreColors.black,
+                                        child: Opacity(
+                                          opacity: 0.3,
+                                          child: Image.memory(
+                                            gallery[currentItemIndex].lowResImage,
+                                            fit: BoxFit.cover,
+                                          ),
+                                        ),
+                                      );
                                   }
                                 },
                               ),
