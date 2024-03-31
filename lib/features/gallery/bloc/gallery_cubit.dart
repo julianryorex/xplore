@@ -11,6 +11,7 @@ import 'package:logger/logger.dart';
 import 'package:uuid/uuid.dart';
 import 'package:xplore/core/enums.dart';
 import 'package:xplore/features/gallery/models/image_models.dart';
+import 'package:xplore/features/gallery/repository/gallery_repository.dart';
 import 'package:xplore/utilities/utilities.dart';
 
 part '../../../generated/features/gallery/bloc/gallery_cubit.freezed.dart';
@@ -21,25 +22,23 @@ part 'gallery_states.dart';
 // TODO: Add Hive repository
 class GalleryCubit extends Cubit<GalleryState> {
   late final Logger _logger;
+  late final GalleryRepository repository;
 
-  GalleryCubit() : super(const GalleryState()) {
+  GalleryCubit({GalleryRepository? repo}) : super(const GalleryState()) {
+    repository = repo ?? GalleryRepository();
     _logger = createLogger('Gallery');
 
     loadImgFromCache();
   }
 
-  Future<void> loadImgFromCache() async {
+  void loadImgFromCache() {
     _logger.d('Load cached gallery');
     emit(state.copyWith(status: EBlocStatus.loading));
 
-    final box = await Hive.openBox('gallery-meta');
-    for (String imageId in box.keys) {
-      final ImageModel imageModel = await box.get(imageId);
-      _addMapItemToState(imageModel);
-    }
-
-    _logger.d('Loaded gallery in state from Hive');
-    emit(state.copyWith(status: EBlocStatus.loaded));
+    repository.loadImgFromCache().then((images) {
+      emit(state.copyWith(imageMap: images, status: EBlocStatus.loaded));
+      _logger.d('Loaded gallery in state from Hive');
+    });
   }
 
   //! -------------------------------------------------------------------------
@@ -99,8 +98,8 @@ class GalleryCubit extends Cubit<GalleryState> {
       );
 
       _addMapItemToState(imageModel); // save to state
-      await cacheMetadata(imageModel); // cache imageModel meta + lowres in Hive
-      cacheHighResImage(imageModel.id, file); // cache imageModel high res in Hive
+      await repository.cacheMetadata(imageModel); // cache imageModel meta + lowres in Hive
+      repository.cacheHighResImage(imageModel.id, file); // cache imageModel high res in Hive
 
       // Upload image to google cloud and update image loading status for the UI
       uploadImage(file, imageModel.id).then((downloadUrl) {
@@ -109,14 +108,14 @@ class GalleryCubit extends Cubit<GalleryState> {
           isUploading: EUploadStatus.complete, // set upload as finished
           downloadUrl: downloadUrl,
         );
-        cacheMetadata(newMapItem);
+        repository.cacheMetadata(newMapItem);
         _addMapItemToState(newMapItem);
       }).onError((err, _) {
         _logger.w('Error uploading image ${image.name}: $err');
         final newMapItem = state.imageMap[imageModel.id]!.copyWith(
           isUploading: EUploadStatus.failed, // set upload as failed
         );
-        cacheMetadata(newMapItem);
+        repository.cacheMetadata(newMapItem);
         _addMapItemToState(newMapItem);
       });
     }
@@ -154,21 +153,6 @@ class GalleryCubit extends Cubit<GalleryState> {
     }
   }
 
-  /// Caches `ImageModel` to Hive (w/ compressed image)
-  @visibleForTesting
-  Future<void> cacheMetadata(ImageModel imageModel) async {
-    final box = await Hive.openBox('gallery-meta'); // TODO: error handling
-    await box.put(imageModel.id, imageModel);
-  }
-
-  /// Caches the actual non-compresed image in hive
-  Future<void> cacheHighResImage(String id, File file) async {
-    final highResImage = await file.readAsBytes(); // TODO: error handling
-    final box = await Hive.openBox('gallery-res');
-    await box.put(id, highResImage);
-    _logger.d('Cached high resolution image $id');
-  }
-
   // TODO: Fetch current itinerary id
   @visibleForTesting
   Future<String> uploadImage(File imageFile, String imageName) async {
@@ -187,13 +171,8 @@ class GalleryCubit extends Cubit<GalleryState> {
   /// Deletes all gallery metadata & high resolution images
   ///
   /// Only use for testing
-  @visibleForTesting
   Future<void> deleteAll() async {
-    final box1 = await Hive.openBox('gallery-meta');
-    final box2 = await Hive.openBox('gallery');
-    await box1.deleteFromDisk();
-    await box2.deleteFromDisk();
-    _logger.d('Deleted boxes in Hive');
+    await repository.reset();
     emit(const GalleryState(status: EBlocStatus.loaded));
   }
 }

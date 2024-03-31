@@ -56,51 +56,37 @@ Logger createLogger(String pref) {
   final prefix = '[$pref]';
   return Logger(
     level: kReleaseMode ? Level.info : Level.all,
-    printer: PrefixPrinter(
-      PrettyPrinter(
-        methodCount: 0,
-        errorMethodCount: 5,
-        colors: false,
-        printEmojis: !kReleaseMode,
-        noBoxingByDefault: true,
-        levelEmojis: {
-          Level.error: '📕',
-          Level.warning: '📙',
-          Level.info: '📘',
-          Level.debug: '📗',
-          Level.trace: '📓',
-        },
-      ),
-      error: prefix,
-      warning: prefix,
-      info: prefix,
-      debug: prefix,
-      trace: prefix,
-    ),
-  );
-}
-
-final wlog = Logger(
-  level: kReleaseMode ? Level.info : Level.all,
-  printer: PrefixPrinter(
-    PrettyPrinter(
+    printer: PrettyPrinter(
       methodCount: 0,
       errorMethodCount: 5,
       colors: false,
       printEmojis: !kReleaseMode,
       noBoxingByDefault: true,
       levelEmojis: {
-        Level.error: '📕',
-        Level.warning: '📙',
-        Level.info: '📘',
-        Level.debug: '📗',
-        Level.trace: '📓',
+        Level.error: '📕 $prefix',
+        Level.warning: '📙 $prefix',
+        Level.info: '📘 $prefix',
+        Level.debug: '📗 $prefix',
+        Level.trace: '📓 $prefix',
       },
     ),
-    error: '[widget]',
-    warning: '[widget]',
-    info: '[widget]',
-    debug: '[widget]',
-    trace: '[widget]',
+  );
+}
+
+final wlog = Logger(
+  level: kReleaseMode ? Level.info : Level.all,
+  printer: PrettyPrinter(
+    methodCount: 0,
+    errorMethodCount: 5,
+    colors: false,
+    printEmojis: !kReleaseMode,
+    noBoxingByDefault: true,
+    levelEmojis: {
+      Level.error: '📕 [widget]',
+      Level.warning: '📙 [widget]',
+      Level.info: '📘 [widget]',
+      Level.debug: '📗 [widget]',
+      Level.trace: '📓 [widget]',
+    },
   ),
 );
