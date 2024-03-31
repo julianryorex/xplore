@@ -4,6 +4,8 @@ import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
+import 'package:hive_flutter/hive_flutter.dart';
+import 'package:logger/logger.dart';
 import 'package:xplore/constants/constants.dart';
 import 'package:xplore/constants/extensions.dart';
 import 'package:xplore/constants/theme.dart';
@@ -11,6 +13,7 @@ import 'package:xplore/core/header.dart';
 import 'package:xplore/core/icon_button.dart';
 import 'package:xplore/core/navbar.dart';
 import 'package:xplore/features/gallery/bloc/gallery_cubit.dart';
+import 'package:xplore/features/gallery/models/image_models.dart';
 import 'package:xplore/features/itinerary/bloc/itinerary_cubit.dart';
 import 'package:xplore/features/itinerary/widgets/itinerary_card.dart';
 import 'package:xplore/features/location/bloc/location_cubit.dart';
@@ -20,20 +23,32 @@ import 'package:xplore/firebase_options.dart';
 import 'package:xplore/routes.dart';
 import 'package:xplore/utilities/utilities.dart';
 
-Future<void> init() async {
+Future<void> init(Logger logger) async {
   try {
     await dotenv.load(fileName: 'assets/.env');
-    log('Env file loaded');
+    logger.d('Env file loaded');
   } catch (err) {
-    log('Env file NOT found');
+    logger.e('Env file NOT found');
   }
 }
 
+Future<void> initHive(Logger logger) async {
+  await Hive.initFlutter();
+  Hive.registerAdapter(ImageModelAdapter());
+  Hive.registerAdapter(EUploadStatusAdapter());
+  logger.d('Hive initialized');
+}
+
 Future<void> main() async {
-  await init();
+  final logger = createLogger('main');
+
+  await init(logger);
+  await initHive(logger);
+
   await Firebase.initializeApp(
     options: DefaultFirebaseOptions.currentPlatform,
   );
+  logger.d('Firebase initialized');
 
   runApp(const MyApp());
 }
