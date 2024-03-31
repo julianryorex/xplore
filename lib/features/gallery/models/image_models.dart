@@ -15,7 +15,6 @@ class ImageModel with _$ImageModel {
     @HiveField(2) required Uint8List lowResImage,
     @HiveField(3) required EUploadStatus isUploading,
     @HiveField(4) String? downloadUrl,
-    // Uint8List? bytes,
   }) = _ImageModel;
 }
 

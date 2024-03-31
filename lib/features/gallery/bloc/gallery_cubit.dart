@@ -17,9 +17,10 @@ import 'package:xplore/utilities/utilities.dart';
 part '../../../generated/features/gallery/bloc/gallery_cubit.freezed.dart';
 part 'gallery_states.dart';
 
-// gallery-meta
-// gallery-res
-// TODO: Add Hive repository
+// TODOs:
+// - Fetch current itinerary id from another cubit or Hive
+// - Support selection & compression w/ video
+// - Implement GCP fetches/downloads after fetching cache
 class GalleryCubit extends Cubit<GalleryState> {
   late final Logger _logger;
   late final GalleryRepository repository;
@@ -74,13 +75,12 @@ class GalleryCubit extends Cubit<GalleryState> {
       final image = pickedImages[i];
 
       // start cloud upload of pictures
-      final file = xFileToFile(image);
+      final file = _xFileToFile(image);
       if (file == null) {
         _logger.w('File is null, skipping iteration');
         continue;
       }
 
-      // TODO: how to compress png?
       final compressedImage = await FlutterImageCompress.compressWithFile(
         file.absolute.path,
         minWidth: 120,
@@ -142,8 +142,8 @@ class GalleryCubit extends Cubit<GalleryState> {
     emit(state.copyWith(imageMap: newMap));
   }
 
-  @visibleForTesting
-  File? xFileToFile(XFile xFile) {
+  /// Converts image file to more generic file
+  File? _xFileToFile(XFile xFile) {
     try {
       File file = File(xFile.path);
       return file;
