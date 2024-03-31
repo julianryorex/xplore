@@ -1,4 +1,5 @@
 import 'dart:io';
+import 'dart:typed_data';
 
 import 'package:firebase_storage/firebase_storage.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
@@ -122,6 +123,15 @@ class GalleryCubit extends Cubit<GalleryState> {
 
     _logger.d('Upload started');
     emit(state.copyWith(status: EBlocStatus.loaded));
+  }
+
+  Future<Uint8List> fetchHighResAsset(String id) async {
+    final watch = Stopwatch()..start();
+    final box = await Hive.openBox('gallery-res');
+    final Uint8List currentImgBytes = await box.get(id);
+    watch.stop();
+    _logger.d('Hive fetch took ${watch.elapsedMilliseconds}ms');
+    return currentImgBytes;
   }
 
   //! -------------------------------------------------------------------------

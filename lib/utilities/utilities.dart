@@ -79,3 +79,28 @@ Logger createLogger(String pref) {
     ),
   );
 }
+
+final wlog = Logger(
+  level: kReleaseMode ? Level.info : Level.all,
+  printer: PrefixPrinter(
+    PrettyPrinter(
+      methodCount: 0,
+      errorMethodCount: 5,
+      colors: false,
+      printEmojis: !kReleaseMode,
+      noBoxingByDefault: true,
+      levelEmojis: {
+        Level.error: '📕',
+        Level.warning: '📙',
+        Level.info: '📘',
+        Level.debug: '📗',
+        Level.trace: '📓',
+      },
+    ),
+    error: '[widget]',
+    warning: '[widget]',
+    info: '[widget]',
+    debug: '[widget]',
+    trace: '[widget]',
+  ),
+);

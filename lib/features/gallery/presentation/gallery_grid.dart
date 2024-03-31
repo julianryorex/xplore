@@ -3,6 +3,7 @@ import 'dart:math';
 import 'package:flutter/material.dart';
 import 'package:xplore/constants/constants.dart';
 import 'package:xplore/features/gallery/models/image_models.dart';
+import 'package:xplore/routes.dart';
 
 // TODO: potential multiple rendering issue
 class GalleryGrid extends StatelessWidget {
@@ -72,15 +73,30 @@ class GalleryGrid extends StatelessWidget {
                                         ),
                                       );
                                     case EUploadStatus.complete:
-                                      return Image.memory(gallery[currentItemIndex].lowResImage, fit: BoxFit.cover);
+                                      return GestureDetector(
+                                        onTap: () {
+                                          Navigator.pushNamed(
+                                            context,
+                                            Paths.galleryFocusView,
+                                            arguments: {'gallery': gallery, 'initialIndex': currentItemIndex},
+                                          );
+                                        },
+                                        child: Image.memory(gallery[currentItemIndex].lowResImage, fit: BoxFit.cover),
+                                      );
                                     case EUploadStatus.failed:
-                                      return Container(
-                                        color: XploreColors.black,
-                                        child: Opacity(
-                                          opacity: 0.3,
-                                          child: Image.memory(
-                                            gallery[currentItemIndex].lowResImage,
-                                            fit: BoxFit.cover,
+                                      return GestureDetector(
+                                        onTap: () {
+                                          // TODO: add re-upload functionality?
+                                          print('tapped failed photo');
+                                        },
+                                        child: Container(
+                                          color: XploreColors.black,
+                                          child: Opacity(
+                                            opacity: 0.3,
+                                            child: Image.memory(
+                                              gallery[currentItemIndex].lowResImage,
+                                              fit: BoxFit.cover,
+                                            ),
                                           ),
                                         ),
                                       );

@@ -1,6 +1,7 @@
 import 'dart:developer';
 
 import 'package:flutter/material.dart';
+import 'package:xplore/features/gallery/presentation/gallery_focus_view.dart';
 import 'package:xplore/features/itinerary/models/itinerary_models.dart';
 import 'package:xplore/main.dart';
 import 'package:xplore/screens/gallery_page.dart';
@@ -14,6 +15,7 @@ class Paths {
   static const map = '/map';
   static const onboarding = '/onboarding-flow';
   static const gallery = '/gallery';
+  static const galleryFocusView = '/gallery-focus';
 
   static const itineraryOverview = '/itinerary-overview';
   static const itineraryFocusView = '/itinerary-focus-view';
@@ -33,6 +35,18 @@ class RouteGenerator {
         return MaterialPageRoute(builder: (_) => Container());
       case Paths.gallery:
         return MaterialPageRoute(builder: (_) => const GalleryPage());
+      case Paths.galleryFocusView:
+        return MaterialPageRoute(builder: (_) {
+          if (args is Map<String, dynamic> && args.containsKey('gallery') && args.containsKey('initialIndex')) {
+            return GalleryFocusView(
+              images: args['gallery'],
+              initialIndex: args['initialIndex'],
+            );
+          }
+
+          log('argument is not of type "ImageModel"');
+          return const ErrorScreen();
+        });
       case Paths.itineraryOverview:
         return MaterialPageRoute(
           builder: (_) {
