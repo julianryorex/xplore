@@ -27,3 +27,7 @@ class XploreColors {
 }
 
 const paddingUnit = 12.0;
+
+// TODO: get from bloc
+const itineraryId = 'ph4kd';
+const userId = '7d125e54-9de9-4a5c-bb15-29efacda4f9a';

@@ -8,12 +8,13 @@ part '../../../generated/features/map/bloc/map_cubit.freezed.dart';
 part 'map_states.dart';
 
 class MapCubit extends Cubit<MapStates> {
-  static const initialCameraPosition = CameraPosition(target: LatLng(40.7128, -73.9571), zoom: 12.0);
   late String mapStyle;
 
   MapCubit() : super(InitialMapState()) {
     init();
   }
+
+  static const initialCameraPosition = CameraPosition(target: LatLng(40.7128, -73.9571), zoom: 12.0);
 
   Future<void> init() async {
     await _loadMapStyle();
