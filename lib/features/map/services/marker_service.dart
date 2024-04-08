@@ -41,7 +41,6 @@ class MarkerService {
   Future<Uint8List?> fetchMarkerIcon(String markerId) async {
     final box = await _hive.openBox(markerHiveBox);
     final Uint8List? markers = await box.get(markerId, defaultValue: null);
-    _logger.d('marker fetched for $markerId (${markers?.length} bytes)');
     return markers;
   }
 

@@ -7,7 +7,7 @@ class AvatarMapIcon extends StatelessWidget {
   final ImageProvider<Object>? image;
 
   const AvatarMapIcon({
-    this.size = 50,
+    this.size = 30,
     this.image,
     super.key,
   });

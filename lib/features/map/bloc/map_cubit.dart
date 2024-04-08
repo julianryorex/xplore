@@ -45,27 +45,19 @@ class MapCubit extends Cubit<MapStates> {
     emit(currentState.copyWith(center: newCenter));
   }
 
-  Future<LatLng> getCurrentLocation() async {
-    await Geolocator.requestPermission();
-    Position position = await Geolocator.getCurrentPosition();
-    return LatLng(position.latitude, position.longitude);
-  }
-
   Future<void> updateUserMarkers(List<LocationModel> locations) async {
     if (state is! LoadedMapState) return;
-
-    _logger.d('Update location markers');
-    // need to get user information for each location and save it to map
 
     List<Marker> markersV2 = [];
 
     for (var el in locations) {
-      final testMarker = await MarkerService().fetchMarkerIcon(el.id);
-      final markerIcon = testMarker != null ? BitmapDescriptor.fromBytes(testMarker) : BitmapDescriptor.defaultMarker;
+      final userMarker = await MarkerService().fetchMarkerIcon(el.id);
+      final markerIcon = userMarker != null ? BitmapDescriptor.fromBytes(userMarker) : BitmapDescriptor.defaultMarker;
 
       final marker = Marker(
         markerId: MarkerId(el.id),
         position: LatLng(el.lat, el.lng),
+        anchor: userMarker != null ? const Offset(0.5, 0.5) : const Offset(0.5, 1.0),
         alpha: DateTime.now().difference(el.lastUpdated) > const Duration(minutes: 10) ? 0.5 : 1,
         // infoWindow: ,
         icon: markerIcon,
@@ -75,11 +67,19 @@ class MapCubit extends Cubit<MapStates> {
     }
 
     emit((state as LoadedMapState).copyWith(markers: markersV2.toSet()));
+    _logger.d('Location markers updated');
   }
 
   //! -------------------------------------------------------------------------
   //! Helpers
   //! -------------------------------------------------------------------------
+
+  @visibleForTesting
+  Future<LatLng> getCurrentLocation() async {
+    await Geolocator.requestPermission();
+    Position position = await Geolocator.getCurrentPosition();
+    return LatLng(position.latitude, position.longitude);
+  }
 
   /// Loads [GoogleMap] style
   Future<void> _loadMapStyle() async {

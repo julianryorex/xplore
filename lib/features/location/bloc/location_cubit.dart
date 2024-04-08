@@ -4,6 +4,8 @@ import 'package:firebase_database/firebase_database.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:freezed_annotation/freezed_annotation.dart';
+import 'package:geolocator/geolocator.dart';
+import 'package:google_maps_flutter/google_maps_flutter.dart';
 import 'package:logger/logger.dart';
 import 'package:xplore/constants/constants.dart';
 import 'package:xplore/constants/extensions.dart';
@@ -39,19 +41,19 @@ class LocationCubit extends Cubit<LocationState> {
     _logger.i('Enabled realtime location update');
   }
 
-  Future<void> loadDemoLocations() async {
-    final Map<String, dynamic> demoData = await loadJsonAsset('assets/demo/locations.json');
+  //! -------------------------------------------------------------------------
+  //! Public Methods
+  //! -------------------------------------------------------------------------
 
-    final locationsFromJson = demoData['locations']['ph4kd'] as Map<String, dynamic>;
-
-    final Map<String, LocationModel> locationMap = {};
-
-    locationsFromJson.entries.forEach((loc) {
-      locationMap[loc.key] = LocationModel.fromJson(loc.value);
-    });
-
-    emit(LocationState(locations: locationMap));
+  Future<LatLng> getCurrentLocation() async {
+    await Geolocator.requestPermission();
+    Position position = await Geolocator.getCurrentPosition();
+    return LatLng(position.latitude, position.longitude);
   }
+
+  //! -------------------------------------------------------------------------
+  //! Private Methods
+  //! -------------------------------------------------------------------------
 
   @visibleForTesting
   Future<void> timerCallback(Timer timer) async {
@@ -60,7 +62,13 @@ class LocationCubit extends Cubit<LocationState> {
     DatabaseReference locationRef = FirebaseDatabase.instance.ref('locations/$itineraryId');
 
     // set my location
-    final myLocation = LocationModel(id: userId, lastUpdated: DateTime.now(), lat: 40.71, lng: -73.934);
+    final myCoords = await getCurrentLocation();
+    final myLocation = LocationModel(
+      id: userId,
+      lastUpdated: DateTime.now(),
+      lat: myCoords.latitude,
+      lng: myCoords.longitude,
+    );
     await locationRef.child(userId).set(myLocation.toJson());
 
     // fetch all locations
@@ -84,6 +92,21 @@ class LocationCubit extends Cubit<LocationState> {
 
     emit(state.copyWith(locations: locationMap));
     _logger.d('Location updated & fetched ${allLocations.length} locations');
+  }
+
+  @visibleForTesting
+  Future<void> loadDemoLocations() async {
+    final Map<String, dynamic> demoData = await loadJsonAsset('assets/demo/locations.json');
+
+    final locationsFromJson = demoData['locations']['ph4kd'] as Map<String, dynamic>;
+
+    final Map<String, LocationModel> locationMap = {};
+
+    locationsFromJson.entries.forEach((loc) {
+      locationMap[loc.key] = LocationModel.fromJson(loc.value);
+    });
+
+    emit(LocationState(locations: locationMap));
   }
 
   @override
