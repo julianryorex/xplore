@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:xplore/constants/constants.dart';
 import 'package:xplore/constants/extensions.dart';
-import 'package:xplore/core/avatar.dart';
+import 'package:xplore/core/avatar_map_icon.dart';
 import 'package:xplore/core/header.dart';
 import 'package:xplore/core/icon_button.dart';
 import 'package:xplore/features/profile/bloc/profile_cubit.dart';
