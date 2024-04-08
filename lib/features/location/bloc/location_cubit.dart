@@ -15,7 +15,6 @@ import 'package:xplore/utilities/utilities.dart';
 part '../../../generated/features/location/bloc/location_cubit.freezed.dart';
 part 'location_states.dart';
 
-// TODO: add mechanism to toggle location update
 // TODO: test if this still works with app in the foreground
 // TODO: look into background fetch
 // TODO: use real user id from auth
@@ -28,6 +27,8 @@ class LocationCubit extends Cubit<LocationState> {
 
   StreamSubscription<DatabaseEvent>? locationSubscription;
 
+  static const locationUpdateInterval = 10;
+
   LocationCubit() : super(const LocationState(locations: {})) {
     _logger = createLogger('Location');
     loadDemoLocations();
@@ -37,9 +38,21 @@ class LocationCubit extends Cubit<LocationState> {
       return;
     }
 
-    updateLocationTimer = Timer.periodic(const Duration(seconds: 10), timerCallback);
     _logger.i('Enabled realtime location update');
+    startTimer();
   }
+
+  void startTimer() {
+    int updateInterval = locationUpdateInterval;
+    if (dotenv.env.containsKey('LOCATION_INTERVAL_UPDATE')) {
+      updateInterval = int.parse(dotenv.env['LOCATION_INTERVAL_UPDATE']!);
+      _logger.d('Custom time interval started for location updates');
+    }
+
+    updateLocationTimer = Timer.periodic(Duration(seconds: updateInterval), timerCallback);
+  }
+
+  void endTimer() => updateLocationTimer.cancel();
 
   //! -------------------------------------------------------------------------
   //! Public Methods
