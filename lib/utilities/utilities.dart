@@ -6,6 +6,7 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter/widgets.dart';
+import 'package:google_maps_flutter/google_maps_flutter.dart';
 import 'package:logger/logger.dart';
 
 /// gets the screen width of the current device
@@ -37,7 +38,14 @@ Future<Uint8List> getBytesFromAsset(String path, int width) async {
   return (await fi.image.toByteData(format: ui.ImageByteFormat.png))!.buffer.asUint8List();
 }
 
+Future<BitmapDescriptor> getMarkerIconFromBytes(Uint8List iconBytes) async {
+  final BitmapDescriptor markerIcon = BitmapDescriptor.fromBytes(iconBytes);
+  return markerIcon;
+}
+
 void unfocusKeyboard() => WidgetsBinding.instance.focusManager.primaryFocus?.unfocus();
+
+Future<void> wait(int milliseconds) async => await Future.delayed(Duration(milliseconds: milliseconds));
 
 Future<T> loadJsonAsset<T>(String pathToAsset) async {
   try {
@@ -46,6 +54,17 @@ Future<T> loadJsonAsset<T>(String pathToAsset) async {
     log('Loaded json from asset: "$pathToAsset"');
 
     return decodedObj;
+  } catch (err, stackTrace) {
+    return Future.error(err, stackTrace);
+  }
+}
+
+Future<ByteData> loadAssetAsBytes(String pathToAsset) async {
+  try {
+    final bytes = await rootBundle.load(pathToAsset);
+    log('Loaded bytes from asset: "$pathToAsset"');
+
+    return bytes;
   } catch (err, stackTrace) {
     return Future.error(err, stackTrace);
   }
