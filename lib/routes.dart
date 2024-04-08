@@ -1,6 +1,5 @@
-import 'dart:developer';
-
 import 'package:flutter/material.dart';
+import 'package:logger/logger.dart';
 import 'package:xplore/features/gallery/presentation/gallery_focus_view.dart';
 import 'package:xplore/features/itinerary/models/itinerary_models.dart';
 import 'package:xplore/main.dart';
@@ -9,6 +8,8 @@ import 'package:xplore/screens/generic_error_page.dart';
 import 'package:xplore/screens/itinerary_focus_page.dart';
 import 'package:xplore/screens/itinerary_overview_page.dart';
 import 'package:xplore/screens/map_canvas.dart';
+import 'package:xplore/screens/profile_page.dart';
+import 'package:xplore/utilities/utilities.dart';
 
 class Paths {
   static const home = '/';
@@ -20,9 +21,13 @@ class Paths {
   static const itineraryOverview = '/itinerary-overview';
   static const itineraryFocusView = '/itinerary-focus-view';
   static const itineraryMapView = '/itinerary-map-view';
+
+  static const profile = '/profile';
 }
 
 class RouteGenerator {
+  static final Logger _logger = createLogger('Router');
+
   static Route<dynamic> generateRoute(RouteSettings settings) {
     final args = settings.arguments;
 
@@ -31,22 +36,26 @@ class RouteGenerator {
         return FadePageRoute(page: const HomePage());
       case Paths.map:
         return FadePageRoute(page: const MapCanvas());
+      case Paths.profile:
+        return FadePageRoute(page: const ProfilePage());
       case Paths.onboarding:
         return MaterialPageRoute(builder: (_) => Container());
       case Paths.gallery:
         return MaterialPageRoute(builder: (_) => const GalleryPage());
       case Paths.galleryFocusView:
-        return MaterialPageRoute(builder: (_) {
-          if (args is Map<String, dynamic> && args.containsKey('gallery') && args.containsKey('initialIndex')) {
-            return GalleryFocusView(
-              images: args['gallery'],
-              initialIndex: args['initialIndex'],
-            );
-          }
+        return MaterialPageRoute(
+          builder: (_) {
+            if (args is Map<String, dynamic> && args.containsKey('gallery') && args.containsKey('initialIndex')) {
+              return GalleryFocusView(
+                images: args['gallery'],
+                initialIndex: args['initialIndex'],
+              );
+            }
 
-          log('argument is not of type "ImageModel"');
-          return const ErrorScreen();
-        });
+            _logger.e('argument is not of type "ImageModel"');
+            return const ErrorScreen();
+          },
+        );
       case Paths.itineraryOverview:
         return MaterialPageRoute(
           builder: (_) {
@@ -54,7 +63,7 @@ class RouteGenerator {
               return ItineraryOverviewPage(dailyPlan: args);
             }
 
-            log('argument is not of type "DailyPlanModel"');
+            _logger.e('argument is not of type "DailyPlanModel"');
             return const ErrorScreen();
           },
         );
@@ -65,7 +74,7 @@ class RouteGenerator {
               return ItineraryFocusPage(locationPlan: args);
             }
 
-            log('argument is not of type "LocationPlanModel"');
+            _logger.e('argument is not of type "LocationPlanModel"');
             return const ErrorScreen();
           },
         );

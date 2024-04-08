@@ -19,6 +19,7 @@ import 'package:xplore/features/itinerary/widgets/itinerary_card.dart';
 import 'package:xplore/features/location/bloc/location_cubit.dart';
 import 'package:xplore/features/map/bloc/map_cubit.dart';
 import 'package:xplore/features/nav/bloc/nav_cubit.dart';
+import 'package:xplore/features/profile/bloc/profile_cubit.dart';
 import 'package:xplore/firebase_options.dart';
 import 'package:xplore/routes.dart';
 import 'package:xplore/utilities/utilities.dart';
@@ -65,6 +66,7 @@ class MyApp extends StatelessWidget {
         BlocProvider<ItineraryCubit>(create: (_) => ItineraryCubit()),
         BlocProvider<MapCubit>(create: (_) => MapCubit()),
         BlocProvider<GalleryCubit>(create: (_) => GalleryCubit()),
+        BlocProvider<ProfileCubit>(create: (_) => ProfileCubit()),
       ],
       child: MaterialApp(
         debugShowCheckedModeBanner: false,
@@ -210,7 +212,7 @@ class HomePage extends StatelessWidget {
             ),
             Header(
               leadingWidget: XploreIconBtn(
-                onTapCallback: () => log('tapped'),
+                onTapCallback: () => Navigator.pushNamed(context, Paths.profile),
                 bgColor: XploreColors.darkBg,
                 icon: const Icon(Icons.person_2_outlined, size: 35),
               ),
