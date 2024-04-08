@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
 import 'package:xplore/core/navbar.dart';
+import 'package:xplore/features/location/bloc/location_cubit.dart';
 import 'package:xplore/features/map/bloc/map_cubit.dart';
 
 class MapCanvas extends StatefulWidget {
@@ -39,11 +40,13 @@ class _MapCanvasState extends State<MapCanvas> {
   /// Sets [GoogleMapController] and map style
   void onMapCreated(GoogleMapController controller) {
     mapController = controller;
-    mapController.setMapStyle(context.read<MapCubit>().mapStyle);
   }
 
   @override
   Widget build(BuildContext context) {
+    final locations = context.watch<LocationCubit>().state.locations.values.toList();
+    context.read<MapCubit>().updateUserMarkers(locations);
+
     return Scaffold(
       bottomNavigationBar: const Navbar(),
       body: Stack(
@@ -65,6 +68,7 @@ class _MapCanvasState extends State<MapCanvas> {
                 myLocationButtonEnabled: true, // TODO: false
                 myLocationEnabled: true,
                 onTap: (_) {},
+                style: context.read<MapCubit>().mapStyle,
               );
             },
           ),

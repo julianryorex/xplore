@@ -13,7 +13,6 @@ import 'package:xplore/utilities/utilities.dart';
 part '../../../generated/features/location/bloc/location_cubit.freezed.dart';
 part 'location_states.dart';
 
-// TODO: display lat/lng on map
 // TODO: add mechanism to toggle location update
 // TODO: test if this still works with app in the foreground
 // TODO: look into background fetch
@@ -61,7 +60,7 @@ class LocationCubit extends Cubit<LocationState> {
     DatabaseReference locationRef = FirebaseDatabase.instance.ref('locations/$itineraryId');
 
     // set my location
-    final myLocation = LocationModel(id: userId, lastUpdated: DateTime.now(), lat: 1, lng: 20);
+    final myLocation = LocationModel(id: userId, lastUpdated: DateTime.now(), lat: 40.71, lng: -73.934);
     await locationRef.child(userId).set(myLocation.toJson());
 
     // fetch all locations
@@ -73,7 +72,7 @@ class LocationCubit extends Cubit<LocationState> {
           id: loc.key!,
           lat: double.parse((locValue['lat'] ?? '0').toString()),
           lng: double.parse((locValue['lng'] ?? '0').toString()),
-          lastUpdated: DateTime.now(),
+          lastUpdated: DateTime.tryParse(locValue['last_updated'] as String) ?? DateTime.now(),
         ),
       };
     });
