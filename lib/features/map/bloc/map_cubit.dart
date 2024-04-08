@@ -4,6 +4,7 @@ import 'package:freezed_annotation/freezed_annotation.dart';
 import 'package:geolocator/geolocator.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
 import 'package:logger/logger.dart';
+import 'package:xplore/constants/constants.dart';
 import 'package:xplore/features/location/models/location_models.dart';
 import 'package:xplore/features/map/services/marker_service.dart';
 import 'package:xplore/utilities/utilities.dart';
@@ -18,9 +19,11 @@ part 'map_states.dart';
 class MapCubit extends Cubit<MapStates> {
   late final Logger _logger;
   late String mapStyle;
+  late MarkerService markerService;
 
   MapCubit() : super(InitialMapState()) {
     _logger = createLogger('Map');
+    markerService = MarkerService();
     init();
   }
 
@@ -29,14 +32,30 @@ class MapCubit extends Cubit<MapStates> {
   @visibleForTesting
   Future<void> init() async {
     await _loadMapStyle();
-    final center = await getCurrentLocation();
+    await checkUserMarkerState();
+  }
 
-    emit(LoadedMapState(center: center));
+  Future<void> checkUserMarkerState() async {
+    final userMarker = await markerService.fetchMarkerIcon(userId);
+
+    if (userMarker == null) {
+      emit(LoadProfileOnMapState());
+      return;
+    }
+
+    emit(const LoadedMapState());
   }
 
   //! -------------------------------------------------------------------------
   //! Public Methods
   //! -------------------------------------------------------------------------
+
+  Future<void> initialMarkerUpdate() async {
+    final iconBytes = await markerService.convertMarkerWidgetToBytes();
+    _logger.d('Generated iconBytes (${iconBytes?.length} bytes)');
+    await markerService.updateMarkerIcon(userId, iconBytes!);
+    emit(const LoadedMapState());
+  }
 
   void updateCenter(LatLng newCenter) {
     final currentState = state as LoadedMapState;
@@ -49,7 +68,7 @@ class MapCubit extends Cubit<MapStates> {
     List<Marker> markersV2 = [];
 
     for (var el in locations) {
-      final userMarker = await MarkerService().fetchMarkerIcon(el.id);
+      final userMarker = await markerService.fetchMarkerIcon(el.id);
       final markerIcon = userMarker != null ? BitmapDescriptor.fromBytes(userMarker) : BitmapDescriptor.defaultMarker;
 
       final marker = Marker(

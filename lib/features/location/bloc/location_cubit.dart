@@ -31,6 +31,7 @@ class LocationCubit extends Cubit<LocationState> {
 
   LocationCubit() : super(const LocationState(locations: {})) {
     _logger = createLogger('Location');
+    updateMyLocation();
 
     if (dotenv.env['DISABLE_REALTIME_LOCATIONS'].toBool()) {
       _logger.i('Disabled realtime location update');
@@ -67,10 +68,7 @@ class LocationCubit extends Cubit<LocationState> {
   //! Private Methods
   //! -------------------------------------------------------------------------
 
-  @visibleForTesting
-  Future<void> timerCallback(Timer timer) async {
-    // every 5 minutes, I will update my location and fetch all locations within the itinerary
-
+  Future<void> updateMyLocation() async {
     DatabaseReference locationRef = FirebaseDatabase.instance.ref('locations/$itineraryId');
 
     // set my location
@@ -81,7 +79,18 @@ class LocationCubit extends Cubit<LocationState> {
       lat: myCoords.latitude,
       lng: myCoords.longitude,
     );
+
+    emit(state.copyWith(locations: {userId: myLocation}));
     await locationRef.child(userId).set(myLocation.toJson());
+  }
+
+  @visibleForTesting
+  Future<void> timerCallback(Timer timer) async {
+    // every 5 minutes, I will update my location and fetch all locations within the itinerary
+
+    DatabaseReference locationRef = FirebaseDatabase.instance.ref('locations/$itineraryId');
+
+    await updateMyLocation();
 
     // fetch all locations
     final snapshot = await locationRef.get();
