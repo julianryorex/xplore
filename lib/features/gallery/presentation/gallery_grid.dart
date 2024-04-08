@@ -5,7 +5,6 @@ import 'package:xplore/constants/constants.dart';
 import 'package:xplore/features/gallery/models/image_models.dart';
 import 'package:xplore/routes.dart';
 
-// TODO: potential multiple rendering issue
 class GalleryGrid extends StatelessWidget {
   final List<ImageModel> gallery;
 

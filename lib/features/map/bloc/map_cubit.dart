@@ -52,6 +52,7 @@ class MapCubit extends Cubit<MapStates> {
 
     for (var el in locations) {
       final userMarker = await MarkerService().fetchMarkerIcon(el.id);
+      // TODO: size the marker based on zoom level
       final markerIcon = userMarker != null ? BitmapDescriptor.fromBytes(userMarker) : BitmapDescriptor.defaultMarker;
 
       final marker = Marker(

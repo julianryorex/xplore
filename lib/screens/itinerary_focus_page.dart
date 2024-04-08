@@ -18,39 +18,35 @@ class ItineraryFocusPage extends StatelessWidget {
   Widget build(BuildContext context) {
     return Scaffold(
       body: SafeArea(
-        child: Stack(
-          children: [
-            SingleChildScrollView(
-              child: LayoutPadding(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    //! Heading
-                    Text(locationPlan.name, style: context.pText.headlineMedium),
-                    const SizedBox(height: paddingUnit),
-                    Text(locationPlan.description, style: context.pText.bodySmall),
-                    const SizedBox(height: paddingUnit * 4),
-
-                    //! Gallery
-                    Text('Gallery', style: context.pText.headlineMedium),
-                    const SizedBox(height: paddingUnit),
-                    Container(height: 120, color: Colors.green),
-                    const SizedBox(height: paddingUnit),
-
-                    //! Vibes
-                    Text('Vibes', style: context.pText.headlineMedium),
-                  ],
-                ),
-              ),
+        child: LayoutPadding(
+          header: Header(
+            leadingWidget: XploreIconBtn(
+              bgColor: XploreColors.darkBg,
+              onTapCallback: () => Navigator.pop(context),
+              icon: const Icon(Icons.arrow_back, size: 45),
             ),
-            Header(
-              leadingWidget: XploreIconBtn(
-                bgColor: XploreColors.darkBg,
-                onTapCallback: () => Navigator.pop(context),
-                icon: const Icon(Icons.arrow_back, size: 45),
-              ),
+          ),
+          child: SingleChildScrollView(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                //! Heading
+                Text(locationPlan.name, style: context.pText.headlineMedium),
+                const SizedBox(height: paddingUnit),
+                Text(locationPlan.description, style: context.pText.bodySmall),
+                const SizedBox(height: paddingUnit * 4),
+
+                //! Gallery
+                Text('Gallery', style: context.pText.headlineMedium),
+                const SizedBox(height: paddingUnit),
+                Container(height: 120, color: Colors.green),
+                const SizedBox(height: paddingUnit),
+
+                //! Vibes
+                Text('Vibes', style: context.pText.headlineMedium),
+              ],
             ),
-          ],
+          ),
         ),
       ),
     );

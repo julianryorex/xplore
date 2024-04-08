@@ -33,7 +33,6 @@ class GalleryPage extends StatelessWidget {
                   opacity: state.status == EBlocStatus.loading ? 0.3 : 1,
                   duration: const Duration(milliseconds: 200),
                   child: LayoutPadding(
-                    enableHeaderPadding: true,
                     child: SingleChildScrollView(
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
