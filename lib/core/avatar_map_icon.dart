@@ -7,7 +7,7 @@ class AvatarMapIcon extends StatelessWidget {
   final ImageProvider<Object>? image;
 
   const AvatarMapIcon({
-    this.size = 30,
+    this.size = 100,
     this.image,
     super.key,
   });
@@ -28,7 +28,7 @@ class AvatarMapIcon extends StatelessWidget {
         child: CircleAvatar(
           foregroundImage: image,
           backgroundColor: XploreColors.secondary,
-          child: Text('J', style: context.pText.bodyMedium),
+          child: Text('J', style: context.pText.headlineMedium),
         ),
       ),
     );
