@@ -52,6 +52,11 @@ class MarkerService {
     uploadMarkerIcon(id, markerAsBytes);
   }
 
+  Future<void> deleteAll() async {
+    final box = await _hive.openBox(markerHiveBox);
+    await box.deleteFromDisk();
+  }
+
   //! -------------------------------------------------------------------------
   //! Private Methods
   //! -------------------------------------------------------------------------

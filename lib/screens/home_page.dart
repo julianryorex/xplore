@@ -11,6 +11,7 @@ import 'package:xplore/core/navbar.dart';
 import 'package:xplore/features/gallery/bloc/gallery_cubit.dart';
 import 'package:xplore/features/itinerary/bloc/itinerary_cubit.dart';
 import 'package:xplore/features/itinerary/widgets/itinerary_card.dart';
+import 'package:xplore/features/profile/bloc/profile_cubit.dart';
 import 'package:xplore/routes.dart';
 import 'package:xplore/utilities/utilities.dart';
 
@@ -138,7 +139,9 @@ class HomePage extends StatelessWidget {
                         const SizedBox(width: paddingUnit),
                         OutlinedButton(
                           onPressed: () async {
-                            await context.read<GalleryCubit>().deleteAll();
+                            context.read<GalleryCubit>().deleteAll();
+                            // context.read<LocationCubit>().deleteAll();
+                            context.read<ProfileCubit>().deleteAll();
                           },
                           child: Text(
                             'Delete Hive',

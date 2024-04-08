@@ -47,6 +47,8 @@ class ProfileCubit extends Cubit<ProfileState> {
     markerService.updateMarkerIcon(userId, iconBytes!);
   }
 
+  Future<void> deleteAll() async => await markerService.deleteAll();
+
   //! -------------------------------------------------------------------------
   //! Private Methods
   //! -------------------------------------------------------------------------

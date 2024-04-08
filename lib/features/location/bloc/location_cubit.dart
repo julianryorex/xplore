@@ -31,7 +31,6 @@ class LocationCubit extends Cubit<LocationState> {
 
   LocationCubit() : super(const LocationState(locations: {})) {
     _logger = createLogger('Location');
-    loadDemoLocations();
 
     if (dotenv.env['DISABLE_REALTIME_LOCATIONS'].toBool()) {
       _logger.i('Disabled realtime location update');
@@ -118,6 +117,8 @@ class LocationCubit extends Cubit<LocationState> {
     locationsFromJson.entries.forEach((loc) {
       locationMap[loc.key] = LocationModel.fromJson(loc.value);
     });
+
+    _logger.d('Loaded ${locationMap.entries.length} demo locations.');
 
     emit(LocationState(locations: locationMap));
   }

@@ -53,13 +53,12 @@ class MapCubit extends Cubit<MapStates> {
       final markerIcon = userMarker != null ? BitmapDescriptor.fromBytes(userMarker) : BitmapDescriptor.defaultMarker;
 
       final marker = Marker(
-        markerId: MarkerId(el.id),
-        position: LatLng(el.lat, el.lng),
-        anchor: userMarker != null ? const Offset(0.5, 0.5) : const Offset(0.5, 1.0),
-        alpha: DateTime.now().difference(el.lastUpdated) > const Duration(minutes: 10) ? 0.5 : 1,
-        icon: markerIcon,
-        // infoWindow: ,
-      );
+          markerId: MarkerId(el.id),
+          position: LatLng(el.lat, el.lng),
+          anchor: userMarker != null ? const Offset(0.5, 0.5) : const Offset(0.5, 1.0),
+          alpha: DateTime.now().difference(el.lastUpdated) > const Duration(minutes: 10) ? 0.5 : 1,
+          icon: markerIcon,
+          infoWindow: const InfoWindow(title: 'Julian', anchor: Offset(-0.5, 0.0)));
 
       markersV2.add(marker);
     }
