@@ -8,21 +8,8 @@ import 'package:xplore/core/icon_button.dart';
 import 'package:xplore/core/layout_padding.dart';
 import 'package:xplore/features/profile/bloc/profile_cubit.dart';
 
-class ProfilePage extends StatefulWidget {
+class ProfilePage extends StatelessWidget {
   const ProfilePage({super.key});
-
-  @override
-  State<ProfilePage> createState() => _ProfilePageState();
-}
-
-class _ProfilePageState extends State<ProfilePage> {
-  late int assetIndex;
-
-  @override
-  void initState() {
-    super.initState();
-    assetIndex = 0;
-  }
 
   @override
   Widget build(BuildContext context) {
