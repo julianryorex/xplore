@@ -1,9 +1,13 @@
+import 'dart:io';
 import 'dart:typed_data';
 import 'dart:ui' as ui;
 
+import 'package:firebase_storage/firebase_storage.dart';
 import 'package:flutter/rendering.dart';
+import 'package:freezed_annotation/freezed_annotation.dart';
 import 'package:hive_flutter/hive_flutter.dart';
 import 'package:logger/logger.dart';
+import 'package:path_provider/path_provider.dart';
 import 'package:xplore/core/avatar_map_icon.dart';
 import 'package:xplore/utilities/utilities.dart';
 
@@ -18,7 +22,7 @@ class MarkerService {
     _logger = createLogger('MarkerService');
   }
 
-  Future<Uint8List?> convertWidgetToBytes() async {
+  Future<Uint8List?> convertMarkerWidgetToBytes() async {
     try {
       final RenderRepaintBoundary boundary =
           AvatarMapIcon.globalKeyAvatarMapIcon.currentContext?.findRenderObject() as RenderRepaintBoundary;
@@ -46,6 +50,33 @@ class MarkerService {
     await box.put(id, markerAsBytes);
     _logger.d('Updated marker icon in cache');
 
-    // TODO: update in GCP
+    uploadMarkerIcon(id, markerAsBytes);
+  }
+
+  //! -------------------------------------------------------------------------
+  //! Private Methods
+  //! -------------------------------------------------------------------------
+
+  @visibleForTesting
+  Future<String> uploadMarkerIcon(String id, Uint8List markerAsBytes) async {
+    // create file to go from Uint8List -> File
+    final directory = await getApplicationDocumentsDirectory();
+    final file = File('${directory.path}/marker.png');
+    await file.writeAsBytes(markerAsBytes);
+
+    // upload to cloud
+    try {
+      FirebaseStorage storage = FirebaseStorage.instance;
+      Reference ref = storage.ref().child('markers/$id/marker');
+
+      UploadTask uploadTask = ref.putFile(file);
+      TaskSnapshot taskSnapshot = await uploadTask;
+      String downloadURL = await taskSnapshot.ref.getDownloadURL();
+
+      _logger.d('Updated marker icon in GCP');
+      return downloadURL;
+    } catch (e) {
+      return Future.error(e);
+    }
   }
 }

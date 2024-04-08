@@ -22,24 +22,9 @@ class ProfileCubit extends Cubit<ProfileState> {
     loadProfileInState();
   }
 
-  Future<void> loadProfileInState() async {
-    final directory = await getApplicationDocumentsDirectory();
-    final file = File(('${directory.path}/profile_picture.png'));
-
-    if (!await file.exists()) {
-      _logger.w('No profile picture found');
-      return;
-    }
-
-    final pictureInBytes = await file.readAsBytes();
-    emit(state.copyWith(profilePicture: pictureInBytes));
-  }
-
-  Future<void> saveProfilePicture(Uint8List imageData) async {
-    final directory = await getApplicationDocumentsDirectory();
-    final file = File(('${directory.path}/profile_picture.png'));
-    await file.writeAsBytes(imageData);
-  }
+  //! -------------------------------------------------------------------------
+  //! Public Methods
+  //! -------------------------------------------------------------------------
 
   Future<void> changeProfilePicture() async {
     final picker = ImagePicker();
@@ -56,9 +41,34 @@ class ProfileCubit extends Cubit<ProfileState> {
     saveProfilePicture(pictureAsBytes);
     await wait(1000);
 
-    final iconBytes = await markerService.convertWidgetToBytes();
+    final iconBytes = await markerService.convertMarkerWidgetToBytes();
     _logger.d('Generated iconBytes (${iconBytes?.length} bytes)');
 
     markerService.updateMarkerIcon(userId, iconBytes!);
+  }
+
+  //! -------------------------------------------------------------------------
+  //! Private Methods
+  //! -------------------------------------------------------------------------
+
+  @visibleForTesting
+  Future<void> loadProfileInState() async {
+    final directory = await getApplicationDocumentsDirectory();
+    final file = File(('${directory.path}/profile_picture.png'));
+
+    if (!await file.exists()) {
+      _logger.w('No profile picture found');
+      return;
+    }
+
+    final pictureInBytes = await file.readAsBytes();
+    emit(state.copyWith(profilePicture: pictureInBytes));
+  }
+
+  @visibleForTesting
+  Future<void> saveProfilePicture(Uint8List imageData) async {
+    final directory = await getApplicationDocumentsDirectory();
+    final file = File(('${directory.path}/profile_picture.png'));
+    await file.writeAsBytes(imageData);
   }
 }

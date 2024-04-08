@@ -13,13 +13,7 @@ part 'map_states.dart';
 
 // TODO: Transit
 // TODO: Add neighborhood polylines (watch dog like)
-// TODO: Profile pictures as users
 // TODO: InfoWindow with last updated
-
-// TODO: Create profile picture from assets as avatar widget
-// TODO: Convert widget to bytes and display on map
-// TODO: save the bytes in hive for easier access
-// TODO: store profile data in cloud
 
 class MapCubit extends Cubit<MapStates> {
   late final Logger _logger;
