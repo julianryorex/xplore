@@ -25,3 +25,9 @@ extension HexConversion on String {
     return Color(int.parse(hexColor, radix: 16));
   }
 }
+
+extension BoolCheck on String? {
+  bool toBool() {
+    return this == 'true';
+  }
+}
