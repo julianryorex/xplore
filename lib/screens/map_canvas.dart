@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
@@ -19,11 +21,25 @@ class _MapCanvasState extends State<MapCanvas> {
   /// Controller for [GoogleMap]
   late GoogleMapController mapController;
 
+  Timer? debounce;
+
   @override
   void initState() {
     super.initState();
-
     redrawKey = Object();
+    initMap();
+  }
+
+  Future<void> initMap() async {
+    final currentPosition = await context.read<LocationCubit>().getCurrentLocation();
+    if (debounce?.isActive == true) debounce!.cancel();
+
+    debounce = Timer(const Duration(milliseconds: 1000), () {
+      final update = CameraUpdate.newCameraPosition(CameraPosition(target: currentPosition, zoom: 16));
+      mapController.animateCamera(update);
+    });
+
+    setState(() => redrawKey = Object());
   }
 
   @override
@@ -32,15 +48,9 @@ class _MapCanvasState extends State<MapCanvas> {
     super.dispose();
   }
 
-  void changeCenterLocation(CameraPosition position) {
-    final newCenter = LatLng(position.target.latitude, position.target.longitude);
-    context.read<MapCubit>().updateCenter(newCenter);
-  }
-
-  /// Sets [GoogleMapController] and map style
-  void onMapCreated(GoogleMapController controller) {
-    mapController = controller;
-  }
+  //! -------------------------------------------------------------------------
+  //! Widgets Methods
+  //! -------------------------------------------------------------------------
 
   @override
   Widget build(BuildContext context) {
@@ -63,10 +73,9 @@ class _MapCanvasState extends State<MapCanvas> {
                 key: ValueKey<Object>(redrawKey),
                 onMapCreated: onMapCreated,
                 initialCameraPosition: MapCubit.initialCameraPosition,
-                onCameraMove: changeCenterLocation,
+                onCameraMove: onCameraMove,
                 markers: state.markers,
                 myLocationButtonEnabled: true, // TODO: false
-                myLocationEnabled: true,
                 onTap: (_) {},
                 style: context.read<MapCubit>().mapStyle,
               );
@@ -75,5 +84,19 @@ class _MapCanvasState extends State<MapCanvas> {
         ],
       ),
     );
+  }
+
+  //! -------------------------------------------------------------------------
+  //! Callback Methods
+  //! -------------------------------------------------------------------------
+
+  /// Sets [GoogleMapController] and map style
+  void onMapCreated(GoogleMapController controller) {
+    mapController = controller;
+  }
+
+  void onCameraMove(CameraPosition position) {
+    final newCenter = LatLng(position.target.latitude, position.target.longitude);
+    context.read<MapCubit>().updateCenter(newCenter);
   }
 }
