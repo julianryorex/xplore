@@ -75,7 +75,7 @@ class _MapCanvasState extends State<MapCanvas> {
                 initialCameraPosition: MapCubit.initialCameraPosition,
                 onCameraMove: onCameraMove,
                 markers: state.markers,
-                myLocationButtonEnabled: true, // TODO: false
+                myLocationButtonEnabled: true,
                 onTap: (_) {},
                 style: context.read<MapCubit>().mapStyle,
               );

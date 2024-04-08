@@ -39,8 +39,6 @@ class MapCubit extends Cubit<MapStates> {
   //! -------------------------------------------------------------------------
 
   void updateCenter(LatLng newCenter) {
-    if (state is! InitialMapState) return;
-
     final currentState = state as LoadedMapState;
     emit(currentState.copyWith(center: newCenter));
   }
@@ -52,7 +50,6 @@ class MapCubit extends Cubit<MapStates> {
 
     for (var el in locations) {
       final userMarker = await MarkerService().fetchMarkerIcon(el.id);
-      // TODO: size the marker based on zoom level
       final markerIcon = userMarker != null ? BitmapDescriptor.fromBytes(userMarker) : BitmapDescriptor.defaultMarker;
 
       final marker = Marker(
@@ -60,8 +57,8 @@ class MapCubit extends Cubit<MapStates> {
         position: LatLng(el.lat, el.lng),
         anchor: userMarker != null ? const Offset(0.5, 0.5) : const Offset(0.5, 1.0),
         alpha: DateTime.now().difference(el.lastUpdated) > const Duration(minutes: 10) ? 0.5 : 1,
-        // infoWindow: ,
         icon: markerIcon,
+        // infoWindow: ,
       );
 
       markersV2.add(marker);
