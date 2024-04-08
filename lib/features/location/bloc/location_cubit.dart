@@ -2,9 +2,11 @@ import 'dart:async';
 
 import 'package:firebase_database/firebase_database.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:freezed_annotation/freezed_annotation.dart';
 import 'package:logger/logger.dart';
 import 'package:xplore/constants/constants.dart';
+import 'package:xplore/constants/extensions.dart';
 import 'package:xplore/features/location/models/location_models.dart';
 import 'package:xplore/utilities/utilities.dart';
 
@@ -29,7 +31,13 @@ class LocationCubit extends Cubit<LocationState> {
     _logger = createLogger('Location');
     loadDemoLocations();
 
-    updateLocationTimer = Timer.periodic(const Duration(minutes: 1), timerCallback);
+    if (dotenv.env['DISABLE_REALTIME_LOCATIONS'].toBool()) {
+      _logger.i('Disabled realtime location update');
+      return;
+    }
+
+    updateLocationTimer = Timer.periodic(const Duration(seconds: 10), timerCallback);
+    _logger.i('Enabled realtime location update');
   }
 
   Future<void> loadDemoLocations() async {
