@@ -5,6 +5,7 @@ import 'package:geolocator/geolocator.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
 import 'package:logger/logger.dart';
 import 'package:xplore/features/location/models/location_models.dart';
+import 'package:xplore/features/map/services/marker_service.dart';
 import 'package:xplore/utilities/utilities.dart';
 
 part '../../../generated/features/map/bloc/map_cubit.freezed.dart';
@@ -14,6 +15,11 @@ part 'map_states.dart';
 // TODO: Add neighborhood polylines (watch dog like)
 // TODO: Profile pictures as users
 // TODO: InfoWindow with last updated
+
+// TODO: Create profile picture from assets as avatar widget
+// TODO: Convert widget to bytes and display on map
+// TODO: save the bytes in hive for easier access
+// TODO: store profile data in cloud
 
 class MapCubit extends Cubit<MapStates> {
   late final Logger _logger;
@@ -57,19 +63,24 @@ class MapCubit extends Cubit<MapStates> {
     _logger.d('Update location markers');
     // need to get user information for each location and save it to map
 
-    final markers = locations.map(
-      (el) {
-        return Marker(
-          markerId: MarkerId(el.id),
-          position: LatLng(el.lat, el.lng),
-          alpha: DateTime.now().difference(el.lastUpdated) > const Duration(minutes: 10) ? 0.5 : 1,
-          // infoWindow: ,
-          // icon: ,
-        );
-      },
-    );
+    List<Marker> markersV2 = [];
 
-    emit((state as LoadedMapState).copyWith(markers: markers.toSet()));
+    for (var el in locations) {
+      final testMarker = await MarkerService().fetchMarkerIcon(el.id);
+      final markerIcon = testMarker != null ? BitmapDescriptor.fromBytes(testMarker) : BitmapDescriptor.defaultMarker;
+
+      final marker = Marker(
+        markerId: MarkerId(el.id),
+        position: LatLng(el.lat, el.lng),
+        alpha: DateTime.now().difference(el.lastUpdated) > const Duration(minutes: 10) ? 0.5 : 1,
+        // infoWindow: ,
+        icon: markerIcon,
+      );
+
+      markersV2.add(marker);
+    }
+
+    emit((state as LoadedMapState).copyWith(markers: markersV2.toSet()));
   }
 
   //! -------------------------------------------------------------------------
