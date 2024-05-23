@@ -16,15 +16,15 @@ class GalleryRepository {
     _logger = createLogger('GalleryRepo');
   }
 
-  static const galleryMetadataBox = 'gallery-meta';
-  static const galleryHighResBox = 'gallery-res';
+  static const metadataBoxName = 'gallery-meta';
+  static const highResBoxName = 'gallery-res';
 
   Future<Map<String, ImageModel>> loadImgFromCache() async {
     final Map<String, ImageModel> imgMap = {};
 
-    final box = await _hive.openBox(galleryMetadataBox);
+    final box = await _hive.openBox(metadataBoxName);
     for (String imageId in box.keys) {
-      final ImageModel imageModel = await box.get(imageId);
+      final ImageModel imageModel = box.get(imageId);
       imgMap.addAll({imageId: imageModel});
     }
 
@@ -34,7 +34,7 @@ class GalleryRepository {
   /// Caches `ImageModel` to Hive (w/ compressed image)
   Future<void> cacheMetadata(ImageModel imageModel) async {
     try {
-      final box = await _hive.openBox(galleryMetadataBox);
+      final box = await _hive.openBox(metadataBoxName);
       await box.put(imageModel.id, imageModel);
     } catch (err) {
       Future.error(err);
@@ -45,7 +45,7 @@ class GalleryRepository {
   Future<void> cacheHighResImage(String id, File file) async {
     try {
       final highResImage = await file.readAsBytes();
-      final box = await _hive.openBox(galleryHighResBox);
+      final box = await _hive.openBox(highResBoxName);
       await box.put(id, highResImage);
       _logger.d('Cached high resolution image $id');
     } catch (err) {
@@ -55,8 +55,8 @@ class GalleryRepository {
 
   Future<void> reset() async {
     try {
-      final box1 = await _hive.openBox(galleryMetadataBox);
-      final box2 = await _hive.openBox(galleryHighResBox);
+      final box1 = await _hive.openBox(metadataBoxName);
+      final box2 = await _hive.openBox(highResBoxName);
       await box1.deleteFromDisk();
       await box2.deleteFromDisk();
       _logger.d('Deleted boxes in Hive');
