@@ -50,5 +50,7 @@
 		<string>UIInterfaceOrientationPortrait</string>
 		<string>UIInterfaceOrientationPortraitUpsideDown</string>
 	</array>
+	<key>MapsApiKey</key>
+	<string>$(MAPS_API_KEY)</string>
 </dict>
 </plist>
