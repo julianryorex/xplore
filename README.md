@@ -102,6 +102,17 @@ fvm flutter run
 FVM pins this project to Flutter `3.44.0`, which provides Dart `3.12.x`. Use `fvm flutter ...` and
 `fvm dart ...` for ad hoc commands, or prefer the Makefile targets below.
 
+### Platform Support
+
+Xplore is currently validated through the iOS target. Do not use Linux runners
+for app validation or golden refreshes; Flutter golden snapshots depend on host
+text rasterization and the checked-in baselines are Apple CI baselines.
+
+Codemagic is configured in [`codemagic.yaml`](codemagic.yaml) to install
+dependencies, generate sources, build the iOS app without code signing, and run
+the itinerary card golden test on a Mac build machine with Xcode. This is an iOS
+CI workflow only; a separate macOS app workflow has not been added yet.
+
 ### Makefile Commands
 
 | Command | Description |

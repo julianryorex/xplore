@@ -1,8 +1,10 @@
 // Renders the real `ItineraryCard` widgets (with the app theme + demo data) to a
 // PNG golden. Used to capture a visual artifact proving the Flutter UI renders
-// in this environment, since the full app GUI targets iOS/macOS only.
+// in the supported iOS CI environment.
 //
-// Generate / refresh with:  flutter test --update-goldens test/itinerary_card_golden_test.dart
+// Run or refresh this test on the Codemagic Apple build host only; Linux text
+// rasterization does not match the checked-in baseline.
+//   flutter test --update-goldens test/itinerary_card_golden_test.dart
 
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
