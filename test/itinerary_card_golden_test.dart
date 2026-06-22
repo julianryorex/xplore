@@ -2,7 +2,9 @@
 // PNG golden. Used to capture a visual artifact proving the Flutter UI renders
 // in this environment, since the full app GUI targets iOS/macOS only.
 //
-// Generate / refresh with:  flutter test --update-goldens test/itinerary_card_golden_test.dart
+// Goldens are platform-specific because text rasterization differs between Linux
+// CI and macOS dev machines. Refresh on the target platform:
+//   flutter test --update-goldens test/itinerary_card_golden_test.dart
 
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -50,7 +52,10 @@ void main() {
     );
     await tester.pumpAndSettle();
 
-    await expectLater(find.byType(Scaffold), matchesGoldenFile('goldens/itinerary_cards.png'));
+    await expectLater(
+      find.byType(Scaffold),
+      matchesGoldenFile(platformGoldenPath('itinerary_cards')),
+    );
 
     await cubit.close();
   });

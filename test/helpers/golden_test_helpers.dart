@@ -1,5 +1,22 @@
+import 'dart:io';
+
 import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
+
+/// Supported platforms for checked-in golden baselines.
+const supportedGoldenPlatforms = {'linux', 'macos'};
+
+/// Golden path for the current OS, e.g. `goldens/itinerary_cards.linux.png`.
+String platformGoldenPath(String basename) {
+  final platform = Platform.operatingSystem;
+  if (!supportedGoldenPlatforms.contains(platform)) {
+    fail(
+      'No golden baseline for platform "$platform". '
+      'Supported: ${supportedGoldenPlatforms.join(", ")}.',
+    );
+  }
+  return 'goldens/$basename.$platform.png';
+}
 
 /// Loads Poppins so golden tests render the app typography instead of Ahem.
 Future<void> loadGoldenTestFonts() async {
