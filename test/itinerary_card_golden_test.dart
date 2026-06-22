@@ -1,29 +1,38 @@
 // Renders the real `ItineraryCard` widgets (with the app theme + demo data) to a
 // PNG golden. Used to capture a visual artifact proving the Flutter UI renders
-// in this environment, since the full app GUI targets iOS/macOS only.
+// in the supported iOS CI environment.
 //
-// Goldens are platform-specific because text rasterization differs between Linux
-// CI and macOS dev machines. Refresh on the target platform:
+// Run or refresh this test on the Codemagic Apple build host only; Linux text
+// rasterization does not match the checked-in baseline.
 //   flutter test --update-goldens test/itinerary_card_golden_test.dart
 
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:xplore/constants/constants.dart';
 import 'package:xplore/constants/theme.dart';
 import 'package:xplore/features/itinerary/bloc/itinerary_cubit.dart';
 import 'package:xplore/features/itinerary/widgets/itinerary_card.dart';
 
-import 'helpers/golden_test_helpers.dart';
+Future<void> _loadPoppins() async {
+  final loader = FontLoader('Poppins')
+    ..addFont(rootBundle.load('assets/fonts/Poppins-Medium.ttf'))
+    ..addFont(rootBundle.load('assets/fonts/Poppins-SemiBold.ttf'));
+  await loader.load();
+}
 
 void main() {
   testWidgets('ItineraryCard carousel renders with demo data', (tester) async {
-    await loadGoldenTestFonts();
+    await _loadPoppins();
 
     final cubit = ItineraryCubit();
     await cubit.loadDemoItinerary();
     final dailyPlans = (cubit.state as LoadedItineraryState).itinerary.dailyPlans;
 
-    setGoldenViewSize(tester, const Size(540, 380));
+    tester.view.physicalSize = const Size(540, 380);
+    tester.view.devicePixelRatio = 1.0;
+    addTearDown(tester.view.resetPhysicalSize);
+    addTearDown(tester.view.resetDevicePixelRatio);
 
     await tester.pumpWidget(
       MaterialApp(
@@ -52,10 +61,7 @@ void main() {
     );
     await tester.pumpAndSettle();
 
-    await expectLater(
-      find.byType(Scaffold),
-      matchesGoldenFile(platformGoldenPath('itinerary_cards')),
-    );
+    await expectLater(find.byType(Scaffold), matchesGoldenFile('goldens/itinerary_cards.png'));
 
     await cubit.close();
   });
