@@ -52,7 +52,7 @@ lib/
 
 | Layer | Technology |
 |-------|------------|
-| Framework | Flutter (Dart >=3.1.5) |
+| Framework | Flutter 3.44.0 (Dart >=3.12.0) via FVM |
 | State Management | flutter_bloc / Cubit |
 | Data Modeling | Freezed + json_serializable |
 | Local Storage | Hive |
@@ -68,7 +68,7 @@ lib/
 
 ### Prerequisites
 
-- Flutter SDK (>=3.1.5)
+- FVM (`dart pub global activate fvm`)
 - Xcode (for iOS builds)
 - A Firebase project with Realtime Database and Storage enabled
 - Google Maps API key
@@ -81,6 +81,10 @@ lib/
 git clone https://github.com/<your-username>/xplore.git
 cd xplore
 
+# Install and link the pinned Flutter SDK from .fvmrc
+fvm install
+fvm use 3.44.0 --skip-pub-get
+
 # Install dependencies
 make get
 
@@ -92,19 +96,22 @@ cp assets/.env.example assets/.env
 make gen
 
 # Run on iOS simulator
-flutter run
+fvm flutter run
 ```
+
+FVM pins this project to Flutter `3.44.0`, which provides Dart `3.12.x`. Use `fvm flutter ...` and
+`fvm dart ...` for ad hoc commands, or prefer the Makefile targets below.
 
 ### Makefile Commands
 
 | Command | Description |
 |---------|-------------|
-| `make get` | Install Flutter dependencies |
-| `make gen` | Run build_runner (Freezed, json_serializable, Hive adapters) |
-| `make format` | Apply dart fixes and format (120 char line width) |
-| `make check-format` | CI-style format check |
-| `make build-ios` | Build iOS release |
-| `make clean` | Clean build artifacts and generated code |
+| `make get` | Install Flutter dependencies with FVM |
+| `make gen` | Run build_runner with FVM Dart (Freezed, json_serializable, Hive adapters) |
+| `make format` | Apply Dart fixes and format with FVM Dart (120 char line width) |
+| `make check-format` | CI-style format check with FVM Dart |
+| `make build-ios` | Build iOS release with FVM Flutter |
+| `make clean` | Clean build artifacts and generated code with FVM Flutter |
 | `make reboot` | Full rebuild: clean → get → gen → build-ios |
 
 ---
