@@ -1,4 +1,4 @@
-.PHONY: get build-ios pub-reset format check-format init gen quick-gen test-gold delete-gold test-cov prep-ipad prep-mac reboot
+.PHONY: get build-ios pub-reset format check-format init gen quick-gen test test-gold delete-gold test-cov prep-ipad prep-mac reboot
 
 FVM ?= fvm
 FLUTTER := $(FVM) flutter
@@ -34,6 +34,9 @@ format:
 
 check-format:
 	$(DART) format --output=none -l 120 --set-exit-if-changed .
+
+test:
+	$(FLUTTER) test
 
 test-gold:
 	$(FLUTTER) test --update-goldens
