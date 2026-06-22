@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:xplore/constants/constants.dart';
 import 'package:xplore/constants/extensions.dart';
+import 'package:xplore/core/glass.dart';
 import 'package:xplore/features/gallery/bloc/gallery_cubit.dart';
 
 class GalleryPicker extends StatelessWidget {
@@ -10,47 +11,52 @@ class GalleryPicker extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return LayoutBuilder(
-      builder: (context, bc) {
-        return DottedBorder(
-          options: RoundedRectDottedBorderOptions(
-            dashPattern: const [8, 6],
-            strokeWidth: 2,
-            color: XploreColors.secondary,
-            radius: const Radius.circular(radiusLg),
-          ),
-          child: Container(
-            width: bc.maxWidth,
-            height: 100,
-            decoration: BoxDecoration(
-              color: XploreColors.secondary.withValues(alpha: 0.14),
-              borderRadius: BorderRadius.circular(radiusLg),
-            ),
-            child: Material(
-              shape: const RoundedRectangleBorder(borderRadius: BorderRadius.all(Radius.circular(radiusLg))),
-              clipBehavior: Clip.hardEdge,
-              color: Colors.transparent,
-              child: InkWell(
-                splashColor: XploreColors.secondary.withValues(alpha: 0.1),
-                highlightColor: XploreColors.secondary.withValues(alpha: 0.1),
-                onTap: () async {
-                  await context.read<GalleryCubit>().uploadToGallery();
-                }, // Open photos
-                child: Center(
-                  child: Row(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      const Icon(Icons.add_rounded),
-                      const SizedBox(width: paddingUnit / 2),
-                      Text('Upload to trip', style: context.pText.labelSmall),
-                    ],
-                  ),
-                ),
-              ),
-            ),
-          ),
-        );
+    return GlassSurface(
+      borderRadius: radiusLg,
+      padding: EdgeInsets.zero,
+      onTap: () async {
+        await context.read<GalleryCubit>().uploadToGallery();
       },
+      child: DottedBorder(
+        options: RoundedRectDottedBorderOptions(
+          dashPattern: const [7, 6],
+          strokeWidth: 1.5,
+          padding: EdgeInsets.zero,
+          color: XploreColors.alternate.withValues(alpha: 0.55),
+          radius: const Radius.circular(radiusLg),
+        ),
+        child: SizedBox(
+          width: double.infinity,
+          height: 104,
+          child: Row(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Container(
+                padding: const EdgeInsets.all(paddingUnit * 0.75),
+                decoration: BoxDecoration(
+                  color: XploreColors.alternate.withValues(alpha: 0.18),
+                  borderRadius: BorderRadius.circular(radiusSm),
+                  border: Border.all(color: XploreColors.alternate.withValues(alpha: 0.32)),
+                ),
+                child: Icon(Icons.add_a_photo_outlined, size: 22, color: XploreColors.alternate),
+              ),
+              const SizedBox(width: paddingUnit),
+              Column(
+                mainAxisSize: MainAxisSize.min,
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text('Upload to trip', style: context.pText.labelLarge),
+                  const SizedBox(height: 2),
+                  Text(
+                    'Add photos to the shared gallery.',
+                    style: context.pText.bodySmall?.copyWith(color: XploreColors.mutedText),
+                  ),
+                ],
+              ),
+            ],
+          ),
+        ),
+      ),
     );
   }
 }
