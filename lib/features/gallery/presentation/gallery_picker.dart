@@ -23,7 +23,7 @@ class GalleryPicker extends StatelessWidget {
             width: bc.maxWidth,
             height: 100,
             decoration: BoxDecoration(
-              color: XploreColors.secondary.withOpacity(0.2),
+              color: XploreColors.secondary.withValues(alpha: 0.2),
               borderRadius: BorderRadius.circular(20),
             ),
             child: Material(
@@ -33,8 +33,8 @@ class GalleryPicker extends StatelessWidget {
               clipBehavior: Clip.hardEdge,
               color: Colors.transparent,
               child: InkWell(
-                splashColor: XploreColors.secondary.withOpacity(0.1),
-                highlightColor: XploreColors.secondary.withOpacity(0.1),
+                splashColor: XploreColors.secondary.withValues(alpha: 0.1),
+                highlightColor: XploreColors.secondary.withValues(alpha: 0.1),
                 onTap: () async {
                   await context.read<GalleryCubit>().uploadToGallery();
                 }, // Open photos

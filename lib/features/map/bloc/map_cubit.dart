@@ -69,7 +69,7 @@ class MapCubit extends Cubit<MapStates> {
 
     for (var el in locations) {
       final userMarker = await markerService.fetchMarkerIcon(el.id);
-      final markerIcon = userMarker != null ? BitmapDescriptor.fromBytes(userMarker) : BitmapDescriptor.defaultMarker;
+      final markerIcon = userMarker != null ? BitmapDescriptor.bytes(userMarker) : BitmapDescriptor.defaultMarker;
 
       final marker = Marker(
           markerId: MarkerId(el.id),

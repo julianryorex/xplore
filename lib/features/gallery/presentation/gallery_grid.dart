@@ -56,7 +56,7 @@ class GalleryGrid extends StatelessWidget {
                               width: itemSize,
                               decoration: BoxDecoration(
                                 color: XploreColors.secondary
-                                    .withOpacity(currentItem.isUploading == EUploadStatus.uploading ? 0.4 : 1),
+                                    .withValues(alpha: currentItem.isUploading == EUploadStatus.uploading ? 0.4 : 1),
                                 border: Border.all(color: XploreColors.primary, width: 1),
                               ),
                               child: Builder(
