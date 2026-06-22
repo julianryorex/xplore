@@ -5,32 +5,23 @@
 // Generate / refresh with:  flutter test --update-goldens test/itinerary_card_golden_test.dart
 
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:xplore/constants/constants.dart';
 import 'package:xplore/constants/theme.dart';
 import 'package:xplore/features/itinerary/bloc/itinerary_cubit.dart';
 import 'package:xplore/features/itinerary/widgets/itinerary_card.dart';
 
-Future<void> _loadPoppins() async {
-  final loader = FontLoader('Poppins')
-    ..addFont(rootBundle.load('assets/fonts/Poppins-Medium.ttf'))
-    ..addFont(rootBundle.load('assets/fonts/Poppins-SemiBold.ttf'));
-  await loader.load();
-}
+import 'helpers/golden_test_helpers.dart';
 
 void main() {
   testWidgets('ItineraryCard carousel renders with demo data', (tester) async {
-    await _loadPoppins();
+    await loadGoldenTestFonts();
 
     final cubit = ItineraryCubit();
     await cubit.loadDemoItinerary();
     final dailyPlans = (cubit.state as LoadedItineraryState).itinerary.dailyPlans;
 
-    tester.view.physicalSize = const Size(540, 380);
-    tester.view.devicePixelRatio = 1.0;
-    addTearDown(tester.view.resetPhysicalSize);
-    addTearDown(tester.view.resetDevicePixelRatio);
+    setGoldenViewSize(tester, const Size(540, 380));
 
     await tester.pumpWidget(
       MaterialApp(
