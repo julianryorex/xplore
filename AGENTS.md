@@ -7,6 +7,10 @@ json_serializable models, Hive local cache, Firebase backend, Google Maps,
 Gemini). See `README.md` and the `Makefile` for the canonical commands
 (`make get`, `make gen`, `make format`, `make check-format`).
 
+**Product backlog:** Before starting net-new features, read `product/BACKLOG.md`
+(prioritized P0–P4 requests with acceptance criteria and code pointers). Add new
+requests via `product/requests/_TEMPLATE.md`.
+
 ### Toolchain / setup notes (non-obvious)
 - Use **Flutter 3.44.x (Dart 3.12)**. This matches `pubspec.lock`
   (`flutter >=3.44.0`, `dart >=3.12.0`). The revision in `.metadata` (3.13.9 /
