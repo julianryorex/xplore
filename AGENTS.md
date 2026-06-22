@@ -11,6 +11,11 @@ Gemini). See `README.md` and the `Makefile` for the canonical commands
 (prioritized P0–P4 requests with acceptance criteria and code pointers). Add new
 requests via `product/requests/_TEMPLATE.md`.
 
+**GitHub issues:** Issues are the execution queue; `product/requests/` stays the
+spec source of truth. Do **not** create GitHub issues directly — emit an
+`issue-proposal` block (see `.github/ISSUE_FILING.md`) and let the Issue Filer
+agent file it. Exception: the Issue Filer automation itself.
+
 ### Toolchain / setup notes (non-obvious)
 - Use **Flutter 3.44.x (Dart 3.12)**. This matches `pubspec.lock`
   (`flutter >=3.44.0`, `dart >=3.12.0`). The revision in `.metadata` (3.13.9 /

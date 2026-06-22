@@ -1,0 +1,79 @@
+name: Feature
+description: New product capability (prefer linking to product/requests/FEAT-*.md)
+title: "[FEAT-XXX] "
+labels:
+  - feature
+body:
+  - type: markdown
+    attributes:
+      value: |
+        **Product specs** live in `product/requests/`. Link an existing FEAT file when possible.
+        To file via agent, post in Slack `#xplore-requests` — see [ISSUE_FILING.md](../ISSUE_FILING.md).
+
+  - type: input
+    id: feat_id
+    attributes:
+      label: FEAT ID
+      description: Existing ID (e.g. FEAT-036) or `new` if no spec file yet
+      placeholder: FEAT-036 or new
+    validations:
+      required: true
+
+  - type: dropdown
+    id: priority
+    attributes:
+      label: Priority
+      description: See product/PRIORITIES.md
+      options:
+        - P0
+        - P1
+        - P2
+        - P3
+        - P4
+    validations:
+      required: true
+
+  - type: dropdown
+    id: effort
+    attributes:
+      label: Effort
+      options:
+        - S
+        - M
+        - L
+        - XL
+
+  - type: textarea
+    id: problem
+    attributes:
+      label: Problem
+      description: What user pain or business gap does this solve?
+    validations:
+      required: true
+
+  - type: textarea
+    id: solution
+    attributes:
+      label: Proposed solution
+      description: Outcome-focused summary of what we will build
+
+  - type: textarea
+    id: acceptance
+    attributes:
+      label: Acceptance criteria
+      description: One checkbox item per line (the agent will format as a list)
+    validations:
+      required: true
+
+  - type: textarea
+    id: related
+    attributes:
+      label: Related code
+      placeholder: lib/features/gallery/bloc/gallery_cubit.dart
+
+  - type: input
+    id: product_spec
+    attributes:
+      label: Product spec path
+      description: Path to product/requests/FEAT-XXX-*.md if it exists
+      placeholder: product/requests/FEAT-036-test-suite.md

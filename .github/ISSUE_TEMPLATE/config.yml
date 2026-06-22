@@ -1,0 +1,8 @@
+blank_issues_enabled: false
+contact_links:
+  - name: Product backlog (FEAT specs)
+    url: https://github.com/julianryorex/xplore/tree/main/product
+    about: Source of truth for priorities and acceptance criteria
+  - name: File via Slack (#xplore-requests)
+    url: https://github.com/julianryorex/xplore/blob/main/.github/ISSUE_FILING.md
+    about: How the Issue Filer agent creates issues from Slack or other agents

@@ -23,6 +23,16 @@ The app is Flutter + Firebase today, with experimental Gemini AI for itinerary g
 | [CURRENT_STATE.md](./CURRENT_STATE.md) | What ships today vs. gaps |
 | [requests/](./requests/) | One file per feature request (detail + acceptance criteria) |
 | [requests/_TEMPLATE.md](./requests/_TEMPLATE.md) | Copy this when adding a new request |
+| [GitHub issue filing](../.github/ISSUE_FILING.md) | How agents file issues from Slack or PR review |
+
+### Product specs vs GitHub issues
+
+| Layer | Location | Purpose |
+|-------|----------|---------|
+| **Spec** | `requests/FEAT-*.md` + [BACKLOG.md](./BACKLOG.md) | Why, acceptance criteria, priority rationale |
+| **Work item** | [GitHub Issues](https://github.com/julianryorex/xplore/issues) | Actionable task — link from PRs, close when shipped |
+
+File new work via Slack `#xplore-requests` (Issue Filer agent) or the GitHub issue templates. Agents that spot follow-up work use an `issue-proposal` block — see [ISSUE_FILING.md](../.github/ISSUE_FILING.md).
 
 ### Adding a new request
 

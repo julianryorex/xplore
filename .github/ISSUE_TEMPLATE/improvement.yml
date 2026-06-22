@@ -1,0 +1,51 @@
+name: Improvement
+description: Refactor, quality, or agent-suggested follow-up (often out of scope for the current PR)
+title: "[improvement] "
+labels:
+  - improvement
+body:
+  - type: markdown
+    attributes:
+      value: |
+        For improvements found during PR review, other agents should emit an
+        `issue-proposal` block instead of creating issues directly — see
+        [ISSUE_FILING.md](../ISSUE_FILING.md).
+
+  - type: dropdown
+    id: priority
+    attributes:
+      label: Priority
+      options:
+        - P2
+        - P3
+        - P4
+    validations:
+      required: true
+
+  - type: textarea
+    id: problem
+    attributes:
+      label: Problem
+      description: What should be improved and why?
+    validations:
+      required: true
+
+  - type: textarea
+    id: acceptance
+    attributes:
+      label: Acceptance criteria
+    validations:
+      required: true
+
+  - type: textarea
+    id: related
+    attributes:
+      label: Related code
+      placeholder: lib/...
+
+  - type: input
+    id: source
+    attributes:
+      label: Source
+      description: Where this came from (PR number, agent name, Slack thread)
+      placeholder: PR #42 review agent
