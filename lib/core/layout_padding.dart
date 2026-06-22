@@ -23,11 +23,13 @@ class LayoutPadding extends StatelessWidget {
             left: paddingUnit * 1.5,
             right: paddingUnit * 1.5,
             bottom: paddingUnit * 1.5,
-            top: paddingUnit * 1.5 + (enableHeaderPadding && header != null ? Header.padding : 0),
+            top:
+                paddingUnit * 1.5 +
+                (enableHeaderPadding && header != null ? Header.padding : 0),
           ),
           child: child,
         ),
-        if (header != null) header!,
+        ?header,
       ],
     );
   }
