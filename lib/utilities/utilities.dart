@@ -39,7 +39,7 @@ Future<Uint8List> getBytesFromAsset(String path, int width) async {
 }
 
 Future<BitmapDescriptor> getMarkerIconFromBytes(Uint8List iconBytes) async {
-  final BitmapDescriptor markerIcon = BitmapDescriptor.fromBytes(iconBytes);
+  final BitmapDescriptor markerIcon = BitmapDescriptor.bytes(iconBytes);
   return markerIcon;
 }
 

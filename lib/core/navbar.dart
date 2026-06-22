@@ -34,7 +34,7 @@ class Navbar extends StatelessWidget {
         color: XploreColors.primaryBg,
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.1),
+            color: Colors.black.withValues(alpha: 0.1),
             spreadRadius: 2,
             blurRadius: 5,
             offset: const Offset(0, -2),
@@ -50,7 +50,7 @@ class Navbar extends StatelessWidget {
                   (index, items) => IconButton(
                     highlightColor: Colors.transparent,
                     icon: Icon(items.value),
-                    color: state == index ? XploreColors.secondary : XploreColors.white.withOpacity(0.3),
+                    color: state == index ? XploreColors.secondary : XploreColors.white.withValues(alpha: 0.3),
                     iconSize: 30.0,
                     onPressed: state == index ? () {} : () => onIconClick(context, index),
                   ),

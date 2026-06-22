@@ -17,13 +17,11 @@ ThemeData getTheme() => ThemeData(
       colorScheme: ColorScheme(
         primary: XploreColors.primary,
         secondary: XploreColors.secondary,
-        background: XploreColors.primaryBg,
         brightness: Brightness.dark,
         onPrimary: XploreColors.primaryText,
         onSecondary: XploreColors.secondaryText,
         error: XploreColors.error,
         onError: XploreColors.primaryText,
-        onBackground: XploreColors.primaryText,
         surface: XploreColors.secondaryBg,
         onSurface: XploreColors.primaryText,
       ),
@@ -33,25 +31,25 @@ ThemeData getTheme() => ThemeData(
       progressIndicatorTheme: ProgressIndicatorThemeData(color: XploreColors.secondary),
       elevatedButtonTheme: ElevatedButtonThemeData(
         style: ButtonStyle(
-          shape: MaterialStatePropertyAll(
+          shape: WidgetStatePropertyAll(
             RoundedRectangleBorder(borderRadius: BorderRadius.circular(15.0)),
           ),
-          backgroundColor: MaterialStatePropertyAll(XploreColors.alternate),
-          textStyle: MaterialStatePropertyAll(defaultTextTheme.bodyMedium),
-          minimumSize: const MaterialStatePropertyAll(Size(250, 62)),
+          backgroundColor: WidgetStatePropertyAll(XploreColors.alternate),
+          textStyle: WidgetStatePropertyAll(defaultTextTheme.bodyMedium),
+          minimumSize: const WidgetStatePropertyAll(Size(250, 62)),
         ),
       ),
       outlinedButtonTheme: OutlinedButtonThemeData(
         style: ButtonStyle(
-          shape: MaterialStatePropertyAll(
+          shape: WidgetStatePropertyAll(
             RoundedRectangleBorder(borderRadius: BorderRadius.circular(15.0)),
           ),
-          textStyle: MaterialStatePropertyAll(defaultTextTheme.bodyMedium),
-          side: MaterialStatePropertyAll(
+          textStyle: WidgetStatePropertyAll(defaultTextTheme.bodyMedium),
+          side: WidgetStatePropertyAll(
             BorderSide(color: XploreColors.alternate, width: 1),
           ),
-          overlayColor: MaterialStatePropertyAll(XploreColors.primary),
-          minimumSize: const MaterialStatePropertyAll(Size(140, 62)),
+          overlayColor: WidgetStatePropertyAll(XploreColors.primary),
+          minimumSize: const WidgetStatePropertyAll(Size(140, 62)),
         ),
       ),
       iconTheme: const IconThemeData(color: Colors.white),
