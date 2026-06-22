@@ -1,0 +1,23 @@
+# Copy to terraform.tfvars (git-ignored) and fill in as needed.
+# The defaults in variables.tf already target xplore-a7012, so most values are
+# optional. The Apple Sign-In credentials are the main thing to add once the
+# Apple Developer portal items exist.
+
+project_id         = "xplore-a7012"
+region             = "us-east1"
+firestore_location = "nam5"
+firestore_type     = "DATASTORE_MODE"
+
+# Named Firestore Native database used by the Flutter app.
+app_firestore_database_id = "xplore-app"
+app_firestore_location    = "us-east1"
+
+# Apple Sign-In (leave empty until ready; then re-apply to enable Apple).
+# apple_services_id = "com.olympuslabs.xplore.signin"
+# apple_team_id     = "XXXXXXXXXX"
+# apple_key_id      = "XXXXXXXXXX"
+# apple_private_key = <<-EOT
+# -----BEGIN PRIVATE KEY-----
+# ...contents of AuthKey_XXXXXXXXXX.p8...
+# -----END PRIVATE KEY-----
+# EOT
