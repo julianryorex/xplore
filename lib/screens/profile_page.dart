@@ -21,7 +21,7 @@ class ProfilePage extends StatelessWidget {
             leadingWidget: XploreIconBtn(
               onTapCallback: () => Navigator.pop(context),
               bgColor: XploreColors.darkBg,
-              icon: const Icon(Icons.arrow_back, size: 35),
+              icon: const Icon(Icons.arrow_back, size: headerIconSize),
             ),
           ),
           child: Stack(
@@ -33,9 +33,7 @@ class ProfilePage extends StatelessWidget {
                       children: [
                         Row(
                           mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                          children: [
-                            Text('Profile', style: context.pText.headlineMedium),
-                          ],
+                          children: [Text('Profile', style: context.pText.headlineMedium)],
                         ),
                         const SizedBox(height: paddingUnit),
                         AvatarMapIcon(

@@ -11,10 +11,7 @@ import 'package:xplore/utilities/utilities.dart';
 class ItineraryOverviewPage extends StatelessWidget {
   final DailyPlanModel dailyPlan;
 
-  const ItineraryOverviewPage({
-    required this.dailyPlan,
-    super.key,
-  });
+  const ItineraryOverviewPage({required this.dailyPlan, super.key});
 
   @override
   Widget build(BuildContext context) {
@@ -55,7 +52,7 @@ class ItineraryOverviewPage extends StatelessWidget {
                 leadingWidget: XploreIconBtn(
                   bgColor: XploreColors.darkBg,
                   onTapCallback: () => Navigator.pop(context),
-                  icon: const Icon(Icons.arrow_back, size: 45),
+                  icon: const Icon(Icons.arrow_back, size: headerIconSize),
                 ),
               ),
             ),
@@ -92,11 +89,7 @@ class ItineraryOverviewPage extends StatelessWidget {
                   ...dailyPlan.plan.locations.map(
                     (el) => Padding(
                       padding: const EdgeInsets.only(bottom: 30),
-                      child: ItineraryTile(
-                        locationPlan: el,
-                        width: bc.maxWidth,
-                        height: rowSize,
-                      ),
+                      child: ItineraryTile(locationPlan: el, width: bc.maxWidth, height: rowSize),
                     ),
                   ),
                 ],

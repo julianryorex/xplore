@@ -26,8 +26,8 @@ class XploreIconBtn extends StatelessWidget {
     required this.onTapCallback,
     this.icon,
     this.hasVibrations = false,
-    this.size = 60.0,
-    this.borderRadius = 10,
+    this.size = headerIconButtonSize,
+    this.borderRadius = radiusMd,
     this.borderColor,
     this.bgColor,
     this.name,
@@ -46,12 +46,7 @@ class XploreIconBtn extends StatelessWidget {
   Widget build(BuildContext context) {
     return GestureDetector(
       onTap: _onTapCallback,
-      child: Column(
-        children: [
-          _renderButton(),
-          if (name != null) _renderButtonName(),
-        ],
-      ),
+      child: Column(mainAxisSize: MainAxisSize.min, children: [_renderButton(), if (name != null) _renderButtonName()]),
     );
   }
 
@@ -63,25 +58,13 @@ class XploreIconBtn extends StatelessWidget {
         color: bgColor ?? XploreColors.alternate,
         borderRadius: BorderRadius.circular(borderRadius),
         border: borderColor != null ? Border.all(color: borderColor!, width: 2) : null,
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withValues(alpha: 0.8),
-            spreadRadius: 2,
-            blurRadius: 5,
-            offset: const Offset(0, 4),
-          ),
-        ],
+        boxShadow: [BoxShadow(color: Colors.black.withValues(alpha: 0.24), blurRadius: 16, offset: const Offset(0, 8))],
       ),
       child: Material(
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.all(Radius.circular(borderRadius)),
-        ),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.all(Radius.circular(borderRadius))),
         clipBehavior: Clip.hardEdge,
         color: Colors.transparent,
-        child: InkWell(
-          onTap: _onTapCallback,
-          child: icon,
-        ),
+        child: InkWell(onTap: _onTapCallback, child: icon),
       ),
     );
   }
@@ -89,7 +72,7 @@ class XploreIconBtn extends StatelessWidget {
   Widget _renderButtonName() {
     return Container(
       padding: const EdgeInsets.all(5),
-      child: Text(name!),
+      child: Text(name!, textAlign: TextAlign.center),
     );
   }
 }

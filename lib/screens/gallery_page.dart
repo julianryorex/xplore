@@ -73,7 +73,7 @@ class GalleryPage extends StatelessWidget {
                   leadingWidget: XploreIconBtn(
                     bgColor: XploreColors.darkBg,
                     onTapCallback: () => Navigator.pop(context),
-                    icon: const Icon(Icons.arrow_back, size: 45),
+                    icon: const Icon(Icons.arrow_back, size: headerIconSize),
                   ),
                 ),
               ],

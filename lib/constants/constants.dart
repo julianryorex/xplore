@@ -24,9 +24,31 @@ class XploreColors {
   static final lineColor = 'DBE2E7'.toColor();
   static final darkBg = '1A1F24'.toColor();
   static final black = '131619'.toColor();
+  static final surface = '211D28'.toColor();
+  static final surfaceElevated = '29242F'.toColor();
+  static final mutedText = white.withValues(alpha: 0.68);
+  static final subtleText = white.withValues(alpha: 0.46);
+  static final divider = white.withValues(alpha: 0.08);
+
+  // Liquid-glass material tokens: a translucent fill, a hairline "rim" border,
+  // and a bright specular edge used for the top highlight.
+  static final glassFill = white.withValues(alpha: 0.10);
+  static final glassFillStrong = white.withValues(alpha: 0.16);
+  static final glassBorder = white.withValues(alpha: 0.14);
+  static final glassHighlight = white.withValues(alpha: 0.38);
 }
 
 const paddingUnit = 12.0;
+const radiusSm = 12.0;
+const radiusMd = 16.0;
+const radiusLg = 24.0;
+const radiusXl = 32.0;
+const headerIconButtonSize = 48.0;
+const headerIconSize = 24.0;
+const navBarHeight = 84.0;
+
+// Default backdrop blur strength for glass surfaces (logical px).
+const glassBlur = 18.0;
 
 // TODO: get from bloc
 const itineraryId = 'ph4kd';
