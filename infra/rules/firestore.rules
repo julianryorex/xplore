@@ -1,0 +1,17 @@
+rules_version = '2';
+
+// FEAT-001 section 7: a user may read/write only their own users/{uid} doc.
+// Trip/membership scoping arrives with FEAT-002.
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    match /users/{uid} {
+      allow read, write: if request.auth != null && request.auth.uid == uid;
+    }
+
+    // Deny everything else by default until later features open specific paths.
+    match /{document=**} {
+      allow read, write: if false;
+    }
+  }
+}
