@@ -5,7 +5,7 @@ part '../../../generated/features/itinerary/models/itinerary_models.freezed.dart
 part '../../../generated/features/itinerary/models/itinerary_models.g.dart';
 
 @freezed
-class ItineraryModel with _$ItineraryModel {
+abstract class ItineraryModel with _$ItineraryModel {
   const factory ItineraryModel({
     required String id,
     @JsonKey(name: 'last_updated') @DateTimeConverter() required DateTime lastUpdated,
@@ -18,7 +18,7 @@ class ItineraryModel with _$ItineraryModel {
 }
 
 @freezed
-class DailyPlanModel with _$DailyPlanModel {
+abstract class DailyPlanModel with _$DailyPlanModel {
   const factory DailyPlanModel({
     required String title,
     required String location,
@@ -29,7 +29,7 @@ class DailyPlanModel with _$DailyPlanModel {
 }
 
 @freezed
-class PlanModel with _$PlanModel {
+abstract class PlanModel with _$PlanModel {
   const factory PlanModel({
     required List<String> favorited,
     required List<LocationPlanModel> locations,
@@ -39,7 +39,7 @@ class PlanModel with _$PlanModel {
 }
 
 @freezed
-class LocationPlanModel with _$LocationPlanModel {
+abstract class LocationPlanModel with _$LocationPlanModel {
   const factory LocationPlanModel({
     required String name,
     required bool completed,

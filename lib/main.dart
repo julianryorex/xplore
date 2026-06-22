@@ -6,7 +6,7 @@ import 'package:hive_flutter/hive_flutter.dart';
 import 'package:logger/logger.dart';
 import 'package:xplore/constants/theme.dart';
 import 'package:xplore/features/gallery/bloc/gallery_cubit.dart';
-import 'package:xplore/features/gallery/models/image_models.dart';
+import 'package:xplore/features/gallery/models/image_models_adapters.dart';
 import 'package:xplore/features/itinerary/bloc/itinerary_cubit.dart';
 import 'package:xplore/features/location/bloc/location_cubit.dart';
 import 'package:xplore/features/map/bloc/map_cubit.dart';
@@ -37,13 +37,32 @@ Future<void> main() async {
 
   await init(logger);
   await initHive(logger);
-
-  await Firebase.initializeApp(
-    options: DefaultFirebaseOptions.currentPlatform,
-  );
-  logger.d('Firebase initialized');
+  await initFirebase(logger);
 
   runApp(const MyApp());
+}
+
+Future<void> initFirebase(Logger logger) async {
+  // firebase_core 4.x auto-initializes the default app natively on iOS when a
+  // GoogleService-Info.plist is present, so a second initializeApp() throws
+  // `duplicate-app`. Reuse the existing default app when that happens.
+  if (Firebase.apps.isNotEmpty) {
+    logger.d('Firebase already initialized (using existing default app)');
+    return;
+  }
+
+  try {
+    await Firebase.initializeApp(
+      options: DefaultFirebaseOptions.currentPlatform,
+    );
+    logger.d('Firebase initialized');
+  } on FirebaseException catch (err) {
+    if (err.code == 'duplicate-app') {
+      logger.d('Firebase already initialized (using existing default app)');
+    } else {
+      rethrow;
+    }
+  }
 }
 
 class MyApp extends StatelessWidget {
