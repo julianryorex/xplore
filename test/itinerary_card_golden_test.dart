@@ -59,10 +59,7 @@ void main() {
     );
     await tester.pumpAndSettle();
 
-    await expectLater(
-      find.byType(Scaffold),
-      matchesGoldenFile('goldens/itinerary_cards.png'),
-    );
+    await expectLater(find.byType(Scaffold), matchesGoldenFile('goldens/itinerary_cards.png'));
 
     await cubit.close();
   });

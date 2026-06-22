@@ -4,7 +4,6 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:xplore/constants/constants.dart';
 import 'package:xplore/constants/extensions.dart';
-import 'package:xplore/core/icon_button.dart';
 import 'package:xplore/features/itinerary/models/itinerary_models.dart';
 import 'package:xplore/routes.dart';
 
@@ -56,13 +55,7 @@ class ItineraryCard extends StatelessWidget {
                       ),
                       child: Text('Daily plan', style: context.pText.labelSmall?.copyWith(color: XploreColors.white)),
                     ),
-                    XploreIconBtn(
-                      onTapCallback: () => log('liked!'),
-                      size: 40,
-                      borderRadius: radiusSm,
-                      bgColor: XploreColors.black.withValues(alpha: 0.22),
-                      icon: Icon(Icons.favorite_border_rounded, color: XploreColors.white, size: 20),
-                    ),
+                    const _SaveButton(),
                   ],
                 ),
                 SizedBox(
@@ -73,27 +66,43 @@ class ItineraryCard extends StatelessWidget {
                     children: [
                       Text(dailyPlan.title, style: context.pText.headlineSmall?.copyWith(height: 1.08)),
                       const SizedBox(height: paddingUnit / 2),
-                      Row(
-                        children: [
-                          Icon(Icons.place_outlined, size: 16, color: XploreColors.white.withValues(alpha: 0.76)),
-                          const SizedBox(width: 4),
-                          Expanded(
-                            child: Text(
-                              dailyPlan.location,
-                              style: context.pText.bodySmall?.copyWith(
-                                color: XploreColors.white.withValues(alpha: 0.76),
-                              ),
-                              maxLines: 2,
-                              overflow: TextOverflow.ellipsis,
-                            ),
-                          ),
-                        ],
+                      Text(
+                        dailyPlan.location,
+                        style: context.pText.bodySmall?.copyWith(
+                          color: XploreColors.white.withValues(alpha: 0.76),
+                          letterSpacing: 0.2,
+                        ),
+                        maxLines: 2,
+                        overflow: TextOverflow.ellipsis,
                       ),
                     ],
                   ),
                 ),
               ],
             ),
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+class _SaveButton extends StatelessWidget {
+  const _SaveButton();
+
+  @override
+  Widget build(BuildContext context) {
+    return Material(
+      color: XploreColors.black.withValues(alpha: 0.22),
+      borderRadius: BorderRadius.circular(radiusSm),
+      clipBehavior: Clip.hardEdge,
+      child: InkWell(
+        onTap: () => log('liked!'),
+        child: Padding(
+          padding: const EdgeInsets.symmetric(horizontal: paddingUnit, vertical: paddingUnit / 2),
+          child: Text(
+            'Save',
+            style: context.pText.labelSmall?.copyWith(color: XploreColors.white, fontWeight: FontWeight.w600),
           ),
         ),
       ),
