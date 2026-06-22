@@ -3,7 +3,6 @@ import 'dart:typed_data';
 
 import 'package:firebase_storage/firebase_storage.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:flutter_image_compress/flutter_image_compress.dart';
 import 'package:freezed_annotation/freezed_annotation.dart';
 import 'package:hive_flutter/hive_flutter.dart';
 import 'package:image_picker/image_picker.dart';
@@ -81,14 +80,10 @@ class GalleryCubit extends Cubit<GalleryState> {
         continue;
       }
 
-      final compressedImage = await FlutterImageCompress.compressWithFile(
-        file.absolute.path,
-        minWidth: 120,
-        minHeight: 120,
-        quality: 100,
-      );
-
-      _logger.i('Ratio: ${((1 - (compressedImage!.length / file.lengthSync())) * 100).toStringAsFixed(2)}');
+      // TODO: re-enable compression once flutter_image_compress supports the
+      // iOS 26 SDK. The dependency is temporarily disabled (see pubspec.yaml),
+      // so we fall back to the original, uncompressed image bytes for now.
+      final compressedImage = await file.readAsBytes();
 
       final imageModel = ImageModel(
         id: const Uuid().v4(),

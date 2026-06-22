@@ -5,7 +5,7 @@ part '../../../generated/features/location/models/location_models.freezed.dart';
 part '../../../generated/features/location/models/location_models.g.dart';
 
 @freezed
-class LocationModel with _$LocationModel {
+abstract class LocationModel with _$LocationModel {
   const factory LocationModel({
     required String id,
     required double lat,

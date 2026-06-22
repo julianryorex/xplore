@@ -13,11 +13,12 @@ class GalleryPicker extends StatelessWidget {
     return LayoutBuilder(
       builder: (context, bc) {
         return DottedBorder(
-          color: XploreColors.secondary,
-          strokeWidth: 5,
-          borderType: BorderType.RRect,
-          dashPattern: const [8, 6],
-          radius: const Radius.circular(20),
+          options: RoundedRectDottedBorderOptions(
+            dashPattern: const [8, 6],
+            strokeWidth: 5,
+            color: XploreColors.secondary,
+            radius: const Radius.circular(20),
+          ),
           child: Container(
             width: bc.maxWidth,
             height: 100,
