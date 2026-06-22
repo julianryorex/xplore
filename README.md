@@ -114,6 +114,25 @@ FVM pins this project to Flutter `3.44.0`, which provides Dart `3.12.x`. Use `fv
 | `make clean` | Clean build artifacts and generated code with FVM Flutter |
 | `make reboot` | Full rebuild: clean → get → gen → build-ios |
 
+### UI / golden tests
+
+Headless widget and golden tests live under `test/`. They load Poppins and the
+Material icon font so text and icons render correctly in CI (see
+`test/helpers/golden_test_helpers.dart`).
+
+```bash
+# Run the full test suite
+flutter test --concurrency=1
+
+# Refresh golden PNGs after intentional UI changes
+flutter test --update-goldens --concurrency=1
+
+# Update a single golden file
+flutter test --update-goldens test/home_page_golden_test.dart
+```
+
+Golden artifacts are stored in `test/goldens/`.
+
 ---
 
 ## Roadmap

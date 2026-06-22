@@ -22,6 +22,13 @@ class ProfileCubit extends Cubit<ProfileState> {
     loadProfileInState();
   }
 
+  /// Headless/widget tests: skips disk I/O from [loadProfileInState].
+  @visibleForTesting
+  ProfileCubit.forTest({ProfileState? initial})
+      : super(initial ?? const ProfileState(id: userId, name: 'Julian Rechsteiner')) {
+    markerService = MarkerService();
+  }
+
   //! -------------------------------------------------------------------------
   //! Public Methods
   //! -------------------------------------------------------------------------
