@@ -27,7 +27,7 @@ class LayoutPadding extends StatelessWidget {
           ),
           child: child,
         ),
-        if (header != null) header!,
+        ?header,
       ],
     );
   }
