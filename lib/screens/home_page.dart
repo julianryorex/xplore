@@ -5,9 +5,9 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:xplore/constants/constants.dart';
 import 'package:xplore/constants/extensions.dart';
+import 'package:xplore/core/ambient_background.dart';
+import 'package:xplore/core/glass.dart';
 import 'package:xplore/core/header.dart';
-import 'package:xplore/core/icon_button.dart';
-import 'package:xplore/core/layout_padding.dart';
 import 'package:xplore/core/navbar.dart';
 import 'package:xplore/core/section_header.dart';
 import 'package:xplore/features/gallery/bloc/gallery_cubit.dart';
@@ -21,25 +21,31 @@ class HomePage extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final viewPadding = MediaQuery.viewPaddingOf(context);
+    final topInset = viewPadding.top;
+    // Space the scroll content needs to clear the floating glass nav bar (its
+    // height + the device's bottom safe-area inset).
+    final bottomClearance = viewPadding.bottom + navBarHeight;
+    // Gap between the status bar and the header controls.
+    const headerTopGap = paddingUnit * 0.75;
+    final headerZone = topInset + headerTopGap + Header.padding;
+
     return Scaffold(
+      backgroundColor: XploreColors.primaryBg,
+      extendBody: true,
       bottomNavigationBar: const Navbar(),
-      body: SafeArea(
-        child: LayoutPadding(
-          header: Header(
-            leadingWidget: XploreIconBtn(
-              onTapCallback: () => Navigator.pushNamed(context, Paths.profile),
-              bgColor: XploreColors.darkBg,
-              icon: const Icon(Icons.person_2_outlined, size: headerIconSize),
-            ),
-            trailingWidget: XploreIconBtn(
-              bgColor: XploreColors.darkBg,
-              onTapCallback: () => log('tapped'),
-              icon: const Icon(Icons.notifications_none_rounded, size: headerIconSize),
-            ),
-          ),
-          child: SingleChildScrollView(
-            child: Padding(
-              padding: const EdgeInsets.only(bottom: paddingUnit * 3),
+      body: AmbientBackground(
+        child: Stack(
+          children: [
+            // Content runs full-height behind the pinned header and floating
+            // nav bar so the glass surfaces have content to refract.
+            SingleChildScrollView(
+              padding: EdgeInsets.only(
+                left: paddingUnit * 1.5,
+                right: paddingUnit * 1.5,
+                top: headerZone + paddingUnit * 0.5,
+                bottom: bottomClearance,
+              ),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
@@ -85,23 +91,45 @@ class HomePage extends StatelessWidget {
                   const SizedBox(height: paddingUnit),
 
                   //! Gallery options
-                  Container(
-                    width: double.infinity,
-                    padding: const EdgeInsets.all(paddingUnit * 1.5),
-                    decoration: BoxDecoration(
-                      color: XploreColors.surfaceElevated,
-                      borderRadius: BorderRadius.circular(radiusLg),
-                      border: Border.all(color: XploreColors.divider),
-                    ),
+                  GlassSurface(
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        Text('Keep every trip moment in one shared place.', style: context.pText.bodyMedium),
-                        const SizedBox(height: paddingUnit),
-                        OutlinedButton.icon(
-                          onPressed: () => context.push(Paths.gallery),
-                          icon: const Icon(Icons.photo_library_outlined, size: 20),
-                          label: const Text('View gallery'),
+                        Row(
+                          children: [
+                            Container(
+                              padding: const EdgeInsets.all(paddingUnit * 0.75),
+                              decoration: BoxDecoration(
+                                color: XploreColors.alternate.withValues(alpha: 0.18),
+                                borderRadius: BorderRadius.circular(radiusSm),
+                                border: Border.all(color: XploreColors.alternate.withValues(alpha: 0.32)),
+                              ),
+                              child: Icon(Icons.photo_library_outlined, size: 22, color: XploreColors.alternate),
+                            ),
+                            const SizedBox(width: paddingUnit),
+                            Expanded(
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  Text('Shared gallery', style: context.pText.labelLarge),
+                                  const SizedBox(height: 2),
+                                  Text(
+                                    'Keep every trip moment in one place.',
+                                    style: context.pText.bodySmall?.copyWith(color: XploreColors.mutedText),
+                                  ),
+                                ],
+                              ),
+                            ),
+                          ],
+                        ),
+                        const SizedBox(height: paddingUnit * 1.25),
+                        SizedBox(
+                          width: double.infinity,
+                          child: OutlinedButton.icon(
+                            onPressed: () => context.push(Paths.gallery),
+                            icon: const Icon(Icons.arrow_forward_rounded, size: 18),
+                            label: const Text('View gallery'),
+                          ),
                         ),
                       ],
                     ),
@@ -139,9 +167,123 @@ class HomePage extends StatelessWidget {
                 ],
               ),
             ),
-          ),
+            // Top scrim: blends the status-bar area into the base colour and
+            // keeps content legible as it scrolls beneath the pinned header.
+            Positioned(
+              top: 0,
+              left: 0,
+              right: 0,
+              child: IgnorePointer(
+                child: Container(
+                  height: headerZone + paddingUnit * 2,
+                  decoration: BoxDecoration(
+                    gradient: LinearGradient(
+                      begin: Alignment.topCenter,
+                      end: Alignment.bottomCenter,
+                      colors: [
+                        XploreColors.primaryBg,
+                        XploreColors.primaryBg,
+                        XploreColors.primaryBg.withValues(alpha: 0),
+                      ],
+                      stops: const [0, 0.6, 1],
+                    ),
+                  ),
+                ),
+              ),
+            ),
+            // Pinned header, sitting just below the status bar.
+            Positioned(
+              top: topInset + headerTopGap,
+              left: 0,
+              right: 0,
+              child: Header(
+                leadingWidget: const _ProfileAvatarButton(),
+                titleWidget: const _HomeGreeting(),
+                trailingWidget: GlassIconButton(
+                  size: 44,
+                  iconSize: 22,
+                  icon: Icons.notifications_none_rounded,
+                  onTap: () => log('tapped'),
+                ),
+              ),
+            ),
+          ],
         ),
       ),
+    );
+  }
+}
+
+class _ProfileAvatarButton extends StatelessWidget {
+  const _ProfileAvatarButton();
+
+  static const _size = 44.0;
+
+  @override
+  Widget build(BuildContext context) {
+    void open() => Navigator.pushNamed(context, Paths.profile);
+
+    return BlocBuilder<ProfileCubit, ProfileState>(
+      buildWhen: (a, b) => a.profilePicture != b.profilePicture,
+      builder: (context, state) {
+        final picture = state.profilePicture;
+
+        if (picture == null) {
+          return SizedBox(
+            width: _size,
+            height: _size,
+            child: GlassSurface(
+              borderRadius: _size / 2,
+              strong: true,
+              padding: EdgeInsets.zero,
+              onTap: open,
+              child: Center(child: Icon(Icons.person_2_outlined, size: 22, color: XploreColors.white)),
+            ),
+          );
+        }
+
+        return GestureDetector(
+          onTap: open,
+          child: Container(
+            width: _size,
+            height: _size,
+            decoration: BoxDecoration(
+              shape: BoxShape.circle,
+              border: Border.all(color: XploreColors.glassBorder),
+              image: DecorationImage(image: MemoryImage(picture), fit: BoxFit.cover),
+            ),
+          ),
+        );
+      },
+    );
+  }
+}
+
+class _HomeGreeting extends StatelessWidget {
+  const _HomeGreeting();
+
+  @override
+  Widget build(BuildContext context) {
+    return BlocBuilder<ProfileCubit, ProfileState>(
+      buildWhen: (a, b) => a.name != b.name,
+      builder: (context, state) {
+        final firstName = state.name.trim().split(' ').first;
+
+        return Column(
+          mainAxisSize: MainAxisSize.min,
+          mainAxisAlignment: MainAxisAlignment.center,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text('Welcome back', style: context.pText.labelSmall?.copyWith(color: XploreColors.subtleText)),
+            Text(
+              firstName,
+              style: context.pText.labelLarge?.copyWith(letterSpacing: -0.2),
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+            ),
+          ],
+        );
+      },
     );
   }
 }

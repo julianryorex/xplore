@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:xplore/constants/constants.dart';
+import 'package:xplore/core/glass.dart';
 import 'package:xplore/features/nav/bloc/nav_cubit.dart';
 import 'package:xplore/routes.dart';
 
@@ -36,29 +37,53 @@ class Navbar extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    // A floating liquid-glass tab bar: it overlays the content behind it
+    // (pair with `Scaffold(extendBody: true)`) so the backdrop blur has real
+    // content to refract, giving the footer its glass feel.
     return SafeArea(
       top: false,
-      child: Container(
-        height: navBarHeight,
-        decoration: BoxDecoration(
-          color: Theme.of(context).colorScheme.surface,
-          border: Border(top: BorderSide(color: Theme.of(context).dividerColor)),
-        ),
-        child: BlocBuilder<NavbarCubit, int>(
-          builder: (context, state) {
-            return Row(
-              mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-              children: _navBarItems
-                  .mapIndexed(
-                    (index, item) => _NavbarButton(
-                      item: item,
-                      isSelected: state == index,
-                      onPressed: state == index ? () {} : () => onIconClick(context, index),
-                    ),
-                  )
-                  .toList(),
-            );
-          },
+      minimum: const EdgeInsets.only(bottom: paddingUnit / 2),
+      child: Padding(
+        padding: const EdgeInsets.symmetric(horizontal: paddingUnit * 1.5),
+        // Drop shadow lifts the bar off the content so it reads as floating
+        // glass; the lower-opacity tint + heavier blur let the content scrolling
+        // underneath show through.
+        child: DecoratedBox(
+          decoration: BoxDecoration(
+            borderRadius: BorderRadius.circular(radiusXl),
+            boxShadow: [
+              BoxShadow(
+                color: XploreColors.black.withValues(alpha: 0.38),
+                blurRadius: 28,
+                spreadRadius: -4,
+                offset: const Offset(0, 12),
+              ),
+            ],
+          ),
+          child: GlassSurface(
+            borderRadius: radiusXl,
+            blur: 28,
+            tint: XploreColors.surface.withValues(alpha: 0.28),
+            padding: const EdgeInsets.symmetric(horizontal: paddingUnit / 2),
+            child: SizedBox(
+              height: 62,
+              child: BlocBuilder<NavbarCubit, int>(
+                builder: (context, state) {
+                  return Row(
+                    children: _navBarItems
+                        .mapIndexed(
+                          (index, item) => _NavbarButton(
+                            item: item,
+                            isSelected: state == index,
+                            onPressed: state == index ? () {} : () => onIconClick(context, index),
+                          ),
+                        )
+                        .toList(),
+                  );
+                },
+              ),
+            ),
+          ),
         ),
       ),
     );

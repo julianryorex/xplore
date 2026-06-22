@@ -1,6 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:xplore/constants/constants.dart';
 
+// `.apply(fontFamily: ...)` ensures Poppins is baked into every style, including
+// the ones referenced directly by the component themes below (buttons). Relying
+// on `ThemeData.fontFamily` alone leaves those raw TextStyles on the platform
+// default font, which breaks typographic consistency across controls.
 final defaultTextTheme = TextTheme(
   headlineLarge: TextStyle(fontSize: 34, fontWeight: FontWeight.w600, height: 1.08, color: XploreColors.white),
   headlineMedium: TextStyle(fontSize: 28, fontWeight: FontWeight.w600, height: 1.12, color: XploreColors.white),
@@ -11,7 +15,7 @@ final defaultTextTheme = TextTheme(
   labelLarge: TextStyle(fontSize: 16, fontWeight: FontWeight.w600, height: 1.3, color: XploreColors.white),
   labelMedium: TextStyle(fontSize: 14, fontWeight: FontWeight.w600, height: 1.3, color: XploreColors.white),
   labelSmall: TextStyle(fontSize: 12, fontWeight: FontWeight.w500, height: 1.3, color: XploreColors.mutedText),
-);
+).apply(fontFamily: 'Poppins');
 
 ThemeData getTheme() => ThemeData(
   useMaterial3: true,
