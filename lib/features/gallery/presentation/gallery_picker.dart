@@ -15,21 +15,19 @@ class GalleryPicker extends StatelessWidget {
         return DottedBorder(
           options: RoundedRectDottedBorderOptions(
             dashPattern: const [8, 6],
-            strokeWidth: 5,
+            strokeWidth: 2,
             color: XploreColors.secondary,
-            radius: const Radius.circular(20),
+            radius: const Radius.circular(radiusLg),
           ),
           child: Container(
             width: bc.maxWidth,
             height: 100,
             decoration: BoxDecoration(
-              color: XploreColors.secondary.withValues(alpha: 0.2),
-              borderRadius: BorderRadius.circular(20),
+              color: XploreColors.secondary.withValues(alpha: 0.14),
+              borderRadius: BorderRadius.circular(radiusLg),
             ),
             child: Material(
-              shape: const RoundedRectangleBorder(
-                borderRadius: BorderRadius.all(Radius.circular(20)),
-              ),
+              shape: const RoundedRectangleBorder(borderRadius: BorderRadius.all(Radius.circular(radiusLg))),
               clipBehavior: Clip.hardEdge,
               color: Colors.transparent,
               child: InkWell(

@@ -15,11 +15,7 @@ class GalleryFocusView extends StatefulWidget {
   final List<ImageModel> images;
   final int initialIndex;
 
-  const GalleryFocusView({
-    required this.images,
-    required this.initialIndex,
-    super.key,
-  });
+  const GalleryFocusView({required this.images, required this.initialIndex, super.key});
 
   @override
   State<GalleryFocusView> createState() => _GalleryFocusViewState();
@@ -105,7 +101,7 @@ class _GalleryFocusViewState extends State<GalleryFocusView> {
                     hasVibrations: true,
                     bgColor: XploreColors.darkBg,
                     onTapCallback: () => Navigator.pop(context),
-                    icon: const Icon(Icons.arrow_back, size: 45),
+                    icon: const Icon(Icons.arrow_back, size: headerIconSize),
                   ),
                 ),
               ),

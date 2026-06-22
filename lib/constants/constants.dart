@@ -24,9 +24,20 @@ class XploreColors {
   static final lineColor = 'DBE2E7'.toColor();
   static final darkBg = '1A1F24'.toColor();
   static final black = '131619'.toColor();
+  static final surface = '211D28'.toColor();
+  static final surfaceElevated = '29242F'.toColor();
+  static final mutedText = white.withValues(alpha: 0.68);
+  static final subtleText = white.withValues(alpha: 0.46);
+  static final divider = white.withValues(alpha: 0.08);
 }
 
 const paddingUnit = 12.0;
+const radiusSm = 12.0;
+const radiusMd = 16.0;
+const radiusLg = 24.0;
+const headerIconButtonSize = 48.0;
+const headerIconSize = 24.0;
+const navBarHeight = 84.0;
 
 // TODO: get from bloc
 const itineraryId = 'ph4kd';

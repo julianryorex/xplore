@@ -14,22 +14,25 @@ class ItineraryCard extends StatelessWidget {
   static const width = 230.0;
   static const height = 300.0;
 
-  const ItineraryCard({
-    required this.dailyPlan,
-    super.key,
-  });
+  const ItineraryCard({required this.dailyPlan, super.key});
 
   @override
   Widget build(BuildContext context) {
     return Container(
       decoration: BoxDecoration(
-        borderRadius: BorderRadius.circular(20),
-        color: XploreColors.alternate,
+        borderRadius: BorderRadius.circular(radiusLg),
+        gradient: LinearGradient(
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+          colors: [XploreColors.alternate, XploreColors.secondary, XploreColors.surfaceElevated],
+          stops: const [0, 0.58, 1],
+        ),
+        boxShadow: [
+          BoxShadow(color: XploreColors.alternate.withValues(alpha: 0.18), blurRadius: 28, offset: const Offset(0, 16)),
+        ],
       ),
       child: Material(
-        shape: const RoundedRectangleBorder(
-          borderRadius: BorderRadius.all(Radius.circular(20)),
-        ),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(radiusLg)),
         clipBehavior: Clip.hardEdge,
         color: Colors.transparent,
         child: InkWell(
@@ -43,16 +46,22 @@ class ItineraryCard extends StatelessWidget {
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
                 Row(
-                  mainAxisAlignment: MainAxisAlignment.end,
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
+                    Container(
+                      padding: const EdgeInsets.symmetric(horizontal: paddingUnit, vertical: paddingUnit / 2),
+                      decoration: BoxDecoration(
+                        color: XploreColors.black.withValues(alpha: 0.18),
+                        borderRadius: BorderRadius.circular(radiusSm),
+                      ),
+                      child: Text('Daily plan', style: context.pText.labelSmall?.copyWith(color: XploreColors.white)),
+                    ),
                     XploreIconBtn(
                       onTapCallback: () => log('liked!'),
-                      bgColor: XploreColors.tertiary,
-                      icon: Icon(
-                        Icons.favorite_border_rounded,
-                        color: XploreColors.alternate,
-                        size: 25,
-                      ),
+                      size: 40,
+                      borderRadius: radiusSm,
+                      bgColor: XploreColors.black.withValues(alpha: 0.22),
+                      icon: Icon(Icons.favorite_border_rounded, color: XploreColors.white, size: 20),
                     ),
                   ],
                 ),
@@ -62,13 +71,23 @@ class ItineraryCard extends StatelessWidget {
                     crossAxisAlignment: CrossAxisAlignment.start,
                     mainAxisAlignment: MainAxisAlignment.end,
                     children: [
-                      Text(
-                        dailyPlan.title,
-                        style: context.pText.headlineSmall?.copyWith(height: 1),
-                      ),
-                      Text(
-                        dailyPlan.location,
-                        style: context.pText.headlineSmall?.copyWith(fontSize: 20, height: 1.3),
+                      Text(dailyPlan.title, style: context.pText.headlineSmall?.copyWith(height: 1.08)),
+                      const SizedBox(height: paddingUnit / 2),
+                      Row(
+                        children: [
+                          Icon(Icons.place_outlined, size: 16, color: XploreColors.white.withValues(alpha: 0.76)),
+                          const SizedBox(width: 4),
+                          Expanded(
+                            child: Text(
+                              dailyPlan.location,
+                              style: context.pText.bodySmall?.copyWith(
+                                color: XploreColors.white.withValues(alpha: 0.76),
+                              ),
+                              maxLines: 2,
+                              overflow: TextOverflow.ellipsis,
+                            ),
+                          ),
+                        ],
                       ),
                     ],
                   ),

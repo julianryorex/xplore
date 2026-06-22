@@ -1,5 +1,6 @@
 import 'dart:developer';
 
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:xplore/constants/constants.dart';
@@ -8,12 +9,12 @@ import 'package:xplore/core/header.dart';
 import 'package:xplore/core/icon_button.dart';
 import 'package:xplore/core/layout_padding.dart';
 import 'package:xplore/core/navbar.dart';
+import 'package:xplore/core/section_header.dart';
 import 'package:xplore/features/gallery/bloc/gallery_cubit.dart';
 import 'package:xplore/features/itinerary/bloc/itinerary_cubit.dart';
 import 'package:xplore/features/itinerary/widgets/itinerary_card.dart';
 import 'package:xplore/features/profile/bloc/profile_cubit.dart';
 import 'package:xplore/routes.dart';
-import 'package:xplore/utilities/utilities.dart';
 
 class HomePage extends StatelessWidget {
   const HomePage({super.key});
@@ -28,34 +29,21 @@ class HomePage extends StatelessWidget {
             leadingWidget: XploreIconBtn(
               onTapCallback: () => Navigator.pushNamed(context, Paths.profile),
               bgColor: XploreColors.darkBg,
-              icon: const Icon(Icons.person_2_outlined, size: 35),
+              icon: const Icon(Icons.person_2_outlined, size: headerIconSize),
             ),
             trailingWidget: XploreIconBtn(
               bgColor: XploreColors.darkBg,
               onTapCallback: () => log('tapped'),
-              icon: const Icon(Icons.notifications, size: 35),
+              icon: const Icon(Icons.notifications_none_rounded, size: headerIconSize),
             ),
           ),
           child: SingleChildScrollView(
-            child: SizedBox(
-              width: getScreenWidth(context: context),
-              height: getScreenHeight(context: context),
+            child: Padding(
+              padding: const EdgeInsets.only(bottom: paddingUnit * 3),
               child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  //! Daily Plans Section Header
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    children: [
-                      Text('Daily Plans', style: context.pText.headlineMedium),
-                      TextButton(
-                        onPressed: null,
-                        child: Text(
-                          'See all',
-                          style: context.pText.bodySmall?.copyWith(color: XploreColors.alternate),
-                        ),
-                      ),
-                    ],
-                  ),
+                  const SectionHeader(title: 'Daily Plans', actionLabel: 'See all'),
                   const SizedBox(height: paddingUnit),
 
                   //! Daily Plans Section Containers
@@ -90,67 +78,64 @@ class HomePage extends StatelessWidget {
                       );
                     },
                   ),
-                  const SizedBox(height: paddingUnit),
+                  const SizedBox(height: paddingUnit * 2),
 
                   //! Gallery Section Header
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    children: [
-                      Text('Gallery', style: context.pText.headlineMedium),
-                    ],
-                  ),
+                  const SectionHeader(title: 'Gallery'),
                   const SizedBox(height: paddingUnit),
 
                   //! Gallery options
-                  SingleChildScrollView(
-                    scrollDirection: Axis.horizontal,
-                    child: Row(
+                  Container(
+                    width: double.infinity,
+                    padding: const EdgeInsets.all(paddingUnit * 1.5),
+                    decoration: BoxDecoration(
+                      color: XploreColors.surfaceElevated,
+                      borderRadius: BorderRadius.circular(radiusLg),
+                      border: Border.all(color: XploreColors.divider),
+                    ),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        OutlinedButton(
-                          onPressed: () {
-                            context.push(Paths.gallery);
-                          },
-                          child: Text(
-                            'View gallery',
-                            style: context.pText.bodySmall?.copyWith(fontWeight: FontWeight.w500),
-                          ),
+                        Text('Keep every trip moment in one shared place.', style: context.pText.bodyMedium),
+                        const SizedBox(height: paddingUnit),
+                        OutlinedButton.icon(
+                          onPressed: () => context.push(Paths.gallery),
+                          icon: const Icon(Icons.photo_library_outlined, size: 20),
+                          label: const Text('View gallery'),
                         ),
-                        const SizedBox(width: paddingUnit),
+                      ],
+                    ),
+                  ),
+                  if (kDebugMode) ...[
+                    const SizedBox(height: paddingUnit),
+                    Wrap(
+                      spacing: paddingUnit,
+                      runSpacing: paddingUnit,
+                      children: [
                         OutlinedButton(
                           onPressed: () async {
                             await context.read<ItineraryCubit>().loadDemoItinerary();
                           },
-                          child: Text(
-                            'Load data',
-                            style: context.pText.bodySmall?.copyWith(fontWeight: FontWeight.w500),
-                          ),
+                          child: const Text('Load data'),
                         ),
-                        const SizedBox(width: paddingUnit),
                         OutlinedButton(
                           onPressed: () async {
                             context.push(Paths.gallery);
                             await context.read<GalleryCubit>().uploadToGallery();
                           },
-                          child: Text(
-                            'Upload',
-                            style: context.pText.bodySmall?.copyWith(fontWeight: FontWeight.w500),
-                          ),
+                          child: const Text('Upload'),
                         ),
-                        const SizedBox(width: paddingUnit),
                         OutlinedButton(
                           onPressed: () async {
                             context.read<GalleryCubit>().deleteAll();
                             // context.read<LocationCubit>().deleteAll();
                             context.read<ProfileCubit>().deleteAll();
                           },
-                          child: Text(
-                            'Delete Hive',
-                            style: context.pText.bodySmall?.copyWith(fontWeight: FontWeight.w500),
-                          ),
+                          child: const Text('Delete Hive'),
                         ),
                       ],
                     ),
-                  ),
+                  ],
                 ],
               ),
             ),

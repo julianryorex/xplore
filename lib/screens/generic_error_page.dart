@@ -20,7 +20,7 @@ class ErrorScreen extends StatelessWidget {
                 leadingWidget: XploreIconBtn(
                   bgColor: XploreColors.darkBg,
                   onTapCallback: () => Navigator.pop(context),
-                  icon: const Icon(Icons.arrow_back, size: 45),
+                  icon: const Icon(Icons.arrow_back, size: headerIconSize),
                 ),
               ),
               Column(
@@ -34,10 +34,7 @@ class ErrorScreen extends StatelessWidget {
                       height: getScreenHeight(context: context, percent: 0.5),
                     ),
                   ),
-                  Text(
-                    'Oops! Something went wrong.',
-                    style: context.pText.bodyMedium,
-                  ),
+                  Text('Oops! Something went wrong.', style: context.pText.bodyMedium),
                 ],
               ),
             ],
