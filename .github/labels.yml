@@ -1,0 +1,46 @@
+# GitHub labels for julianryorex/xplore
+# Synced by .github/workflows/sync-labels.yml
+
+- name: feature
+  color: "0e8a16"
+  description: New product capability
+
+- name: improvement
+  color: "1d76db"
+  description: Refactor, quality, or follow-up work
+
+- name: P0
+  color: "b60205"
+  description: Launch blocker — ship immediately
+
+- name: P1
+  color: "d93f0b"
+  description: Core value — after P0 stable
+
+- name: P2
+  color: "fbca04"
+  description: Monetization and growth
+
+- name: P3
+  color: "006b75"
+  description: Expansion and polish
+
+- name: P4
+  color: "c5def5"
+  description: Quality-of-life / opportunistic
+
+- name: "source:slack"
+  color: "7057ff"
+  description: Filed from Slack #xplore-requests
+
+- name: "source:agent"
+  color: "5319e7"
+  description: Filed from another agent (review, triage, scout)
+
+- name: "source:product"
+  color: "bfdadc"
+  description: Promoted from product/requests FEAT spec
+
+- name: needs-feat-file
+  color: "fef2c0"
+  description: Issue exists but no product/requests/ spec yet
