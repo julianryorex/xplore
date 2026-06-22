@@ -2,7 +2,9 @@
 
 Ranked feature requests for Xplore. **Work top-to-bottom within each tier.**
 
-Legend: **Status** — `backlog` · `in_progress` · `done` · `wont_do`
+Legend: **Status** — `backlog` · `ready_for_dev` (full spec written) · `in_progress` · `done` · `wont_do`
+
+> **Next up:** [FEAT-001 Authentication](./requests/FEAT-001-user-authentication.md) has a full build-ready product spec and is the recommended starting point for development.
 
 ---
 
@@ -12,7 +14,7 @@ Cannot onboard real groups or operate as a product without these.
 
 | ID | Feature | Revenue | Effort | Status | Request |
 |----|---------|---------|--------|--------|---------|
-| FEAT-001 | User authentication (Firebase Auth) | blocker | L | backlog | [→](./requests/FEAT-001-user-authentication.md) |
+| FEAT-001 | User authentication (Firebase Auth) | blocker | L | **ready_for_dev** | [→](./requests/FEAT-001-user-authentication.md) |
 | FEAT-002 | Trip entity & multi-trip management | blocker | L | backlog | [→](./requests/FEAT-002-trip-management.md) |
 | FEAT-003 | Trip invites & join flow | blocker | L | backlog | [→](./requests/FEAT-003-trip-invites.md) |
 | FEAT-004 | Replace hardcoded trip/user IDs | blocker | M | backlog | [→](./requests/FEAT-004-remove-hardcoded-ids.md) |
