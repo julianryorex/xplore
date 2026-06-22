@@ -3,13 +3,13 @@
 <plist version="1.0">
 <dict>
 	<key>API_KEY</key>
-	<string>AIzaSyB2Lx8CwK1NQT7Z3B9-2MpG3GOXBELX-cQ</string>
+	<string>AIzaSyC7f8oBhSlWulz6OKptKe-mnI0F4FFypKs</string>
 	<key>GCM_SENDER_ID</key>
 	<string>700905798457</string>
 	<key>PLIST_VERSION</key>
 	<string>1</string>
 	<key>BUNDLE_ID</key>
-	<string>com.example.xplore</string>
+	<string>com.olympuslabs.xplore</string>
 	<key>PROJECT_ID</key>
 	<string>xplore-a7012</string>
 	<key>STORAGE_BUCKET</key>
@@ -25,6 +25,8 @@
 	<key>IS_SIGNIN_ENABLED</key>
 	<true></true>
 	<key>GOOGLE_APP_ID</key>
-	<string>1:700905798457:ios:40f4626fde9bbde4c446e8</string>
+	<string>1:700905798457:ios:b3762811940cfb83c446e8</string>
+	<key>DATABASE_URL</key>
+	<string>https://xplore-a7012-default-rtdb.firebaseio.com</string>
 </dict>
 </plist>

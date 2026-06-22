@@ -40,19 +40,19 @@ class DefaultFirebaseOptions {
 
   static FirebaseOptions ios = FirebaseOptions(
     apiKey: dotenv.env['APPLE_API_KEY'] ?? '',
-    appId: '1:700905798457:ios:40f4626fde9bbde4c446e8',
+    appId: '1:700905798457:ios:b3762811940cfb83c446e8',
     messagingSenderId: '700905798457',
     projectId: 'xplore-a7012',
     storageBucket: 'xplore-a7012.appspot.com',
-    iosBundleId: 'com.example.xplore',
+    iosBundleId: 'com.olympuslabs.xplore',
   );
 
   static FirebaseOptions macos = FirebaseOptions(
     apiKey: dotenv.env['MACOS_API_KEY'] ?? '',
-    appId: '1:700905798457:ios:2e0c536d91772786c446e8',
+    appId: '1:700905798457:ios:b3762811940cfb83c446e8',
     messagingSenderId: '700905798457',
     projectId: 'xplore-a7012',
     storageBucket: 'xplore-a7012.appspot.com',
-    iosBundleId: 'com.example.xplore.RunnerTests',
+    iosBundleId: 'com.olympuslabs.xplore',
   );
 }

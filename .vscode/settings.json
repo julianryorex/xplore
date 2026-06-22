@@ -8,7 +8,11 @@
     "amplify/backend/amplify-meta.json": true,
     "amplify/backend/awscloudformation": true
   },
+  "dart.flutterSdkPath": ".fvm/versions/3.44.0",
   "dart.lineLength": 120,
+  "files.watcherExclude": {
+    "**/.fvm/**": true
+  },
   "[dart]": {
     "editor.defaultFormatter": "Dart-Code.dart-code",
     "editor.formatOnSave": true,
@@ -22,7 +26,9 @@
       "quickfix.remove.nonNullAssertion.multi": "explicit",
       "quickfix.remove.questionMark.multi": "explicit"
     },
-    "editor.rulers": [120]
+    "editor.rulers": [
+      120
+    ]
   },
   "files.associations": {
     "string": "cpp"

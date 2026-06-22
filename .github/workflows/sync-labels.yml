@@ -17,7 +17,7 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      - uses: EndBug/label-sync-yaml-action@v2
+      - uses: EndBug/label-sync@v2
         with:
-          config-path: .github/labels.yml
-          delete-labels: false
+          config-file: .github/labels.yml
+          delete-other-labels: false
