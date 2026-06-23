@@ -6,7 +6,6 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:freezed_annotation/freezed_annotation.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:path_provider/path_provider.dart';
-import 'package:xplore/constants/constants.dart';
 import 'package:xplore/features/auth/services/auth_service.dart';
 import 'package:xplore/features/map/services/marker_service.dart';
 import 'package:xplore/utilities/utilities.dart';
@@ -19,12 +18,15 @@ class ProfileCubit extends Cubit<ProfileState> {
   final AuthService _authService;
   late final MarkerService markerService;
 
+  // The profile cubit is only created behind the auth gate, so `currentUid` is
+  // normally set; the empty-string default is a defensive pre-auth placeholder
+  // and is never surfaced (the id isn't rendered; marker ops read `_uid` live).
   ProfileCubit(
     this._authService, {
     @visibleForTesting bool loadLocalProfile = true,
   }) : super(
          ProfileState(
-           id: _authService.currentUid ?? userId,
+           id: _authService.currentUid ?? '',
            name: 'Julian Rechsteiner',
          ),
        ) {
@@ -34,9 +36,8 @@ class ProfileCubit extends Cubit<ProfileState> {
     }
   }
 
-  /// The active user id: the real Firebase UID once authenticated, falling back
-  /// to the quarantined demo constant pre-auth (full removal in FEAT-004).
-  String get _uid => _authService.currentUid ?? userId;
+  /// The active Firebase UID, or null when unauthenticated.
+  String? get _uid => _authService.currentUid;
 
   //! -------------------------------------------------------------------------
   //! Public Methods
@@ -57,10 +58,16 @@ class ProfileCubit extends Cubit<ProfileState> {
     saveProfilePicture(pictureAsBytes);
     await wait(1000);
 
+    final uid = _uid;
+    if (uid == null) {
+      _logger.w('changeProfilePicture skipped marker update: not authenticated');
+      return;
+    }
+
     final iconBytes = await markerService.convertMarkerWidgetToBytes();
     _logger.d('Generated iconBytes (${iconBytes?.length} bytes)');
 
-    markerService.updateMarkerIcon(_uid, iconBytes!);
+    markerService.updateMarkerIcon(uid, iconBytes!);
   }
 
   Future<void> deleteAll() async => await markerService.deleteAll();

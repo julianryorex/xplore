@@ -8,7 +8,9 @@ import 'package:hive_flutter/hive_flutter.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:logger/logger.dart';
 import 'package:uuid/uuid.dart';
+import 'package:xplore/constants/constants.dart';
 import 'package:xplore/core/enums.dart';
+import 'package:xplore/features/auth/services/auth_service.dart';
 import 'package:xplore/features/gallery/models/image_models.dart';
 import 'package:xplore/features/gallery/repository/gallery_repository.dart';
 import 'package:xplore/features/gallery/services/image_compressor.dart';
@@ -18,19 +20,24 @@ part '../../../generated/features/gallery/bloc/gallery_cubit.freezed.dart';
 part 'gallery_states.dart';
 
 // TODOs:
-// - Fetch current itinerary id from another cubit or Hive
+// - Fetch current itinerary id from TripCubit (FEAT-002) instead of the
+//   `itineraryId` placeholder constant
 // - Support selection & compression w/ video
 // - Implement GCP fetches/downloads after fetching cache
 class GalleryCubit extends Cubit<GalleryState> {
   late final Logger _logger;
   late final GalleryRepository repository;
+  final AuthService _authService;
 
-  GalleryCubit({GalleryRepository? repo}) : super(const GalleryState()) {
+  GalleryCubit(this._authService, {GalleryRepository? repo}) : super(const GalleryState()) {
     repository = repo ?? GalleryRepository();
     _logger = createLogger('Gallery');
 
     loadImgFromCache();
   }
+
+  /// The uploader's Firebase UID, or null when unauthenticated.
+  String? get _uid => _authService.currentUid;
 
   void loadImgFromCache() {
     _logger.d('Load cached gallery');
@@ -155,12 +162,17 @@ class GalleryCubit extends Cubit<GalleryState> {
     }
   }
 
-  // TODO: Fetch current itinerary id
+  // TODO(FEAT-002): source the trip id from TripCubit instead of `itineraryId`.
   @visibleForTesting
   Future<String> uploadImage(File imageFile, String imageName) async {
+    final uid = _uid;
+    if (uid == null) {
+      return Future.error(StateError('Cannot upload to gallery while unauthenticated.'));
+    }
+
     try {
       FirebaseStorage storage = FirebaseStorage.instance;
-      Reference ref = storage.ref().child('gallery/ph4kd/$imageName');
+      Reference ref = storage.ref().child('gallery/$itineraryId/$uid/$imageName');
       UploadTask uploadTask = ref.putFile(imageFile);
       TaskSnapshot taskSnapshot = await uploadTask;
       String downloadURL = await taskSnapshot.ref.getDownloadURL();

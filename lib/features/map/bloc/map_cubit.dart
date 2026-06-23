@@ -4,7 +4,6 @@ import 'package:freezed_annotation/freezed_annotation.dart';
 import 'package:geolocator/geolocator.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
 import 'package:logger/logger.dart';
-import 'package:xplore/constants/constants.dart';
 import 'package:xplore/features/auth/services/auth_service.dart';
 import 'package:xplore/features/location/models/location_models.dart';
 import 'package:xplore/features/map/services/marker_service.dart';
@@ -29,9 +28,8 @@ class MapCubit extends Cubit<MapStates> {
     init();
   }
 
-  /// The active user id: real Firebase UID once authenticated, else the
-  /// quarantined demo constant (full removal in FEAT-004).
-  String get _uid => _authService.currentUid ?? userId;
+  /// The active Firebase UID, or null when unauthenticated.
+  String? get _uid => _authService.currentUid;
 
   static const initialCameraPosition = CameraPosition(target: LatLng(40.7128, -73.9571), zoom: 12.0);
 
@@ -42,7 +40,13 @@ class MapCubit extends Cubit<MapStates> {
   }
 
   Future<void> checkUserMarkerState() async {
-    final userMarker = await markerService.fetchMarkerIcon(_uid);
+    final uid = _uid;
+    if (uid == null) {
+      _logger.w('checkUserMarkerState skipped: not authenticated');
+      return;
+    }
+
+    final userMarker = await markerService.fetchMarkerIcon(uid);
 
     if (userMarker == null) {
       emit(LoadProfileOnMapState());
@@ -57,9 +61,15 @@ class MapCubit extends Cubit<MapStates> {
   //! -------------------------------------------------------------------------
 
   Future<void> initialMarkerUpdate() async {
+    final uid = _uid;
+    if (uid == null) {
+      _logger.w('initialMarkerUpdate skipped: not authenticated');
+      return;
+    }
+
     final iconBytes = await markerService.convertMarkerWidgetToBytes();
     _logger.d('Generated iconBytes (${iconBytes?.length} bytes)');
-    await markerService.updateMarkerIcon(_uid, iconBytes!);
+    await markerService.updateMarkerIcon(uid, iconBytes!);
     emit(const LoadedMapState());
   }
 

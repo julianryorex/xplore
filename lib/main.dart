@@ -85,7 +85,7 @@ class MyApp extends StatelessWidget {
               BlocProvider<NavbarCubit>(create: (_) => NavbarCubit()),
               BlocProvider<ItineraryCubit>(create: (_) => ItineraryCubit()),
               BlocProvider<MapCubit>(create: (_) => MapCubit(authService)),
-              BlocProvider<GalleryCubit>(create: (_) => GalleryCubit()),
+              BlocProvider<GalleryCubit>(create: (_) => GalleryCubit(authService)),
               BlocProvider<ProfileCubit>(create: (_) => ProfileCubit(authService)),
             ],
             child: MaterialApp(
