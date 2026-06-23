@@ -1,3 +1,19 @@
+locals {
+  google_oauth_client_id_set     = var.google_oauth_client_id != ""
+  google_oauth_client_secret_set = var.google_oauth_client_secret != ""
+}
+
+resource "terraform_data" "validate_google_oauth_credentials" {
+  input = local.google_oauth_client_id_set && local.google_oauth_client_secret_set
+
+  lifecycle {
+    precondition {
+      condition     = local.google_oauth_client_id_set == local.google_oauth_client_secret_set
+      error_message = "google_oauth_client_id and google_oauth_client_secret must be provided together, or both left empty."
+    }
+  }
+}
+
 module "firebase" {
   source = "./modules/firebase"
 

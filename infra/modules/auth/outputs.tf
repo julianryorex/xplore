@@ -5,5 +5,5 @@ output "apple_configured" {
 
 output "google_configured" {
   description = "True if the Google sign-in provider was configured via Terraform."
-  value       = local.google_enabled
+  value       = nonsensitive(local.google_enabled)
 }
