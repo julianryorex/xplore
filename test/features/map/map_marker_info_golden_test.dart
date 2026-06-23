@@ -9,19 +9,14 @@
 //   flutter test --update-goldens test/features/map/map_marker_info_golden_test.dart
 
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:xplore/constants/constants.dart';
 import 'package:xplore/constants/theme.dart';
 import 'package:xplore/features/location/models/location_models.dart';
 import 'package:xplore/features/location/utils/last_seen.dart';
 
-Future<void> _loadPoppins() async {
-  final loader = FontLoader('Poppins')
-    ..addFont(rootBundle.load('assets/fonts/Poppins-Medium.ttf'))
-    ..addFont(rootBundle.load('assets/fonts/Poppins-SemiBold.ttf'));
-  await loader.load();
-}
+// Poppins font loading and per-test view reset live in
+// `test/flutter_test_config.dart` so they apply to every test automatically.
 
 /// A pin + the `InfoWindow` bubble exactly as the map populates it:
 /// `title: 'Last seen ${formatLastSeen(lastUpdated)}'`, faded when stale.
@@ -113,8 +108,6 @@ class _TailPainter extends CustomPainter {
 
 void main() {
   testWidgets('Map marker InfoWindows render relative "last seen" labels', (tester) async {
-    await _loadPoppins();
-
     // Fixed reference clock so the rendered labels are deterministic.
     final now = DateTime(2026, 6, 23, 17, 0, 0);
 
@@ -143,8 +136,6 @@ void main() {
 
     tester.view.physicalSize = const Size(900, 360);
     tester.view.devicePixelRatio = 1.0;
-    addTearDown(tester.view.resetPhysicalSize);
-    addTearDown(tester.view.resetDevicePixelRatio);
 
     await tester.pumpWidget(
       MaterialApp(
