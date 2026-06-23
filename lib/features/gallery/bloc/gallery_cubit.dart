@@ -11,6 +11,7 @@ import 'package:uuid/uuid.dart';
 import 'package:xplore/core/enums.dart';
 import 'package:xplore/features/gallery/models/image_models.dart';
 import 'package:xplore/features/gallery/repository/gallery_repository.dart';
+import 'package:xplore/features/gallery/services/image_compressor.dart';
 import 'package:xplore/utilities/utilities.dart';
 
 part '../../../generated/features/gallery/bloc/gallery_cubit.freezed.dart';
@@ -48,8 +49,9 @@ class GalleryCubit extends Cubit<GalleryState> {
   /// Uploads user selected photo gallery images to GCP.
   /// Each image goes through the following process:
   /// 1. Convert Xfile (image) to file,
-  /// 2. Compress image by 50%
-  /// 3. Convert file to `ImageModel` (w/ compressed)
+  /// 2. Generate a downscaled/compressed thumbnail (`lowResImage`) for fast
+  ///    local display — the full-resolution original is left untouched.
+  /// 3. Convert file to `ImageModel` (w/ thumbnail)
   /// 4. Save to state
   /// 5. Cache in Hive
   /// 6. Cache high-res image in Hive
@@ -80,16 +82,19 @@ class GalleryCubit extends Cubit<GalleryState> {
         continue;
       }
 
-      // TODO: re-enable compression once flutter_image_compress supports the
-      // iOS 26 SDK. The dependency is temporarily disabled (see pubspec.yaml),
-      // so we fall back to the original, uncompressed image bytes for now.
-      final compressedImage = await file.readAsBytes();
+      // Build the lightweight thumbnail (`lowResImage`) for fast local display
+      // using the pure-Dart `image` package (no native plugin / iOS SDK risk).
+      // The full-resolution original (`file`) is preserved for the Hive
+      // high-res cache and the Storage upload below, so other members still see
+      // the full-detail photo.
+      final originalBytes = await file.readAsBytes();
+      final thumbnail = await compressGalleryThumbnailAsync(originalBytes);
 
       final imageModel = ImageModel(
         id: const Uuid().v4(),
         createdAt: await image.lastModified(),
         isUploading: EUploadStatus.uploading,
-        lowResImage: compressedImage,
+        lowResImage: thumbnail,
       );
 
       _addMapItemToState(imageModel); // save to state

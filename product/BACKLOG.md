@@ -81,9 +81,10 @@ Quality-of-life and experimental; pick up when higher tiers are stable.
 | FEAT-040 | Map transit directions | none | M | backlog | [→](./requests/FEAT-040-map-transit.md) |
 | FEAT-041 | Collaborative itinerary voting | retention | M | backlog | [→](./requests/FEAT-041-itinerary-voting.md) |
 | FEAT-042 | Video gallery support | retention | M | backlog | [→](./requests/FEAT-042-video-gallery.md) |
-| FEAT-043 | Re-enable image compression (iOS 26) | indirect | S | backlog | [→](./requests/FEAT-043-image-compression.md) |
+| FEAT-043 | Re-enable image compression (iOS 26) | indirect | S | done | [→](./requests/FEAT-043-image-compression.md) |
 | FEAT-044 | Neighborhood / geofence alerts | retention | L | backlog | [→](./requests/FEAT-044-geofence-alerts.md) |
 | FEAT-045 | B2B tour operator dashboard | direct | XL | backlog | [→](./requests/FEAT-045-b2b-dashboard.md) |
+| FEAT-046 | Profile avatar map-marker pipeline | retention | M | backlog | [→](./requests/FEAT-046-map-avatar-marker-pipeline.md) |
 
 ---
 

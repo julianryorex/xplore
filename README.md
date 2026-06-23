@@ -60,7 +60,7 @@ lib/
 | Backend | Firebase (Realtime Database, Storage) |
 | Maps | Google Maps Flutter + Geolocator |
 | AI | Google Gemini (flutter_gemini) |
-| Media | image_picker, flutter_image_compress, photo_view |
+| Media | image_picker, image (pure-Dart thumbnail compression), photo_view |
 | Tooling | build_runner, flutter_lints, Makefile automation |
 
 ---

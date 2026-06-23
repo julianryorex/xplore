@@ -11,36 +11,32 @@ environment:
 dependencies:
   flutter:
     sdk: flutter
+  cloud_firestore: ^6.6.0
   collection: ^1.17.2
   cupertino_icons: ^1.0.2
   dotted_border: ^3.1.0
+  firebase_auth: ^6.5.4
   firebase_core: ^4.11.0
   firebase_database: ^12.4.3
   firebase_storage: ^13.4.3
   flutter_bloc: ^9.1.1
   flutter_dotenv: ^6.0.1
-  # Temporarily disabled: flutter_image_compress 2.x (common 1.0.6) uses Apple's
-  # removed AssetsLibrary framework and fails to build on the iOS 26 SDK.
-  # Re-enable when upgrading deps to latest. See gallery_cubit.dart for the
-  # uncompressed fallback currently in use.
-  # flutter_image_compress: ^2.2.0
+  flutter_gemini: ^3.0.0
   flutter_svg: ^2.0.9
   freezed_annotation: ^3.1.0
   geolocator: ^14.0.3
   google_maps_flutter: ^2.5.3
   google_maps_flutter_ios_sdk10: ^2.18.4
+  google_sign_in: ^7.2.0
   hive: ^2.2.3
   hive_flutter: ^1.1.0
+  image: ^4.8.0
   image_picker: ^1.0.7
   json_annotation: ^4.12.0
   logger: ^2.2.0
+  path_provider: ^2.1.2
   photo_view: ^0.15.0
   uuid: ^4.3.3
-  path_provider: ^2.1.2
-  flutter_gemini: ^3.0.0
-  firebase_auth: ^6.5.4
-  cloud_firestore: ^6.6.0
-  google_sign_in: ^7.2.0
 
 dev_dependencies:
   flutter_test:
