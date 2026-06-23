@@ -3,6 +3,7 @@
 FVM ?= fvm
 FLUTTER := $(FVM) flutter
 DART := $(FVM) dart
+DART_FORMAT_DIRS := lib test
 
 clean:
 	$(FLUTTER) clean
@@ -30,10 +31,10 @@ gen:
 
 format:
 	$(DART) fix --apply
-	$(DART) format . -l 120
+	$(DART) format $(DART_FORMAT_DIRS) -l 120
 
 check-format:
-	$(DART) format --output=none -l 120 --set-exit-if-changed .
+	$(DART) format --output=none -l 120 --set-exit-if-changed $(DART_FORMAT_DIRS)
 
 test:
 	$(FLUTTER) test

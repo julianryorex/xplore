@@ -12,7 +12,5 @@ class InitialItineraryState extends ItineraryStates {
 abstract class LoadedItineraryState extends ItineraryStates with _$LoadedItineraryState {
   const LoadedItineraryState._();
 
-  const factory LoadedItineraryState({
-    required ItineraryModel itinerary,
-  }) = _LoadedItineraryState;
+  const factory LoadedItineraryState({required ItineraryModel itinerary}) = _LoadedItineraryState;
 }

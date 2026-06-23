@@ -17,6 +17,9 @@ module "auth" {
   apple_key_id      = var.apple_key_id
   apple_private_key = var.apple_private_key
 
+  google_oauth_client_id     = var.google_oauth_client_id
+  google_oauth_client_secret = var.google_oauth_client_secret
+
   depends_on = [google_project_service.required, module.firebase]
 }
 
