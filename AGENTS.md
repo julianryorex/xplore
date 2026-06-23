@@ -47,10 +47,11 @@ agent file it. Exception: the Issue Filer automation itself.
   `main.dart`'s `initFirebase` only catches `duplicate-app`, not this. The same
   throw blocks linux/windows/Android.
 - To run the real app, use a **Mac with Xcode + iOS simulator** (see README)
-  with valid Firebase/Maps/Gemini keys in `assets/.env`. Note `pubspec.yaml`
-  currently disables `flutter_image_compress` (the iOS 26 SDK dropped the
-  AssetsLibrary framework it relies on); gallery uploads fall back to
-  uncompressed images.
+  with valid Firebase/Maps/Gemini keys in `assets/.env`. Note `flutter_image_compress`
+ was removed (the iOS 26 SDK dropped the AssetsLibrary framework it relied on);
+ gallery **thumbnails** are now compressed with the pure-Dart `image` package
+ (`lib/features/gallery/services/image_compressor.dart`), while the
+ **full-resolution original is still uploaded** to Storage for full-detail viewing.
 - On Linux the practical dev loop is: `make gen` (codegen) →
   `fvm flutter analyze` (lint) → `fvm flutter test`. Core, Firebase-free logic
   can be exercised headlessly — e.g. `ItineraryCubit.loadDemoItinerary()` loads

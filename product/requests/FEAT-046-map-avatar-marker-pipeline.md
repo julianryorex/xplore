@@ -144,8 +144,9 @@ URL variant for markers.
    to display a profile neatly on the map" fix and unblocks rendering peers' avatars.
 3. **Option C (`image` package)** — add a small pure-Dart resize utility to emit a
    256 px avatar thumbnail for cross-device sync, chosen specifically so we are never
-   again blocked by a native iOS-SDK change. The same utility can re-enable the gallery
-   path and **supersede FEAT-043** without `flutter_image_compress`.
+   again blocked by a native iOS-SDK change. **Done for the gallery** — see
+   `lib/features/gallery/services/image_compressor.dart` (introduced for FEAT-043);
+   the avatar path can reuse the same utility.
 4. **Option D** — adopt the Canvas painter when we add styled status rings (aligns with
    FEAT-017) for pixel-perfect, widget-free pins.
 5. **Option E** — only if/when avatar serving cost becomes material, folded into the
@@ -188,8 +189,9 @@ replaced by the pure-Dart `image` package.
 - [FEAT-015](./FEAT-015-profile-cloud-sync.md) — cross-device avatar fetch (download the
   uploaded marker / avatar by URL).
 - [FEAT-017](./FEAT-017-map-marker-info.md) — styled marker state (pairs with Option D).
-- [FEAT-043](./FEAT-043-image-compression.md) — gallery compression; the pure-Dart
-  approach here can supersede it.
+- [FEAT-043](./FEAT-043-image-compression.md) — gallery compression; **done** via the
+  pure-Dart `image` package, whose `image_compressor.dart` utility the avatar path can
+  reuse.
 
 ## Related code
 
@@ -210,8 +212,9 @@ replaced by the pure-Dart `image` package.
 
 - Do we want one bounded master profile image (Option A) or a separate hi-res original +
   generated thumbnail (A + C)? Master-only is simpler and sufficient today.
-- Should the gallery thumbnail path (FEAT-043) be folded into the same pure-Dart utility
-  and FEAT-043 closed as superseded?
+- ~~Should the gallery thumbnail path (FEAT-043) be folded into the same pure-Dart
+  utility?~~ Done — FEAT-043 now uses `image_compressor.dart`; the avatar work should
+  reuse it.
 
 ## Notes / history
 

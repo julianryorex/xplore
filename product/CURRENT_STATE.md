@@ -11,7 +11,7 @@ Snapshot of what exists in `lib/` vs. what product assumes. Update this doc when
 | Google Map + neon style | ✅ | `MapCanvas`, `assets/maps/GoogleMapNeon.json` |
 | Live location sync | ✅ Demo | Firebase RTDB at `locations/{itineraryId}`; interval configurable via `.env` |
 | Avatar map markers | ✅ | Profile photo → widget → PNG → Hive + Storage |
-| Gallery pick / upload / zoom | ✅ Partial | Optimistic UI; compression disabled on iOS 26 SDK |
+| Gallery pick / upload / zoom | ✅ Partial | Optimistic UI; pure-Dart thumbnail compression (full-res original still uploaded) |
 | Profile photo | ✅ Local | Saved to app documents; not synced to Firebase Auth profile |
 | Bottom nav | ✅ | Home, Map, Gallery routes |
 

@@ -11,7 +11,7 @@
 
 ## Problem
 
-Firebase Storage costs scale with uncompressed gallery uploads (compression disabled on iOS 26). Free users could upload unbounded photos without revenue offset.
+Firebase Storage costs scale with full-resolution gallery uploads (the full-detail original is uploaded intentionally; only the local thumbnail is compressed). Free users could upload unbounded photos without revenue offset.
 
 ## Proposed solution
 
