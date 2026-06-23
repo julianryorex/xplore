@@ -6,7 +6,7 @@
 // Linux CI box (iOS/macOS target), so this golden captures the exact text and
 // stale-opacity behavior the change produces, using real `LocationModel` data.
 //
-//   flutter test --update-goldens test/map_marker_info_golden_test.dart
+//   flutter test --update-goldens test/features/map/map_marker_info_golden_test.dart
 
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
