@@ -24,3 +24,7 @@ Re-enable when plugin supports iOS 26, or swap to alternative compressor. Restor
 ## Notes / history
 
 - 2025-06-22: Created
+- 2026-06-23: Clarified scope — `flutter_image_compress` was **gallery-only**; it was
+  never part of the profile-on-map avatar pipeline. See
+  [FEAT-046](./FEAT-046-map-avatar-marker-pipeline.md), which proposes a pure-Dart
+  (`image` package) resize utility that could supersede this native dependency.
