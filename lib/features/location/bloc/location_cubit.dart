@@ -55,9 +55,8 @@ class LocationCubit extends Cubit<LocationState> {
 
   void endTimer() => updateLocationTimer.cancel();
 
-  /// The active user id: real Firebase UID once authenticated, else the
-  /// quarantined demo constant (full removal in FEAT-004).
-  String get _uid => _authService.currentUid ?? userId;
+  /// The active Firebase UID, or null when unauthenticated.
+  String? get _uid => _authService.currentUid;
 
   //! -------------------------------------------------------------------------
   //! Public Methods
@@ -74,10 +73,16 @@ class LocationCubit extends Cubit<LocationState> {
   //! -------------------------------------------------------------------------
 
   Future<void> updateMyLocation() async {
+    // Pre-auth (the cubit is created eagerly at app start) there is no UID to
+    // write a location for, so skip until the user is signed in.
+    final uid = _uid;
+    if (uid == null) {
+      _logger.d('Skipping location update: not authenticated');
+      return;
+    }
+
     DatabaseReference locationRef = FirebaseDatabase.instance.ref('locations/$itineraryId');
 
-    // set my location
-    final uid = _uid;
     final myCoords = await getCurrentLocation();
     final myLocation = LocationModel(
       id: uid,
@@ -125,7 +130,7 @@ class LocationCubit extends Cubit<LocationState> {
   Future<void> loadDemoLocations() async {
     final Map<String, dynamic> demoData = await loadJsonAsset('assets/demo/locations.json');
 
-    final locationsFromJson = demoData['locations']['ph4kd'] as Map<String, dynamic>;
+    final locationsFromJson = demoData['locations'][itineraryId] as Map<String, dynamic>;
 
     final Map<String, LocationModel> locationMap = {};
 
