@@ -6,6 +6,7 @@ import 'package:google_maps_flutter/google_maps_flutter.dart';
 import 'package:logger/logger.dart';
 import 'package:xplore/constants/constants.dart';
 import 'package:xplore/features/location/models/location_models.dart';
+import 'package:xplore/features/location/utils/last_seen.dart';
 import 'package:xplore/features/map/services/marker_service.dart';
 import 'package:xplore/utilities/utilities.dart';
 
@@ -14,7 +15,6 @@ part 'map_states.dart';
 
 // TODO: Transit
 // TODO: Add neighborhood polylines (watch dog like)
-// TODO: InfoWindow with last updated
 
 class MapCubit extends Cubit<MapStates> {
   late final Logger _logger;
@@ -71,13 +71,16 @@ class MapCubit extends Cubit<MapStates> {
       final userMarker = await markerService.fetchMarkerIcon(el.id);
       final markerIcon = userMarker != null ? BitmapDescriptor.bytes(userMarker) : BitmapDescriptor.defaultMarker;
 
+      final stale = isLocationStale(el.lastUpdated);
+
       final marker = Marker(
-          markerId: MarkerId(el.id),
-          position: LatLng(el.lat, el.lng),
-          anchor: userMarker != null ? const Offset(0.5, 0.5) : const Offset(0.5, 1.0),
-          alpha: DateTime.now().difference(el.lastUpdated) > const Duration(minutes: 10) ? 0.5 : 1,
-          icon: markerIcon,
-          infoWindow: const InfoWindow(title: 'Julian', anchor: Offset(-0.5, 0.0)));
+        markerId: MarkerId(el.id),
+        position: LatLng(el.lat, el.lng),
+        anchor: userMarker != null ? const Offset(0.5, 0.5) : const Offset(0.5, 1.0),
+        alpha: stale ? 0.5 : 1,
+        icon: markerIcon,
+        infoWindow: InfoWindow(title: 'Last seen ${formatLastSeen(el.lastUpdated)}', anchor: const Offset(-0.5, 0.0)),
+      );
 
       markersV2.add(marker);
     }
