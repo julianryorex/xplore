@@ -19,11 +19,6 @@ dependencies:
   firebase_storage: ^13.4.3
   flutter_bloc: ^9.1.1
   flutter_dotenv: ^6.0.1
-  # NOTE: `flutter_image_compress` was removed because its 2.x line (via common
-  # 1.0.6) relies on Apple's AssetsLibrary framework, which the iOS 26 SDK
-  # dropped, breaking the build. Gallery thumbnail compression is now done with
-  # the pure-Dart `image` package (no native dependency, immune to iOS SDK
-  # churn). See `lib/features/gallery/services/image_compressor.dart`.
   flutter_svg: ^2.0.9
   freezed_annotation: ^3.1.0
   geolocator: ^14.0.3
