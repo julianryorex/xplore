@@ -97,22 +97,24 @@ class GalleryCubit extends Cubit<GalleryState> {
       repository.cacheHighResImage(imageModel.id, file); // cache imageModel high res in Hive
 
       // Upload image to google cloud and update image loading status for the UI
-      uploadImage(file, imageModel.id).then((downloadUrl) {
-        _logger.d('Image Uploaded');
-        final newMapItem = state.imageMap[imageModel.id]!.copyWith(
-          isUploading: EUploadStatus.complete, // set upload as finished
-          downloadUrl: downloadUrl,
-        );
-        repository.cacheMetadata(newMapItem);
-        _addMapItemToState(newMapItem);
-      }).onError((err, _) {
-        _logger.w('Error uploading image ${image.name}: $err');
-        final newMapItem = state.imageMap[imageModel.id]!.copyWith(
-          isUploading: EUploadStatus.failed, // set upload as failed
-        );
-        repository.cacheMetadata(newMapItem);
-        _addMapItemToState(newMapItem);
-      });
+      uploadImage(file, imageModel.id)
+          .then((downloadUrl) {
+            _logger.d('Image Uploaded');
+            final newMapItem = state.imageMap[imageModel.id]!.copyWith(
+              isUploading: EUploadStatus.complete, // set upload as finished
+              downloadUrl: downloadUrl,
+            );
+            repository.cacheMetadata(newMapItem);
+            _addMapItemToState(newMapItem);
+          })
+          .onError((err, _) {
+            _logger.w('Error uploading image ${image.name}: $err');
+            final newMapItem = state.imageMap[imageModel.id]!.copyWith(
+              isUploading: EUploadStatus.failed, // set upload as failed
+            );
+            repository.cacheMetadata(newMapItem);
+            _addMapItemToState(newMapItem);
+          });
     }
 
     _logger.d('Upload started');

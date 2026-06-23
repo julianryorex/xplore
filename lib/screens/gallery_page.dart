@@ -52,16 +52,10 @@ class GalleryPage extends StatelessWidget {
                           height: heroHeight,
                           total: images.length,
                           onUpload: () => context.read<GalleryCubit>().uploadToGallery(),
-                          onTapCover:
-                              cover == null ? null : () => _openFocus(context, images, images.indexOf(cover)),
+                          onTapCover: cover == null ? null : () => _openFocus(context, images, images.indexOf(cover)),
                         ),
                         Padding(
-                          padding: const EdgeInsets.fromLTRB(
-                            paddingUnit * 1.5,
-                            paddingUnit * 2,
-                            paddingUnit * 1.5,
-                            0,
-                          ),
+                          padding: const EdgeInsets.fromLTRB(paddingUnit * 1.5, paddingUnit * 2, paddingUnit * 1.5, 0),
                           child: images.isEmpty
                               ? const _GalleryEmptyState()
                               : _CompactGrid(
@@ -101,19 +95,12 @@ class GalleryPage extends StatelessWidget {
   /// first available image.
   ImageModel? _coverImage(List<ImageModel> images) {
     if (images.isEmpty) return null;
-    return images.firstWhere(
-      (img) => img.isUploading == EUploadStatus.complete,
-      orElse: () => images.first,
-    );
+    return images.firstWhere((img) => img.isUploading == EUploadStatus.complete, orElse: () => images.first);
   }
 }
 
 void _openFocus(BuildContext context, List<ImageModel> gallery, int index) {
-  Navigator.pushNamed(
-    context,
-    Paths.galleryFocusView,
-    arguments: {'gallery': gallery, 'initialIndex': index},
-  );
+  Navigator.pushNamed(context, Paths.galleryFocusView, arguments: {'gallery': gallery, 'initialIndex': index});
 }
 
 class _Hero extends StatelessWidget {

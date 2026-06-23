@@ -10,6 +10,8 @@ linter:
     require_trailing_commas: true # stylistic, developer preference
 analyzer:
   exclude:
+    - ".dart_tool/**"
+    - "build/**"
     - "**/*.g.dart"
     - "**/*.freezed.dart"
     - "**/*.mocks.dart"

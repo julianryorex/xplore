@@ -18,9 +18,4 @@ abstract class ImageModel with _$ImageModel {
   }) = _ImageModel;
 }
 
-enum EUploadStatus {
-  notStarted,
-  uploading,
-  complete,
-  failed,
-}
+enum EUploadStatus { notStarted, uploading, complete, failed }

@@ -16,8 +16,5 @@ class LoadProfileOnMapState extends MapStates {
 abstract class LoadedMapState extends MapStates with _$LoadedMapState {
   const LoadedMapState._();
 
-  const factory LoadedMapState({
-    LatLng? center,
-    @Default({}) Set<Marker> markers,
-  }) = _LoadedMapState;
+  const factory LoadedMapState({LatLng? center, @Default({}) Set<Marker> markers}) = _LoadedMapState;
 }

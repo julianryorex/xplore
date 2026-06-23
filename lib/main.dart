@@ -5,6 +5,9 @@ import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:hive_flutter/hive_flutter.dart';
 import 'package:logger/logger.dart';
 import 'package:xplore/constants/theme.dart';
+import 'package:xplore/features/auth/bloc/auth_cubit.dart';
+import 'package:xplore/features/auth/presentation/auth_gate.dart';
+import 'package:xplore/features/auth/services/auth_service.dart';
 import 'package:xplore/features/gallery/bloc/gallery_cubit.dart';
 import 'package:xplore/features/gallery/models/image_models_adapters.dart';
 import 'package:xplore/features/itinerary/bloc/itinerary_cubit.dart';
@@ -52,9 +55,7 @@ Future<void> initFirebase(Logger logger) async {
   }
 
   try {
-    await Firebase.initializeApp(
-      options: DefaultFirebaseOptions.currentPlatform,
-    );
+    await Firebase.initializeApp(options: DefaultFirebaseOptions.currentPlatform);
     logger.d('Firebase initialized');
   } on FirebaseException catch (err) {
     if (err.code == 'duplicate-app') {
@@ -70,19 +71,31 @@ class MyApp extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return MultiBlocProvider(
-      providers: [
-        BlocProvider<LocationCubit>(create: (_) => LocationCubit(), lazy: false),
-        BlocProvider<NavbarCubit>(create: (_) => NavbarCubit()),
-        BlocProvider<ItineraryCubit>(create: (_) => ItineraryCubit()),
-        BlocProvider<MapCubit>(create: (_) => MapCubit()),
-        BlocProvider<GalleryCubit>(create: (_) => GalleryCubit()),
-        BlocProvider<ProfileCubit>(create: (_) => ProfileCubit()),
-      ],
-      child: MaterialApp(
-        debugShowCheckedModeBanner: false,
-        theme: getTheme(),
-        onGenerateRoute: RouteGenerator.generateRoute,
+    // One AuthService instance is the single source of UID truth, composed into
+    // every cubit (constructor injection) so none of them import another cubit.
+    return RepositoryProvider<AuthService>(
+      create: (_) => AuthService(),
+      child: Builder(
+        builder: (context) {
+          final authService = context.read<AuthService>();
+          return MultiBlocProvider(
+            providers: [
+              BlocProvider<AuthCubit>(create: (_) => AuthCubit(authService), lazy: false),
+              BlocProvider<LocationCubit>(create: (_) => LocationCubit(authService), lazy: false),
+              BlocProvider<NavbarCubit>(create: (_) => NavbarCubit()),
+              BlocProvider<ItineraryCubit>(create: (_) => ItineraryCubit()),
+              BlocProvider<MapCubit>(create: (_) => MapCubit(authService)),
+              BlocProvider<GalleryCubit>(create: (_) => GalleryCubit()),
+              BlocProvider<ProfileCubit>(create: (_) => ProfileCubit(authService)),
+            ],
+            child: MaterialApp(
+              debugShowCheckedModeBanner: false,
+              theme: getTheme(),
+              home: const AuthGate(),
+              onGenerateRoute: RouteGenerator.generateRoute,
+            ),
+          );
+        },
       ),
     );
   }

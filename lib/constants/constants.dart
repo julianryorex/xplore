@@ -52,4 +52,8 @@ const glassBlur = 18.0;
 
 // TODO: get from bloc
 const itineraryId = 'ph4kd';
+
+// QUARANTINED (FEAT-001): demo fallback only. Production reads the real Firebase
+// UID via AuthService.currentUid; this constant is used solely before sign-in
+// resolves and in demo/test paths. Full removal is tracked in FEAT-004.
 const userId = '7d125e54-9de9-4a5c-bb15-29efacda4f9a';

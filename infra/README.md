@@ -14,14 +14,17 @@ sign-in provider.
 | Service | Resource | Mode |
 |---------|----------|------|
 | Firebase | `google_firebase_project`, `google_firebase_apple_app` | import |
-| Auth | `google_identity_platform_config` (base) + Apple IdP (gated) | create/scaffold |
+| Auth | `google_identity_platform_config` (base) + Google IdP (gated) + Apple IdP (gated) | create/scaffold |
 | Firestore / Datastore | existing `(default)` database (`nam5`, `DATASTORE_MODE`) | import / protect |
 | Firestore app DB | named `xplore-app` database (`us-east1`, `FIRESTORE_NATIVE`) + rules | create |
 | Realtime DB | `google_firebase_database_instance` + RTDB rules (REST) | import + apply |
 | Storage | `google_firebase_storage_bucket` + rules | import |
 | APIs | `google_project_service` (firebase, identitytoolkit, firestore, ...) | enable |
 
-Auth providers: **Apple only** (Anonymous + Google deferred per FEAT-001).
+Auth providers: **Google** (interim, enabled now) and **Apple** (scaffolded,
+gated on credentials). Anonymous deferred per FEAT-001. Google was brought
+forward ahead of Apple while Apple Developer enrollment is unavailable; the
+design stays provider-agnostic so Apple drops in by filling its vars.
 
 ## Prerequisites
 
@@ -98,6 +101,34 @@ FirebaseFirestore.instanceFor(
 terraform plan -out tfplan
 terraform apply tfplan
 ```
+
+## Google sign-in (interim provider)
+
+Google is enabled ahead of Apple. Terraform owns the Identity Platform
+`google.com` IdP config, but **Terraform cannot create the OAuth web client
+itself** — that credential is created out-of-band and injected, the same way
+Apple's `.p8` is.
+
+1. Create the OAuth client (one-time):
+   - Easiest: in the **Firebase Console > Authentication > Sign-in method**,
+     enable **Google**. Firebase auto-creates a "Web client (auto created by
+     Google Service)" OAuth 2.0 credential.
+   - Or in **GCP Console > APIs & Services > Credentials**, create an OAuth 2.0
+     Client ID of type **Web application**.
+2. Copy the **client ID** and **client secret** (GCP Console > Credentials >
+   the web client) into `terraform.tfvars` (or `TF_VAR_*`):
+   ```hcl
+   google_oauth_client_id     = "1234567890-xxxx.apps.googleusercontent.com"
+   google_oauth_client_secret = "GOCSPX-xxxxxxxx"
+   ```
+3. `terraform apply` — the `google.com` IdP config is created/enabled. Until
+   `google_oauth_client_id` is set, the Google IdP resource is skipped
+   (`count = 0`) and the rest of the infra still applies.
+
+> The Flutter app's Google sign-in also needs the **iOS OAuth client ID** and
+> its reversed-client-ID URL scheme, which come from the app's
+> `GoogleService-Info.plist` (regenerate it from the Firebase console after
+> enabling Google). That is app-side config, separate from the web client above.
 
 ## Apple sign-in (manual finish)
 
