@@ -19,10 +19,19 @@ class ProfileCubit extends Cubit<ProfileState> {
   final AuthService _authService;
   late final MarkerService markerService;
 
-  ProfileCubit(this._authService)
-    : super(ProfileState(id: _authService.currentUid ?? userId, name: 'Julian Rechsteiner')) {
+  ProfileCubit(
+    this._authService, {
+    @visibleForTesting bool loadLocalProfile = true,
+  }) : super(
+         ProfileState(
+           id: _authService.currentUid ?? userId,
+           name: 'Julian Rechsteiner',
+         ),
+       ) {
     markerService = MarkerService();
-    loadProfileInState();
+    if (loadLocalProfile) {
+      loadProfileInState();
+    }
   }
 
   /// The active user id: the real Firebase UID once authenticated, falling back
