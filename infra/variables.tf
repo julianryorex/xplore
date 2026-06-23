@@ -94,3 +94,22 @@ variable "apple_private_key" {
   default     = ""
   sensitive   = true
 }
+
+# ---------------------------------------------------------------------------
+# Google Sign-In (interim provider, enabled ahead of Apple)
+# Terraform owns the Identity Platform google.com IdP config, but the OAuth web
+# client itself is created out-of-band (GCP Credentials console / Firebase
+# auto-create) and injected here. Leave empty to skip the Google provider.
+# ---------------------------------------------------------------------------
+variable "google_oauth_client_id" {
+  description = "OAuth 2.0 web client ID for Google sign-in. Empty = Google provider not configured."
+  type        = string
+  default     = ""
+}
+
+variable "google_oauth_client_secret" {
+  description = "OAuth 2.0 web client secret for Google sign-in. Sensitive."
+  type        = string
+  default     = ""
+  sensitive   = true
+}

@@ -98,11 +98,7 @@ class ItineraryCard extends StatelessWidget {
                           const SizedBox(height: paddingUnit / 2),
                           Row(
                             children: [
-                              Icon(
-                                Icons.place_outlined,
-                                size: 15,
-                                color: XploreColors.white.withValues(alpha: 0.82),
-                              ),
+                              Icon(Icons.place_outlined, size: 15, color: XploreColors.white.withValues(alpha: 0.82)),
                               const SizedBox(width: 4),
                               Expanded(
                                 child: Text(

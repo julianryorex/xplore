@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:logger/logger.dart';
+import 'package:xplore/features/auth/presentation/onboarding_page.dart';
+import 'package:xplore/features/auth/presentation/sign_in_page.dart';
 import 'package:xplore/features/gallery/presentation/gallery_focus_view.dart';
 import 'package:xplore/features/itinerary/models/itinerary_models.dart';
 import 'package:xplore/screens/gallery_page.dart';
@@ -15,6 +17,7 @@ class Paths {
   static const home = '/';
   static const map = '/map';
   static const onboarding = '/onboarding-flow';
+  static const signIn = '/sign-in';
   static const gallery = '/gallery';
   static const galleryFocusView = '/gallery-focus';
 
@@ -39,17 +42,16 @@ class RouteGenerator {
       case Paths.profile:
         return FadePageRoute(page: const ProfilePage());
       case Paths.onboarding:
-        return MaterialPageRoute(builder: (_) => Container());
+        return MaterialPageRoute(builder: (_) => const OnboardingPage());
+      case Paths.signIn:
+        return MaterialPageRoute(builder: (_) => const SignInPage());
       case Paths.gallery:
         return MaterialPageRoute(builder: (_) => const GalleryPage());
       case Paths.galleryFocusView:
         return MaterialPageRoute(
           builder: (_) {
             if (args is Map<String, dynamic> && args.containsKey('gallery') && args.containsKey('initialIndex')) {
-              return GalleryFocusView(
-                images: args['gallery'],
-                initialIndex: args['initialIndex'],
-              );
+              return GalleryFocusView(images: args['gallery'], initialIndex: args['initialIndex']);
             }
 
             _logger.e('argument is not of type "ImageModel"');
@@ -93,24 +95,13 @@ class FadePageRoute extends PageRouteBuilder {
   final Widget page;
 
   FadePageRoute({required this.page})
-      : super(
-          pageBuilder: (
-            BuildContext context,
-            Animation<double> animation,
-            Animation<double> secondaryAnimation,
-          ) {
-            return page;
-          },
-          transitionsBuilder: (
-            BuildContext context,
-            Animation<double> animation,
-            Animation<double> secondaryAnimation,
-            Widget child,
-          ) {
-            return FadeTransition(
-              opacity: animation,
-              child: child,
-            );
-          },
-        );
+    : super(
+        pageBuilder: (BuildContext context, Animation<double> animation, Animation<double> secondaryAnimation) {
+          return page;
+        },
+        transitionsBuilder:
+            (BuildContext context, Animation<double> animation, Animation<double> secondaryAnimation, Widget child) {
+              return FadeTransition(opacity: animation, child: child);
+            },
+      );
 }

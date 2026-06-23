@@ -12,6 +12,14 @@ firestore_type     = "DATASTORE_MODE"
 app_firestore_database_id = "xplore-app"
 app_firestore_location    = "us-east1"
 
+# Google Sign-In (interim provider, enabled ahead of Apple).
+# Create an OAuth 2.0 "Web application" client in
+# GCP Console > APIs & Services > Credentials (or let Firebase auto-create one
+# when Google sign-in is first enabled), then paste its values here. The secret
+# is sensitive — prefer TF_VAR_google_oauth_client_secret in CI.
+# google_oauth_client_id     = "1234567890-xxxxxxxxxxxxxxxx.apps.googleusercontent.com"
+# google_oauth_client_secret = "GOCSPX-xxxxxxxxxxxxxxxxxxxx"
+
 # Apple Sign-In (leave empty until ready; then re-apply to enable Apple).
 # apple_services_id = "com.olympuslabs.xplore.signin"
 # apple_team_id     = "XXXXXXXXXX"

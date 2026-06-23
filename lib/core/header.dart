@@ -8,12 +8,7 @@ class Header extends StatelessWidget {
 
   static const padding = paddingUnit * 4;
 
-  const Header({
-    this.leadingWidget,
-    this.titleWidget,
-    this.trailingWidget,
-    super.key,
-  });
+  const Header({this.leadingWidget, this.titleWidget, this.trailingWidget, super.key});
 
   @override
   Widget build(BuildContext context) {

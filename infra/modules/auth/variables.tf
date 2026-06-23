@@ -22,3 +22,14 @@ variable "apple_private_key" {
   default   = ""
   sensitive = true
 }
+
+variable "google_oauth_client_id" {
+  type    = string
+  default = ""
+}
+
+variable "google_oauth_client_secret" {
+  type      = string
+  default   = ""
+  sensitive = true
+}
