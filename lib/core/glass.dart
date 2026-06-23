@@ -141,7 +141,9 @@ class GlassIconButton extends StatelessWidget {
         strong: true,
         padding: EdgeInsets.zero,
         onTap: onTap,
-        child: Center(child: Icon(icon, size: iconSize, color: iconColor ?? XploreColors.white)),
+        child: Center(
+          child: Icon(icon, size: iconSize, color: iconColor ?? XploreColors.white),
+        ),
       ),
     );
 

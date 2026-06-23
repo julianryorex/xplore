@@ -19,21 +19,15 @@ abstract class ItineraryModel with _$ItineraryModel {
 
 @freezed
 abstract class DailyPlanModel with _$DailyPlanModel {
-  const factory DailyPlanModel({
-    required String title,
-    required String location,
-    required PlanModel plan,
-  }) = _DailyPlanModel;
+  const factory DailyPlanModel({required String title, required String location, required PlanModel plan}) =
+      _DailyPlanModel;
 
   factory DailyPlanModel.fromJson(Map<String, Object?> json) => _$DailyPlanModelFromJson(json);
 }
 
 @freezed
 abstract class PlanModel with _$PlanModel {
-  const factory PlanModel({
-    required List<String> favorited,
-    required List<LocationPlanModel> locations,
-  }) = _PlanModel;
+  const factory PlanModel({required List<String> favorited, required List<LocationPlanModel> locations}) = _PlanModel;
 
   factory PlanModel.fromJson(Map<String, Object?> json) => _$PlanModelFromJson(json);
 }

@@ -1,5 +1,1 @@
-enum EBlocStatus {
-  loading,
-  loaded,
-  error,
-}
+enum EBlocStatus { loading, loaded, error }

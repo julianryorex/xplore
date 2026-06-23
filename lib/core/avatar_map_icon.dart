@@ -6,11 +6,7 @@ class AvatarMapIcon extends StatelessWidget {
   final double size;
   final ImageProvider<Object>? image;
 
-  const AvatarMapIcon({
-    this.size = 100,
-    this.image,
-    super.key,
-  });
+  const AvatarMapIcon({this.size = 100, this.image, super.key});
 
   static final GlobalKey globalKeyAvatarMapIcon = GlobalKey(debugLabel: 'globalKeyAvatarMapIcon');
 
