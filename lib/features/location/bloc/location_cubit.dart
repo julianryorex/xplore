@@ -9,6 +9,7 @@ import 'package:google_maps_flutter/google_maps_flutter.dart';
 import 'package:logger/logger.dart';
 import 'package:xplore/constants/constants.dart';
 import 'package:xplore/constants/extensions.dart';
+import 'package:xplore/features/auth/services/auth_service.dart';
 import 'package:xplore/features/location/models/location_models.dart';
 import 'package:xplore/utilities/utilities.dart';
 
@@ -17,10 +18,10 @@ part 'location_states.dart';
 
 // TODO: test if this still works with app in the foreground
 // TODO: look into background fetch
-// TODO: use real user id from auth
 
 class LocationCubit extends Cubit<LocationState> {
   late final Logger _logger;
+  final AuthService _authService;
 
   /// Timer where every min user location is updated & fetched to/from the cloud
   late Timer updateLocationTimer;
@@ -29,7 +30,7 @@ class LocationCubit extends Cubit<LocationState> {
 
   static const locationUpdateInterval = 10;
 
-  LocationCubit() : super(const LocationState(locations: {})) {
+  LocationCubit(this._authService) : super(const LocationState(locations: {})) {
     _logger = createLogger('Location');
     updateMyLocation();
 
@@ -54,6 +55,10 @@ class LocationCubit extends Cubit<LocationState> {
 
   void endTimer() => updateLocationTimer.cancel();
 
+  /// The active user id: real Firebase UID once authenticated, else the
+  /// quarantined demo constant (full removal in FEAT-004).
+  String get _uid => _authService.currentUid ?? userId;
+
   //! -------------------------------------------------------------------------
   //! Public Methods
   //! -------------------------------------------------------------------------
@@ -72,16 +77,17 @@ class LocationCubit extends Cubit<LocationState> {
     DatabaseReference locationRef = FirebaseDatabase.instance.ref('locations/$itineraryId');
 
     // set my location
+    final uid = _uid;
     final myCoords = await getCurrentLocation();
     final myLocation = LocationModel(
-      id: userId,
+      id: uid,
       lastUpdated: DateTime.now(),
       lat: myCoords.latitude,
       lng: myCoords.longitude,
     );
 
-    emit(state.copyWith(locations: {userId: myLocation}));
-    await locationRef.child(userId).set(myLocation.toJson());
+    emit(state.copyWith(locations: {uid: myLocation}));
+    await locationRef.child(uid).set(myLocation.toJson());
   }
 
   @visibleForTesting
@@ -123,9 +129,9 @@ class LocationCubit extends Cubit<LocationState> {
 
     final Map<String, LocationModel> locationMap = {};
 
-    locationsFromJson.entries.forEach((loc) {
+    for (final loc in locationsFromJson.entries) {
       locationMap[loc.key] = LocationModel.fromJson(loc.value);
-    });
+    }
 
     _logger.d('Loaded ${locationMap.entries.length} demo locations.');
 

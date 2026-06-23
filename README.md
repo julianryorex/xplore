@@ -45,6 +45,7 @@ lib/
 - **Immutable models** via Freezed with json_serializable codegen
 - **Offline-first data layer** — Hive for local caching, Firebase for cloud sync
 - **Repository pattern** for gallery (Hive abstraction); other features interact with Firebase directly from cubits
+- **Cubits never import cubits** — cross-feature state lives in a plain service injected into each cubit (see [`docs/PATTERNS.md`](docs/PATTERNS.md))
 
 ---
 
@@ -119,8 +120,8 @@ CI workflow only; a separate macOS app workflow has not been added yet.
 |---------|-------------|
 | `make get` | Install Flutter dependencies with FVM |
 | `make gen` | Run build_runner with FVM Dart (Freezed, json_serializable, Hive adapters) |
-| `make format` | Apply Dart fixes and format with FVM Dart (120 char line width) |
-| `make check-format` | CI-style format check with FVM Dart |
+| `make format` | Apply Dart fixes and format app/test Dart code with FVM Dart (120 char line width) |
+| `make check-format` | CI-style format check for app/test Dart code with FVM Dart |
 | `make build-ios` | Build iOS release with FVM Flutter |
 | `make clean` | Clean build artifacts and generated code with FVM Flutter |
 | `make reboot` | Full rebuild: clean → get → gen → build-ios |

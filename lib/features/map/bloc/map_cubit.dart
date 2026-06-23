@@ -5,6 +5,7 @@ import 'package:geolocator/geolocator.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
 import 'package:logger/logger.dart';
 import 'package:xplore/constants/constants.dart';
+import 'package:xplore/features/auth/services/auth_service.dart';
 import 'package:xplore/features/location/models/location_models.dart';
 import 'package:xplore/features/map/services/marker_service.dart';
 import 'package:xplore/utilities/utilities.dart';
@@ -18,14 +19,19 @@ part 'map_states.dart';
 
 class MapCubit extends Cubit<MapStates> {
   late final Logger _logger;
+  final AuthService _authService;
   late String mapStyle;
   late MarkerService markerService;
 
-  MapCubit() : super(InitialMapState()) {
+  MapCubit(this._authService) : super(InitialMapState()) {
     _logger = createLogger('Map');
     markerService = MarkerService();
     init();
   }
+
+  /// The active user id: real Firebase UID once authenticated, else the
+  /// quarantined demo constant (full removal in FEAT-004).
+  String get _uid => _authService.currentUid ?? userId;
 
   static const initialCameraPosition = CameraPosition(target: LatLng(40.7128, -73.9571), zoom: 12.0);
 
@@ -36,7 +42,7 @@ class MapCubit extends Cubit<MapStates> {
   }
 
   Future<void> checkUserMarkerState() async {
-    final userMarker = await markerService.fetchMarkerIcon(userId);
+    final userMarker = await markerService.fetchMarkerIcon(_uid);
 
     if (userMarker == null) {
       emit(LoadProfileOnMapState());
@@ -53,7 +59,7 @@ class MapCubit extends Cubit<MapStates> {
   Future<void> initialMarkerUpdate() async {
     final iconBytes = await markerService.convertMarkerWidgetToBytes();
     _logger.d('Generated iconBytes (${iconBytes?.length} bytes)');
-    await markerService.updateMarkerIcon(userId, iconBytes!);
+    await markerService.updateMarkerIcon(_uid, iconBytes!);
     emit(const LoadedMapState());
   }
 
@@ -72,12 +78,13 @@ class MapCubit extends Cubit<MapStates> {
       final markerIcon = userMarker != null ? BitmapDescriptor.bytes(userMarker) : BitmapDescriptor.defaultMarker;
 
       final marker = Marker(
-          markerId: MarkerId(el.id),
-          position: LatLng(el.lat, el.lng),
-          anchor: userMarker != null ? const Offset(0.5, 0.5) : const Offset(0.5, 1.0),
-          alpha: DateTime.now().difference(el.lastUpdated) > const Duration(minutes: 10) ? 0.5 : 1,
-          icon: markerIcon,
-          infoWindow: const InfoWindow(title: 'Julian', anchor: Offset(-0.5, 0.0)));
+        markerId: MarkerId(el.id),
+        position: LatLng(el.lat, el.lng),
+        anchor: userMarker != null ? const Offset(0.5, 0.5) : const Offset(0.5, 1.0),
+        alpha: DateTime.now().difference(el.lastUpdated) > const Duration(minutes: 10) ? 0.5 : 1,
+        icon: markerIcon,
+        infoWindow: const InfoWindow(title: 'Julian', anchor: Offset(-0.5, 0.0)),
+      );
 
       markersV2.add(marker);
     }

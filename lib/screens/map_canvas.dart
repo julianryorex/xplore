@@ -91,15 +91,26 @@ class _MapCanvasState extends State<MapCanvas> {
                               children: [
                                 AvatarMapIcon(
                                   size: 100,
-                                  image: state.profilePicture != null ? Image.memory(state.profilePicture!).image : null,
+                                  image: state.profilePicture != null
+                                      ? Image.memory(state.profilePicture!).image
+                                      : null,
                                 ),
                                 const Text('Hello'),
                                 OutlinedButton(
                                   onPressed: () async {
-                                    await context.read<MapCubit>().initialMarkerUpdate().then((value) async {
-                                      final locations = context.read<LocationCubit>().state.locations.values.toList();
-                                      await context.read<MapCubit>().updateUserMarkers(locations);
-                                    }).then((value) => Navigator.pop(context));
+                                    await context
+                                        .read<MapCubit>()
+                                        .initialMarkerUpdate()
+                                        .then((value) async {
+                                          final locations = context
+                                              .read<LocationCubit>()
+                                              .state
+                                              .locations
+                                              .values
+                                              .toList();
+                                          await context.read<MapCubit>().updateUserMarkers(locations);
+                                        })
+                                        .then((value) => Navigator.pop(context));
                                   },
                                   child: const Text('Sounds good!'),
                                 ),
@@ -115,9 +126,7 @@ class _MapCanvasState extends State<MapCanvas> {
               child: BlocBuilder<MapCubit, MapStates>(
                 builder: (context, state) {
                   if (state is! LoadedMapState) {
-                    return const Center(
-                      child: CircularProgressIndicator(),
-                    );
+                    return const Center(child: CircularProgressIndicator());
                   }
 
                   return GoogleMap(
@@ -179,9 +188,7 @@ class _MapCanvasState extends State<MapCanvas> {
             top: topInset + headerTopGap,
             left: 0,
             right: 0,
-            child: Header(
-              titleWidget: const _MapTitle(),
-            ),
+            child: Header(titleWidget: const _MapTitle()),
           ),
         ],
       ),

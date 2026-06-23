@@ -22,3 +22,8 @@ output "apple_auth_configured" {
   description = "Whether the Apple sign-in provider was configured (requires Apple credentials)."
   value       = module.auth.apple_configured
 }
+
+output "google_auth_configured" {
+  description = "Whether the Google sign-in provider was configured (requires OAuth web client credentials)."
+  value       = module.auth.google_configured
+}

@@ -7,6 +7,7 @@ import 'package:freezed_annotation/freezed_annotation.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:xplore/constants/constants.dart';
+import 'package:xplore/features/auth/services/auth_service.dart';
 import 'package:xplore/features/map/services/marker_service.dart';
 import 'package:xplore/utilities/utilities.dart';
 
@@ -15,12 +16,18 @@ part 'profile_state.dart';
 
 class ProfileCubit extends Cubit<ProfileState> {
   final _logger = createLogger('Profile');
+  final AuthService _authService;
   late final MarkerService markerService;
 
-  ProfileCubit() : super(const ProfileState(id: userId, name: 'Julian Rechsteiner')) {
+  ProfileCubit(this._authService)
+    : super(ProfileState(id: _authService.currentUid ?? userId, name: 'Julian Rechsteiner')) {
     markerService = MarkerService();
     loadProfileInState();
   }
+
+  /// The active user id: the real Firebase UID once authenticated, falling back
+  /// to the quarantined demo constant pre-auth (full removal in FEAT-004).
+  String get _uid => _authService.currentUid ?? userId;
 
   //! -------------------------------------------------------------------------
   //! Public Methods
@@ -44,7 +51,7 @@ class ProfileCubit extends Cubit<ProfileState> {
     final iconBytes = await markerService.convertMarkerWidgetToBytes();
     _logger.d('Generated iconBytes (${iconBytes?.length} bytes)');
 
-    markerService.updateMarkerIcon(userId, iconBytes!);
+    markerService.updateMarkerIcon(_uid, iconBytes!);
   }
 
   Future<void> deleteAll() async => await markerService.deleteAll();
