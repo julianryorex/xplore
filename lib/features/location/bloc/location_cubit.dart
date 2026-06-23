@@ -123,9 +123,9 @@ class LocationCubit extends Cubit<LocationState> {
 
     final Map<String, LocationModel> locationMap = {};
 
-    locationsFromJson.entries.forEach((loc) {
+    for (final loc in locationsFromJson.entries) {
       locationMap[loc.key] = LocationModel.fromJson(loc.value);
-    });
+    }
 
     _logger.d('Loaded ${locationMap.entries.length} demo locations.');
 
