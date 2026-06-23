@@ -16,6 +16,16 @@ spec source of truth. Do **not** create GitHub issues directly — emit an
 `issue-proposal` block (see `.github/ISSUE_FILING.md`) and let the Issue Filer
 agent file it. Exception: the Issue Filer automation itself.
 
+**Pull requests:** When opening a PR for work tied to a GitHub issue, the PR
+body **must** include a `Closes #N` line (or `Fixes #N` / `Resolves #N`) for
+each issue the PR fully completes — place it in a **Linked issues** section near
+the top (see `.github/pull_request_template.md`). GitHub only auto-closes issues
+when one of those keywords appears in the PR description; omitting it leaves
+completed work looking stale in the issue queue. If the PR only partially
+addresses an issue, use `Related: #N` instead — never `Closes`. When starting
+from a FEAT spec, run `gh issue list --state open --limit 100` and link the
+matching epic or sub-issue before `gh pr create`.
+
 ### Toolchain / setup notes (non-obvious)
 - Use **FVM-pinned Flutter 3.44.0 (Dart 3.12)**. This matches `.fvmrc`,
   `pubspec.yaml`, and `pubspec.lock` (`flutter >=3.44.0`, `dart >=3.12.0`).

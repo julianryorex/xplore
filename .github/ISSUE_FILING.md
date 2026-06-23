@@ -10,6 +10,9 @@ GitHub Issues are the **execution queue**. Product intent stays in `product/requ
 
 Only the **Issue Filer** agent creates GitHub issues. Other agents emit structured proposals.
 
+When a PR completes an issue, its description must include `Closes #N` (see
+[AGENTS.md](../AGENTS.md) and [.github/pull_request_template.md](./pull_request_template.md)).
+
 ---
 
 ## Issue Filer (Cursor Automation)
