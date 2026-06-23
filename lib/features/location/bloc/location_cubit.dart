@@ -129,7 +129,7 @@ class LocationCubit extends Cubit<LocationState> {
 
     final Map<String, LocationModel> locationMap = {};
 
-    for (var loc in locationsFromJson.entries) {
+    for (final loc in locationsFromJson.entries) {
       locationMap[loc.key] = LocationModel.fromJson(loc.value);
     }
 
