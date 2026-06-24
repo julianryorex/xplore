@@ -1,5 +1,3 @@
-import 'dart:developer';
-
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
@@ -225,7 +223,7 @@ class HomePage extends StatelessWidget {
                   size: 44,
                   iconSize: 22,
                   icon: Icons.notifications_none_rounded,
-                  onTap: () => log('tapped'),
+                  onTap: () => context.push(Paths.notifications),
                 ),
               ),
             ),
