@@ -7,31 +7,48 @@ class LayoutPadding extends StatelessWidget {
   final Widget? header;
   final bool enableHeaderPadding;
 
-  const LayoutPadding({required this.child, this.enableHeaderPadding = true, this.header, super.key});
+  const LayoutPadding({
+    required this.child,
+    this.enableHeaderPadding = true,
+    this.header,
+    super.key,
+  });
 
   @override
   Widget build(BuildContext context) {
+    // Status-bar height. This survives the enclosing SafeArea (which strips
+    // `padding` but keeps `viewPadding`), letting the scrim reach up behind the
+    // status bar so the ambient glow doesn't peek out above it as a hard seam.
+    final topInset = MediaQuery.viewPaddingOf(context).top;
+
     return Stack(
+      // Allow the scrim to paint upward into the status-bar area, above this
+      // widget's own bounds.
+      clipBehavior: Clip.none,
       children: [
         Padding(
           padding: EdgeInsets.only(
             left: paddingUnit * 1.5,
             right: paddingUnit * 1.5,
             bottom: paddingUnit * 1.5,
-            top: paddingUnit * 1.5 + (enableHeaderPadding && header != null ? Header.padding : 0),
+            top:
+                paddingUnit * 1.5 +
+                (enableHeaderPadding && header != null ? Header.padding : 0),
           ),
           child: child,
         ),
         // Soft scrim so content scrolling beneath the floating header stays
-        // legible without giving the header a heavy opaque bar.
+        // legible without giving the header a heavy opaque bar. It extends up
+        // over the status bar so the top of the screen fades evenly into the
+        // ambient background instead of cutting off the glow abruptly.
         if (header != null)
           Positioned(
-            top: 0,
+            top: -topInset,
             left: 0,
             right: 0,
             child: IgnorePointer(
               child: Container(
-                height: Header.padding + paddingUnit * 2,
+                height: Header.padding + paddingUnit * 2 + topInset,
                 decoration: BoxDecoration(
                   gradient: LinearGradient(
                     begin: Alignment.topCenter,
