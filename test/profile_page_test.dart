@@ -1,21 +1,13 @@
-import 'package:fake_cloud_firestore/fake_cloud_firestore.dart';
 import 'package:firebase_auth_mocks/firebase_auth_mocks.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:xplore/constants/theme.dart';
 import 'package:xplore/features/auth/bloc/auth_cubit.dart';
-import 'package:xplore/features/auth/services/auth_service.dart';
 import 'package:xplore/features/profile/bloc/profile_cubit.dart';
 import 'package:xplore/screens/profile_page.dart';
 
-Future<void> _loadPoppins() async {
-  final loader = FontLoader('Poppins')
-    ..addFont(rootBundle.load('assets/fonts/Poppins-Medium.ttf'))
-    ..addFont(rootBundle.load('assets/fonts/Poppins-SemiBold.ttf'));
-  await loader.load();
-}
+import 'helpers/auth_fixtures.dart';
 
 class _ProfileHarness {
   _ProfileHarness({required this.authCubit, required this.profileCubit});
@@ -25,16 +17,13 @@ class _ProfileHarness {
 }
 
 Future<_ProfileHarness> _pumpProfilePage(WidgetTester tester) async {
-  final authService = AuthService(
-    firebaseAuth: MockFirebaseAuth(
-      signedIn: true,
-      mockUser: MockUser(
-        uid: 'abc123',
-        displayName: 'Ada Lovelace',
-        email: 'ada@example.com',
-      ),
+  final authService = fakeAuthService(
+    signedIn: true,
+    user: MockUser(
+      uid: 'abc123',
+      displayName: 'Ada Lovelace',
+      email: 'ada@example.com',
     ),
-    firestore: FakeFirebaseFirestore(),
   );
   final authCubit = AuthCubit(authService);
   final profileCubit = ProfileCubit(authService, loadLocalProfile: false);
@@ -62,8 +51,6 @@ Future<_ProfileHarness> _pumpProfilePage(WidgetTester tester) async {
 
 void main() {
   TestWidgetsFlutterBinding.ensureInitialized();
-
-  setUpAll(_loadPoppins);
 
   testWidgets('ProfilePage shows signed-in account and confirms sign-out', (
     tester,

@@ -39,8 +39,16 @@ check-format:
 test:
 	$(FLUTTER) test
 
+# Refresh golden baselines. Goldens are an Apple-only artifact (text rasterises
+# differently on Linux) — only run this on a macOS host.
 test-gold:
 	$(FLUTTER) test --update-goldens
+
+# Runs the suite with coverage, dropping generated sources from the report.
+test-cov:
+	$(FLUTTER) test --coverage
+	@lcov --remove coverage/lcov.info 'lib/generated/*' -o coverage/lcov.info --ignore-errors unused 2>/dev/null || true
+	@echo "Coverage written to coverage/lcov.info"
 
 delete-gold:
 	find ./test/ -wholename '*golden*' -delete
