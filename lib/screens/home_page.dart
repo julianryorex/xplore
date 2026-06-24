@@ -189,14 +189,6 @@ class HomePage extends StatelessWidget {
                     children: [
                       OutlinedButton(
                         onPressed: () async {
-                          await context
-                              .read<ItineraryCubit>()
-                              .loadDemoItinerary();
-                        },
-                        child: const Text('Load data'),
-                      ),
-                      OutlinedButton(
-                        onPressed: () async {
                           context.push(Paths.gallery);
                           await context.read<GalleryCubit>().uploadToGallery();
                         },
@@ -211,7 +203,8 @@ class HomePage extends StatelessWidget {
                         child: const Text('Delete Hive'),
                       ),
                       OutlinedButton(
-                        onPressed: () => context.read<TripCubit>().debugTriggerError(),
+                        onPressed: () =>
+                            context.read<TripCubit>().debugTriggerError(),
                         child: const Text('Trigger error'),
                       ),
                     ],
@@ -279,7 +272,12 @@ class _ItineraryPlaceholder extends StatelessWidget {
           Icon(Icons.event_note_outlined, color: XploreColors.alternate),
           const SizedBox(width: paddingUnit),
           Expanded(
-            child: Text(message, style: context.pText.bodySmall?.copyWith(color: XploreColors.mutedText)),
+            child: Text(
+              message,
+              style: context.pText.bodySmall?.copyWith(
+                color: XploreColors.mutedText,
+              ),
+            ),
           ),
         ],
       ),
@@ -323,7 +321,8 @@ class _TripStatePrompt extends StatelessWidget {
           ),
           TripError() => ErrorState(
             title: 'Unable to load trips',
-            message: 'Something went wrong while loading your trips. Please try again.',
+            message:
+                'Something went wrong while loading your trips. Please try again.',
             onRetry: () => context.read<TripCubit>().retry(),
           ),
           _ => const SizedBox.shrink(),
