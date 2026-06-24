@@ -55,6 +55,24 @@ Wiring (see `lib/main.dart`): one `AuthService` is provided via
 `RepositoryProvider` and passed into each cubit's constructor, so every cubit
 shares the same instance.
 
+## Auth-dependent cubits
+
+Choose deliberately between action-driven and session/reactive auth patterns:
+
+- **Action-driven cubits** (`MapCubit`, `ProfileCubit`) read
+  `AuthService.currentUid` at call time and no-op or fail fast when it is null.
+  Their work is triggered after the auth gate by user actions, timers, or
+  explicit refreshes, so they do not need their own auth subscription.
+- **Session/reactive cubits** (`AuthCubit`, `TripCubit`) subscribe to
+  `AuthService.authStateChanges()`, load on sign-in, and clear any per-user
+  state plus subscriptions on sign-out. Use this when the UI must reflect
+  session data without a user action.
+- **Cross-cubit reactivity** uses a stream mixin instead of one cubit importing
+  another. `TripCubit` publishes `TripState` through `TripStreamMixin`; consumers
+  like `GalleryCubit` and `LocationCubit` subscribe to cache the active trip id.
+  Consumers cancel only their own `StreamSubscription` in `close()` and never
+  close the shared broadcast controller.
+
 ## Other conventions (see README "Key patterns")
 
 - **Feature-first modules** — each domain owns its `bloc/`, `models/`,

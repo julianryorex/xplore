@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:io';
 import 'dart:typed_data';
 
@@ -14,30 +15,37 @@ import 'package:xplore/features/auth/services/auth_service.dart';
 import 'package:xplore/features/gallery/models/image_models.dart';
 import 'package:xplore/features/gallery/repository/gallery_repository.dart';
 import 'package:xplore/features/gallery/services/image_compressor.dart';
+import 'package:xplore/features/trip/bloc/trip_state.dart';
+import 'package:xplore/features/trip/bloc/trip_stream_mixin.dart';
 import 'package:xplore/utilities/utilities.dart';
 
 part '../../../generated/features/gallery/bloc/gallery_cubit.freezed.dart';
 part 'gallery_states.dart';
 
 // TODOs:
-// - Fetch current itinerary id from TripCubit (FEAT-002) instead of the
-//   `itineraryId` placeholder constant
+// - Keep `itineraryId` as the late-subscriber/demo fallback until trip switching
+//   can replay or synchronously expose the active trip id.
 // - Support selection & compression w/ video
 // - Implement GCP fetches/downloads after fetching cache
-class GalleryCubit extends Cubit<GalleryState> {
+class GalleryCubit extends Cubit<GalleryState> with TripStreamMixin {
   late final Logger _logger;
   late final GalleryRepository repository;
   final AuthService _authService;
+  StreamSubscription<TripState>? _tripSubscription;
+  String? _activeTripId;
 
   GalleryCubit(this._authService, {GalleryRepository? repo}) : super(const GalleryState()) {
     repository = repo ?? GalleryRepository();
     _logger = createLogger('Gallery');
+    _tripSubscription = listenToTripState(_onTripStateChanged);
 
     loadImgFromCache();
   }
 
   /// The uploader's Firebase UID, or null when unauthenticated.
   String? get _uid => _authService.currentUid;
+
+  String get _tripScopeId => _activeTripId ?? itineraryId;
 
   void loadImgFromCache() {
     _logger.d('Load cached gallery');
@@ -151,6 +159,17 @@ class GalleryCubit extends Cubit<GalleryState> {
     emit(state.copyWith(imageMap: newMap));
   }
 
+  void _onTripStateChanged(TripState tripState) {
+    switch (tripState) {
+      case TripLoaded(:final active):
+        _activeTripId = active.id;
+      case TripEmpty() || TripError():
+        _activeTripId = null;
+      case TripLoading():
+        break;
+    }
+  }
+
   /// Converts image file to more generic file
   File? _xFileToFile(XFile xFile) {
     try {
@@ -162,7 +181,6 @@ class GalleryCubit extends Cubit<GalleryState> {
     }
   }
 
-  // TODO(FEAT-002): source the trip id from TripCubit instead of `itineraryId`.
   @visibleForTesting
   Future<String> uploadImage(File imageFile, String imageName) async {
     final uid = _uid;
@@ -172,7 +190,7 @@ class GalleryCubit extends Cubit<GalleryState> {
 
     try {
       FirebaseStorage storage = FirebaseStorage.instance;
-      Reference ref = storage.ref().child('gallery/$itineraryId/$uid/$imageName');
+      Reference ref = storage.ref().child('gallery/$_tripScopeId/$uid/$imageName');
       UploadTask uploadTask = ref.putFile(imageFile);
       TaskSnapshot taskSnapshot = await uploadTask;
       String downloadURL = await taskSnapshot.ref.getDownloadURL();
@@ -188,5 +206,11 @@ class GalleryCubit extends Cubit<GalleryState> {
   Future<void> deleteAll() async {
     await repository.reset();
     emit(const GalleryState(status: EBlocStatus.loaded));
+  }
+
+  @override
+  Future<void> close() async {
+    await _tripSubscription?.cancel();
+    return super.close();
   }
 }

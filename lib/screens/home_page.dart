@@ -14,10 +14,21 @@ import 'package:xplore/features/gallery/bloc/gallery_cubit.dart';
 import 'package:xplore/features/itinerary/bloc/itinerary_cubit.dart';
 import 'package:xplore/features/itinerary/widgets/itinerary_card.dart';
 import 'package:xplore/features/profile/bloc/profile_cubit.dart';
+import 'package:xplore/features/trip/bloc/trip_cubit.dart';
+import 'package:xplore/features/trip/bloc/trip_state.dart';
 import 'package:xplore/routes.dart';
 
 class HomePage extends StatelessWidget {
   const HomePage({super.key});
+
+  void _openCreateTripSheet(BuildContext context) {
+    showModalBottomSheet<void>(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
+      builder: (_) => const _CreateTripSheet(),
+    );
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -49,7 +60,13 @@ class HomePage extends StatelessWidget {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  const SectionHeader(title: 'Daily Plans', actionLabel: 'See all'),
+                  SectionHeader(
+                    title: 'Daily Plans',
+                    actionLabel: 'See all',
+                    onAction: () => _openCreateTripSheet(context),
+                  ),
+                  const SizedBox(height: paddingUnit),
+                  _TripStatePrompt(onCreateTrip: () => _openCreateTripSheet(context)),
                   const SizedBox(height: paddingUnit),
 
                   //! Daily Plans Section Containers
@@ -205,6 +222,134 @@ class HomePage extends StatelessWidget {
                   icon: Icons.notifications_none_rounded,
                   onTap: () => log('tapped'),
                 ),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+class _TripStatePrompt extends StatelessWidget {
+  const _TripStatePrompt({required this.onCreateTrip});
+
+  final VoidCallback onCreateTrip;
+
+  @override
+  Widget build(BuildContext context) {
+    return BlocBuilder<TripCubit, TripState>(
+      builder: (context, state) {
+        return switch (state) {
+          TripEmpty() => GlassSurface(
+            child: Row(
+              children: [
+                Icon(Icons.travel_explore_rounded, color: XploreColors.alternate),
+                const SizedBox(width: paddingUnit),
+                Expanded(
+                  child: Text(
+                    'Create your first trip to start saving plans, photos, and locations together.',
+                    style: context.pText.bodySmall?.copyWith(color: XploreColors.mutedText),
+                  ),
+                ),
+                const SizedBox(width: paddingUnit),
+                FilledButton(onPressed: onCreateTrip, child: const Text('Create')),
+              ],
+            ),
+          ),
+          TripError(:final message) => GlassSurface(
+            child: Text(
+              'Trips could not load: $message',
+              style: context.pText.bodySmall?.copyWith(color: XploreColors.error),
+            ),
+          ),
+          _ => const SizedBox.shrink(),
+        };
+      },
+    );
+  }
+}
+
+class _CreateTripSheet extends StatefulWidget {
+  const _CreateTripSheet();
+
+  @override
+  State<_CreateTripSheet> createState() => _CreateTripSheetState();
+}
+
+class _CreateTripSheetState extends State<_CreateTripSheet> {
+  final TextEditingController _controller = TextEditingController();
+  bool _isSubmitting = false;
+  String? _error;
+
+  @override
+  void dispose() {
+    _controller.dispose();
+    super.dispose();
+  }
+
+  Future<void> _submit() async {
+    final title = _controller.text.trim();
+    if (title.isEmpty) {
+      setState(() => _error = 'Name your trip first.');
+      return;
+    }
+
+    setState(() {
+      _isSubmitting = true;
+      _error = null;
+    });
+
+    try {
+      await context.read<TripCubit>().createTrip(title);
+      if (mounted) {
+        Navigator.of(context).pop();
+      }
+    } catch (error) {
+      if (!mounted) {
+        return;
+      }
+      setState(() {
+        _isSubmitting = false;
+        _error = error.toString();
+      });
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+      padding: EdgeInsets.only(
+        left: paddingUnit,
+        right: paddingUnit,
+        bottom: MediaQuery.viewInsetsOf(context).bottom + paddingUnit,
+      ),
+      child: GlassSurface(
+        strong: true,
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text('Create a trip', style: context.pText.headlineSmall),
+            const SizedBox(height: paddingUnit / 2),
+            Text(
+              'Give this shared space a name. Dates and cover images will come in the full trip switcher.',
+              style: context.pText.bodySmall?.copyWith(color: XploreColors.mutedText),
+            ),
+            const SizedBox(height: paddingUnit),
+            TextField(
+              controller: _controller,
+              autofocus: true,
+              textInputAction: TextInputAction.done,
+              onSubmitted: (_) => _isSubmitting ? null : _submit(),
+              decoration: InputDecoration(errorText: _error, labelText: 'Trip name'),
+            ),
+            const SizedBox(height: paddingUnit),
+            SizedBox(
+              width: double.infinity,
+              child: FilledButton(
+                onPressed: _isSubmitting ? null : _submit,
+                child: Text(_isSubmitting ? 'Creating...' : 'Create trip'),
               ),
             ),
           ],

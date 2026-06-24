@@ -11,6 +11,8 @@ import 'package:xplore/constants/constants.dart';
 import 'package:xplore/constants/extensions.dart';
 import 'package:xplore/features/auth/services/auth_service.dart';
 import 'package:xplore/features/location/models/location_models.dart';
+import 'package:xplore/features/trip/bloc/trip_state.dart';
+import 'package:xplore/features/trip/bloc/trip_stream_mixin.dart';
 import 'package:xplore/utilities/utilities.dart';
 
 part '../../../generated/features/location/bloc/location_cubit.freezed.dart';
@@ -19,9 +21,11 @@ part 'location_states.dart';
 // TODO: test if this still works with app in the foreground
 // TODO: look into background fetch
 
-class LocationCubit extends Cubit<LocationState> {
+class LocationCubit extends Cubit<LocationState> with TripStreamMixin {
   late final Logger _logger;
   final AuthService _authService;
+  StreamSubscription<TripState>? _tripSubscription;
+  String? _activeTripId;
 
   /// Timer where every min user location is updated & fetched to/from the cloud
   Timer? updateLocationTimer;
@@ -32,6 +36,7 @@ class LocationCubit extends Cubit<LocationState> {
 
   LocationCubit(this._authService) : super(const LocationState(locations: {})) {
     _logger = createLogger('Location');
+    _tripSubscription = listenToTripState(_onTripStateChanged);
     updateMyLocation();
 
     if (dotenv.env['DISABLE_REALTIME_LOCATIONS'].toBool()) {
@@ -58,6 +63,8 @@ class LocationCubit extends Cubit<LocationState> {
   /// The active Firebase UID, or null when unauthenticated.
   String? get _uid => _authService.currentUid;
 
+  String get _tripScopeId => _activeTripId ?? itineraryId;
+
   //! -------------------------------------------------------------------------
   //! Public Methods
   //! -------------------------------------------------------------------------
@@ -81,7 +88,7 @@ class LocationCubit extends Cubit<LocationState> {
       return;
     }
 
-    DatabaseReference locationRef = FirebaseDatabase.instance.ref('locations/$itineraryId');
+    DatabaseReference locationRef = FirebaseDatabase.instance.ref('locations/$_tripScopeId');
 
     final myCoords = await getCurrentLocation();
     final myLocation = LocationModel(
@@ -99,7 +106,7 @@ class LocationCubit extends Cubit<LocationState> {
   Future<void> timerCallback(Timer timer) async {
     // every 5 minutes, I will update my location and fetch all locations within the itinerary
 
-    DatabaseReference locationRef = FirebaseDatabase.instance.ref('locations/$itineraryId');
+    DatabaseReference locationRef = FirebaseDatabase.instance.ref('locations/$_tripScopeId');
 
     await updateMyLocation();
 
@@ -143,11 +150,23 @@ class LocationCubit extends Cubit<LocationState> {
     emit(LocationState(locations: locationMap));
   }
 
+  void _onTripStateChanged(TripState tripState) {
+    switch (tripState) {
+      case TripLoaded(:final active):
+        _activeTripId = active.id;
+      case TripEmpty() || TripError():
+        _activeTripId = null;
+      case TripLoading():
+        break;
+    }
+  }
+
   @override
-  Future<void> close() {
+  Future<void> close() async {
     _logger.d('Disposing');
     updateLocationTimer?.cancel();
-    locationSubscription?.cancel();
+    await locationSubscription?.cancel();
+    await _tripSubscription?.cancel();
     return super.close();
   }
 }
