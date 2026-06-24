@@ -19,12 +19,7 @@ import '../../helpers/auth_fixtures.dart';
 void main() {
   TestWidgetsFlutterBinding.ensureInitialized();
 
-  setUp(
-    () => dotenv.loadFromString(
-      mergeWith: {'DISABLE_REALTIME_LOCATIONS': 'true'},
-      isOptional: true,
-    ),
-  );
+  setUp(() => dotenv.loadFromString(mergeWith: {'DISABLE_REALTIME_LOCATIONS': 'true'}, isOptional: true));
   tearDown(dotenv.clean);
 
   group('LocationCubit', () {

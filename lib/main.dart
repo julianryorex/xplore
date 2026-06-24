@@ -11,6 +11,7 @@ import 'package:xplore/features/auth/services/auth_service.dart';
 import 'package:xplore/features/gallery/bloc/gallery_cubit.dart';
 import 'package:xplore/features/gallery/models/image_models_adapters.dart';
 import 'package:xplore/features/itinerary/bloc/itinerary_cubit.dart';
+import 'package:xplore/features/itinerary/services/itinerary_service.dart';
 import 'package:xplore/features/location/bloc/location_cubit.dart';
 import 'package:xplore/features/map/bloc/map_cubit.dart';
 import 'package:xplore/features/nav/bloc/nav_cubit.dart';
@@ -79,18 +80,23 @@ class MyApp extends StatelessWidget {
       providers: [
         RepositoryProvider<AuthService>(create: (_) => AuthService()),
         RepositoryProvider<TripService>(create: (_) => TripService()),
+        RepositoryProvider<ItineraryService>(create: (_) => ItineraryService()),
       ],
       child: Builder(
         builder: (context) {
           final authService = context.read<AuthService>();
           final tripService = context.read<TripService>();
+          final itineraryService = context.read<ItineraryService>();
           return MultiBlocProvider(
             providers: [
               BlocProvider<AuthCubit>(create: (_) => AuthCubit(authService), lazy: false),
-              BlocProvider<TripCubit>(create: (_) => TripCubit(tripService, authService), lazy: false),
+              BlocProvider<TripCubit>(
+                create: (_) => TripCubit(tripService, authService, itineraryService),
+                lazy: false,
+              ),
               BlocProvider<LocationCubit>(create: (_) => LocationCubit(authService), lazy: false),
               BlocProvider<NavbarCubit>(create: (_) => NavbarCubit()),
-              BlocProvider<ItineraryCubit>(create: (_) => ItineraryCubit()),
+              BlocProvider<ItineraryCubit>(create: (_) => ItineraryCubit(itineraryService, authService), lazy: false),
               BlocProvider<MapCubit>(create: (_) => MapCubit(authService)),
               BlocProvider<GalleryCubit>(create: (_) => GalleryCubit(authService)),
               BlocProvider<ProfileCubit>(create: (_) => ProfileCubit(authService)),

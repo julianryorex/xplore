@@ -24,26 +24,17 @@ class AmbientBackground extends StatelessWidget {
           Positioned(
             top: -140,
             left: -90,
-            child: _Glow(
-              color: XploreColors.alternate.withValues(alpha: 0.30),
-              size: 340,
-            ),
+            child: _Glow(color: XploreColors.alternate.withValues(alpha: 0.30), size: 340),
           ),
           Positioned(
             top: 120,
             right: -130,
-            child: _Glow(
-              color: XploreColors.secondary.withValues(alpha: 0.24),
-              size: 380,
-            ),
+            child: _Glow(color: XploreColors.secondary.withValues(alpha: 0.24), size: 380),
           ),
           Positioned(
             bottom: -120,
             left: -60,
-            child: _Glow(
-              color: XploreColors.secondaryBg.withValues(alpha: 0.18),
-              size: 320,
-            ),
+            child: _Glow(color: XploreColors.secondaryBg.withValues(alpha: 0.18), size: 320),
           ),
           child,
         ],

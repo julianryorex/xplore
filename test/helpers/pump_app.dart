@@ -12,19 +12,11 @@ import 'package:xplore/constants/theme.dart';
 /// Pass [providers] to inject already-built cubits via `BlocProvider.value`;
 /// the harness deliberately does **not** construct feature cubits itself so
 /// each test stays explicit about what it wires up.
-Widget wrapApp(
-  Widget child, {
-  List<BlocProvider> providers = const [],
-  ThemeData? theme,
-  Color? backgroundColor,
-}) {
+Widget wrapApp(Widget child, {List<BlocProvider> providers = const [], ThemeData? theme, Color? backgroundColor}) {
   final app = MaterialApp(
     debugShowCheckedModeBanner: false,
     theme: theme ?? getTheme(),
-    home: Scaffold(
-      backgroundColor: backgroundColor ?? XploreColors.primaryBg,
-      body: child,
-    ),
+    home: Scaffold(backgroundColor: backgroundColor ?? XploreColors.primaryBg, body: child),
   );
 
   if (providers.isEmpty) return app;
@@ -48,8 +40,6 @@ Future<void> pumpForGolden(
   addTearDown(tester.view.resetPhysicalSize);
   addTearDown(tester.view.resetDevicePixelRatio);
 
-  await tester.pumpWidget(
-    wrapApp(child, providers: providers, backgroundColor: backgroundColor),
-  );
+  await tester.pumpWidget(wrapApp(child, providers: providers, backgroundColor: backgroundColor));
   await tester.pumpAndSettle();
 }

@@ -21,15 +21,10 @@ void main() {
 
     await pumpForGolden(
       tester,
-      const Center(
-        child: ItineraryTile(locationPlan: plan, width: 320, height: 80),
-      ),
+      const Center(child: ItineraryTile(locationPlan: plan, width: 320, height: 80)),
       size: const Size(360, 160),
     );
 
-    await expectLater(
-      find.byType(ItineraryTile),
-      matchesGoldenFile('goldens/itinerary_tile.png'),
-    );
+    await expectLater(find.byType(ItineraryTile), matchesGoldenFile('goldens/itinerary_tile.png'));
   });
 }

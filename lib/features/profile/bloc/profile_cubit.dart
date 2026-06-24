@@ -21,15 +21,8 @@ class ProfileCubit extends Cubit<ProfileState> {
   // The profile cubit is only created behind the auth gate, so `currentUid` is
   // normally set; the empty-string default is a defensive pre-auth placeholder
   // and is never surfaced (the id isn't rendered; marker ops read `_uid` live).
-  ProfileCubit(
-    this._authService, {
-    @visibleForTesting bool loadLocalProfile = true,
-  }) : super(
-         ProfileState(
-           id: _authService.currentUid ?? '',
-           name: 'Julian Rechsteiner',
-         ),
-       ) {
+  ProfileCubit(this._authService, {@visibleForTesting bool loadLocalProfile = true})
+    : super(ProfileState(id: _authService.currentUid ?? '', name: 'Julian Rechsteiner')) {
     markerService = MarkerService();
     if (loadLocalProfile) {
       loadProfileInState();

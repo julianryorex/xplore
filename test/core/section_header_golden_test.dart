@@ -19,10 +19,7 @@ void main() {
       size: const Size(390, 120),
     );
 
-    await expectLater(
-      find.byType(SectionHeader),
-      matchesGoldenFile('goldens/section_header_with_action.png'),
-    );
+    await expectLater(find.byType(SectionHeader), matchesGoldenFile('goldens/section_header_with_action.png'));
   });
 
   testWidgets('SectionHeader title only', (tester) async {
@@ -35,9 +32,6 @@ void main() {
       size: const Size(390, 120),
     );
 
-    await expectLater(
-      find.byType(SectionHeader),
-      matchesGoldenFile('goldens/section_header_title_only.png'),
-    );
+    await expectLater(find.byType(SectionHeader), matchesGoldenFile('goldens/section_header_title_only.png'));
   });
 }
