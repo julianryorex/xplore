@@ -4,7 +4,7 @@
 |-------|-------|
 | **ID** | FEAT-004 |
 | **Priority** | P0 |
-| **Status** | `backlog` |
+| **Status** | `done` |
 | **Revenue impact** | blocker |
 | **Effort** | M |
 | **Owner** | — |
@@ -60,3 +60,4 @@ Centralize **active trip ID** and **current user ID** in `TripCubit` and `AuthCu
 ## Notes / history
 
 - 2025-06-22: Created
+- 2026-06-24: **Shipped** via PR #76 — `userId` constant removed; cubits read uid from `AuthCubit` and trip scope from `TripCubit.activeTripId`. `itineraryId = 'ph4kd'` retained as demo/test fallback only. Moved to `requests/done/`.

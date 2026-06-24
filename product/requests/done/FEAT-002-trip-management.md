@@ -4,7 +4,7 @@
 |-------|-------|
 | **ID** | FEAT-002 |
 | **Priority** | P0 |
-| **Status** | `backlog` |
+| **Status** | `done` |
 | **Revenue impact** | blocker |
 | **Effort** | L |
 | **Owner** | — |
@@ -55,3 +55,4 @@ Introduce a **Trip** domain model and `TripCubit` as the session context for the
 ## Notes / history
 
 - 2025-06-22: Created
+- 2026-06-24: **Foundation shipped** via PR #79 — `TripModel`, `TripCubit`, create-trip sheet, `activeTripId` wired into location/gallery/itinerary cubits. **Deferred follow-ups:** multi-trip switcher UI; itinerary still loads demo JSON until FEAT-006. Moved to `requests/done/`.

@@ -132,12 +132,13 @@ CI workflow only; a separate macOS app workflow has not been added yet.
 
 Engineering checklist (high level). For **prioritized product feature requests**, revenue context, and acceptance criteria, see [`product/BACKLOG.md`](product/BACKLOG.md).
 
-- [ ] Authentication and multi-user support → [FEAT-001](product/requests/FEAT-001-user-authentication.md)
+- [x] Authentication and multi-user support → [FEAT-001](product/requests/done/FEAT-001-user-authentication.md) (PR #73)
 - [ ] Onboarding flow → [FEAT-005](product/requests/FEAT-005-onboarding.md)
-- [ ] Multi-trip / itinerary management → [FEAT-002](product/requests/FEAT-002-trip-management.md)
+- [x] Multi-trip / itinerary management (foundation) → [FEAT-002](product/requests/done/FEAT-002-trip-management.md) (PR #79)
+- [ ] Production itinerary data layer → [FEAT-006](product/requests/FEAT-006-itinerary-firebase-sync.md)
 - [ ] Wire AI-generated itineraries into the main UI flow → [FEAT-010](product/requests/FEAT-010-ai-itinerary-ui.md)
 - [ ] Android platform support → [FEAT-030](product/requests/FEAT-030-android-support.md)
-- [ ] Test suite (unit, widget, integration) → [FEAT-036](product/requests/FEAT-036-test-suite.md)
+- [ ] Test suite (unit, widget, integration) → [FEAT-036](product/requests/FEAT-036-test-suite.md) (in progress — PR #80)
 - [ ] CI/CD pipeline → [FEAT-035](product/requests/FEAT-035-cicd-pipeline.md)
 
 ---

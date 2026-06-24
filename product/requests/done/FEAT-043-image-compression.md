@@ -30,6 +30,7 @@
 - 2025-06-22: Created
 - 2026-06-23: Clarified scope — `flutter_image_compress` was **gallery-only**; it was
   never part of the profile-on-map avatar pipeline. See
-  [FEAT-046](./FEAT-046-map-avatar-marker-pipeline.md).
+  [FEAT-046](../FEAT-046-map-avatar-marker-pipeline.md).
 - 2026-06-23: **Done** — replaced the removed native plugin with the pure-Dart `image`
   package for gallery thumbnail compression (full-resolution upload preserved).
+- 2026-06-24: Moved to `requests/done/`.

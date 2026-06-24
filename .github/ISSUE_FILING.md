@@ -1,6 +1,6 @@
 # Issue filing (agents & Slack)
 
-GitHub Issues are the **execution queue**. Product intent stays in `product/requests/FEAT-*.md` and [BACKLOG.md](../product/BACKLOG.md).
+GitHub Issues are the **execution queue**. Product intent stays in `product/requests/FEAT-*.md` (open work) or `product/requests/done/FEAT-*.md` (shipped) and [BACKLOG.md](../product/BACKLOG.md).
 
 | Layer | Owns |
 |-------|------|
@@ -42,7 +42,7 @@ When triggered by a Slack message in #xplore-requests:
    - If a match exists, reply in the Slack thread with the existing issue or FEAT link. Stop.
 
 3. Determine the request type:
-   - References FEAT-XXX or "file issue for FEAT-…" → read product/requests/FEAT-XXX-*.md and file from that spec (label source:product).
+   - References FEAT-XXX or "file issue for FEAT-…" → read `product/requests/FEAT-XXX-*.md` or `product/requests/done/FEAT-XXX-*.md` and file from that spec (label source:product).
    - Freeform feature idea → draft issue from product/requests/_TEMPLATE.md sections (label needs-feat-file if no spec exists).
    - Contains an issue-proposal block (see below) → parse fields from the block (label source:agent unless source says otherwise).
 

@@ -4,7 +4,7 @@
 |-------|-------|
 | **ID** | FEAT-036 |
 | **Priority** | P3 |
-| **Status** | `backlog` |
+| **Status** | `in_progress` |
 | **Revenue impact** | indirect |
 | **Effort** | L |
 | **Owner** | — |
@@ -30,3 +30,4 @@ Replace counter test. Add cubit unit tests (itinerary parse, gallery state, loca
 ## Notes / history
 
 - 2025-06-22: Created
+- 2026-06-24: Test infrastructure landed via PR #80 (golden helpers, cubit unit tests for auth/trip/gallery/location). Counter template test removed. Full P0 coverage and CI gate remain open.

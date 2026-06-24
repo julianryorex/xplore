@@ -4,7 +4,7 @@
 |-------|-------|
 | **ID** | FEAT-001 |
 | **Priority** | P0 |
-| **Status** | `ready_for_dev` |
+| **Status** | `done` |
 | **Revenue impact** | blocker |
 | **Effort** | L |
 | **Owner** | — |
@@ -262,3 +262,4 @@ Step-by-step:
 - 2025-06-22: Created from codebase audit.
 - 2026-06-22: Expanded into full build-ready product spec; status → `ready_for_dev`.
 - 2026-06-22: Scope narrowed for MVP simplicity — **Apple-only**, **hard gate at end of (mocked) onboarding**, anonymous-first and Google deferred. `users/{uid}` moved to **Firestore**; RTDB reserved for location sharing only.
+- 2026-06-24: **Shipped** via PR #73 — Google Sign-In as interim provider, `AuthCubit` + hard gate + mock onboarding + Firestore `users/{uid}`. Sign in with Apple deferred (see `.cursor/plans/apple_auth_hard_gate_*.plan.md`). Moved to `requests/done/`.

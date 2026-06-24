@@ -4,7 +4,7 @@ Ranked feature requests for Xplore. **Work top-to-bottom within each tier.**
 
 Legend: **Status** — `backlog` · `ready_for_dev` (full spec written) · `in_progress` · `done` · `wont_do`
 
-> **Next up:** [FEAT-001 Authentication](./requests/FEAT-001-user-authentication.md) has a full build-ready product spec and is the recommended starting point for development.
+> **Next up:** [FEAT-006 Production itinerary data layer](./requests/FEAT-006-itinerary-firebase-sync.md) — makes the active trip from FEAT-002 load real cloud itinerary data instead of demo JSON.
 
 ---
 
@@ -14,10 +14,7 @@ Cannot onboard real groups or operate as a product without these.
 
 | ID | Feature | Revenue | Effort | Status | Request |
 |----|---------|---------|--------|--------|---------|
-| FEAT-001 | User authentication (Firebase Auth) | blocker | L | **ready_for_dev** | [→](./requests/FEAT-001-user-authentication.md) |
-| FEAT-002 | Trip entity & multi-trip management | blocker | L | backlog | [→](./requests/FEAT-002-trip-management.md) |
 | FEAT-003 | Trip invites & join flow | blocker | L | backlog | [→](./requests/FEAT-003-trip-invites.md) |
-| FEAT-004 | Replace hardcoded trip/user IDs | blocker | M | backlog | [→](./requests/FEAT-004-remove-hardcoded-ids.md) |
 | FEAT-005 | Onboarding flow | blocker | M | backlog | [→](./requests/FEAT-005-onboarding.md) |
 | FEAT-006 | Production itinerary data layer | blocker | L | backlog | [→](./requests/FEAT-006-itinerary-firebase-sync.md) |
 
@@ -68,7 +65,7 @@ New platforms, partnerships, and power features.
 | FEAT-033 | In-app trip chat / activity feed | retention | L | backlog | [→](./requests/FEAT-033-trip-chat.md) |
 | FEAT-034 | Expense splitting (Splitwise-lite) | retention | L | backlog | [→](./requests/FEAT-034-expense-splitting.md) |
 | FEAT-035 | CI/CD pipeline | indirect | M | backlog | [→](./requests/FEAT-035-cicd-pipeline.md) |
-| FEAT-036 | Test suite (unit, widget, integration) | indirect | L | backlog | [→](./requests/FEAT-036-test-suite.md) |
+| FEAT-036 | Test suite (unit, widget, integration) | indirect | L | `in_progress` | [→](./requests/FEAT-036-test-suite.md) |
 
 ---
 
@@ -81,17 +78,29 @@ Quality-of-life and experimental; pick up when higher tiers are stable.
 | FEAT-040 | Map transit directions | none | M | backlog | [→](./requests/FEAT-040-map-transit.md) |
 | FEAT-041 | Collaborative itinerary voting | retention | M | backlog | [→](./requests/FEAT-041-itinerary-voting.md) |
 | FEAT-042 | Video gallery support | retention | M | backlog | [→](./requests/FEAT-042-video-gallery.md) |
-| FEAT-043 | Re-enable image compression (iOS 26) | indirect | S | done | [→](./requests/FEAT-043-image-compression.md) |
 | FEAT-044 | Neighborhood / geofence alerts | retention | L | backlog | [→](./requests/FEAT-044-geofence-alerts.md) |
 | FEAT-045 | B2B tour operator dashboard | direct | XL | backlog | [→](./requests/FEAT-045-b2b-dashboard.md) |
 | FEAT-046 | Profile avatar map-marker pipeline | retention | M | backlog | [→](./requests/FEAT-046-map-avatar-marker-pipeline.md) |
 
 ---
 
+## Done
+
+Shipped features live in [`requests/done/`](./requests/done/). Move a spec here when the work merges; update its `Status` to `done` and note the PR.
+
+| ID | Feature | Shipped | Request |
+|----|---------|---------|---------|
+| FEAT-001 | User authentication (Firebase Auth) | PR #73 | [→](./requests/done/FEAT-001-user-authentication.md) |
+| FEAT-002 | Trip entity & multi-trip management (foundation) | PR #79 | [→](./requests/done/FEAT-002-trip-management.md) |
+| FEAT-004 | Replace hardcoded trip/user IDs | PR #76 | [→](./requests/done/FEAT-004-remove-hardcoded-ids.md) |
+| FEAT-043 | Re-enable image compression (iOS 26) | PR #71 | [→](./requests/done/FEAT-043-image-compression.md) |
+
+---
+
 ## Suggested implementation order (first 6 sprints)
 
-1. **FEAT-001** Auth → **FEAT-004** Remove hardcoded IDs
-2. **FEAT-002** Trips → **FEAT-006** Itinerary Firebase sync
+1. ~~**FEAT-001** Auth → **FEAT-004** Remove hardcoded IDs~~ ✅
+2. ~~**FEAT-002** Trips~~ ✅ → **FEAT-006** Itinerary Firebase sync
 3. **FEAT-003** Invites → **FEAT-005** Onboarding
 4. **FEAT-014** Trip-scoped gallery → **FEAT-011** Gallery cloud fetch
 5. **FEAT-025** Analytics → **FEAT-010** AI itinerary UI

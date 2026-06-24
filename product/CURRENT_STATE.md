@@ -1,44 +1,47 @@
-# Current State (as of product backlog creation)
+# Current State (as of 2026-06-24)
 
 Snapshot of what exists in `lib/` vs. what product assumes. Update this doc when major foundations land.
 
-## Shipped & working (demo / single-user)
+## Shipped & working
 
 | Capability | Status | Notes |
 |------------|--------|-------|
-| Itinerary UI | ✅ Demo | `ItineraryCubit.loadDemoItinerary()` reads `assets/demo/itinerary.json` |
+| User authentication | ✅ | Google Sign-In + `AuthCubit` hard gate; Apple deferred ([FEAT-001](./requests/done/FEAT-001-user-authentication.md), PR #73) |
+| Trip entity (foundation) | ✅ Partial | `TripCubit`, create-trip sheet, `activeTripId` plumbing ([FEAT-002](./requests/done/FEAT-002-trip-management.md), PR #79); switcher UI deferred |
+| Dynamic user/trip IDs | ✅ | Cubits read uid from auth and trip scope from `TripCubit` ([FEAT-004](./requests/done/FEAT-004-remove-hardcoded-ids.md), PR #76) |
+| Itinerary UI | ✅ Demo | `ItineraryCubit.loadDemoItinerary()` reads `assets/demo/itinerary.json` — cloud sync is FEAT-006 |
 | Day overview + location detail | ✅ | `ItineraryOverviewPage`, `ItineraryFocusPage` |
 | Google Map + neon style | ✅ | `MapCanvas`, `assets/maps/GoogleMapNeon.json` |
-| Live location sync | ✅ Demo | Firebase RTDB at `locations/{itineraryId}`; interval configurable via `.env` |
+| Live location sync | ✅ | Firebase RTDB at `locations/{tripId}`; interval configurable via `.env` |
 | Avatar map markers | ✅ | Profile photo → widget → PNG → Hive + Storage |
-| Gallery pick / upload / zoom | ✅ Partial | Optimistic UI; pure-Dart thumbnail compression (full-res original still uploaded) |
-| Profile photo | ✅ Local | Saved to app documents; not synced to Firebase Auth profile |
+| Gallery pick / upload / zoom | ✅ | Optimistic UI; pure-Dart thumbnail compression ([FEAT-043](./requests/done/FEAT-043-image-compression.md)) |
+| Profile photo | ✅ Local | Saved to app documents; cloud sync is FEAT-015 |
 | Bottom nav | ✅ | Home, Map, Gallery routes |
+| Test infrastructure | ✅ Partial | Golden + cubit unit tests (PR #80); full suite still FEAT-036 |
 
-## Hardcoded / prototype assumptions
+## Remaining prototype assumptions
 
-These block real users and monetization:
+These still block real multi-user group travel:
 
 ```dart
-// lib/constants/constants.dart
+// lib/constants/constants.dart — demo fallback only
 const itineraryId = 'ph4kd';
-const userId = '7d125e54-9de9-4a5c-bb15-29efacda4f9a';
 ```
 
-Also hardcoded:
+Also outstanding:
 
-- Gallery Storage path: `gallery/ph4kd/` in `GalleryCubit.uploadImage`
-- Demo itinerary lookup by key `ph4kd` in `ItineraryCubit`
-- Profile name: `'Julian Rechsteiner'` in `ProfileCubit`
+- `ItineraryCubit` loads demo JSON keyed by `itineraryId` regardless of active trip → **FEAT-006**
+- Mock onboarding placeholder only → **FEAT-005**
+- No trip invites / deep links → **FEAT-003**
 - Notifications button on home: `onTapCallback: () => log('tapped')` — no-op
+- Profile name not synced to cloud → **FEAT-015**
 
 ## Stubbed / not wired
 
 | Item | Evidence |
 |------|----------|
-| Onboarding | `Paths.onboarding` → empty `Container()` |
-| Authentication | No Firebase Auth; README roadmap item |
-| Multi-trip | Single demo itinerary only |
+| Production itinerary sync | Demo JSON only; FEAT-006 |
+| Multi-trip switcher | Create-trip works; list/switch UI deferred |
 | Gemini AI in UI | Dependency in `pubspec.yaml`; no cubit/screen integration |
 | Gallery cloud fetch | `GalleryRepository` TODO: GCP fetch; cache-only on new device |
 | Push notifications | UI affordance only |
@@ -47,15 +50,11 @@ Also hardcoded:
 
 ## Data model readiness
 
-`ItineraryModel` already includes fields useful for production:
-
-- `id`, `invitees`, `daily_plans`, `last_updated`, `pins`
-
-Location and gallery layers need the same **trip-scoped IDs** from a shared `TripCubit` or auth/session layer rather than constants.
+`ItineraryModel` and `TripModel` include fields useful for production. Location and gallery layers consume `TripCubit.activeTripId` with a demo fallback until FEAT-006 fully replaces itinerary demo data.
 
 ## Engineering debt affecting product timeline
 
-- Test suite incomplete (`test/widget_test.dart` is template counter test)
+- Test suite incomplete — infrastructure landed (PR #80); counter template test removed; more P0 cubit coverage in FEAT-036
 - No CI/CD
 - `assets/icons/` declared but missing (non-fatal warning)
 
