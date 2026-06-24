@@ -7,24 +7,15 @@
 //   flutter test --update-goldens test/itinerary_card_golden_test.dart
 
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:xplore/constants/constants.dart';
 import 'package:xplore/constants/theme.dart';
 import 'package:xplore/features/itinerary/bloc/itinerary_cubit.dart';
 import 'package:xplore/features/itinerary/widgets/itinerary_card.dart';
 
-Future<void> _loadPoppins() async {
-  final loader = FontLoader('Poppins')
-    ..addFont(rootBundle.load('assets/fonts/Poppins-Medium.ttf'))
-    ..addFont(rootBundle.load('assets/fonts/Poppins-SemiBold.ttf'));
-  await loader.load();
-}
-
+// Fonts are loaded once globally by `test/flutter_test_config.dart`.
 void main() {
   testWidgets('ItineraryCard carousel renders with demo data', (tester) async {
-    await _loadPoppins();
-
     final cubit = ItineraryCubit();
     await cubit.loadDemoItinerary();
     final dailyPlans = (cubit.state as LoadedItineraryState).itinerary.dailyPlans;
