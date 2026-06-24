@@ -13,7 +13,7 @@
 
 We removed/disabled `flutter_image_compress` because the iOS 26 SDK dropped the
 AssetsLibrary framework the plugin depends on (see `pubspec.yaml` lines 22–26 and
-[FEAT-043](./FEAT-043-image-compression.md)). The open question raised was: image
+[FEAT-043](./done/FEAT-043-image-compression.md)). The open question raised was: image
 compression was thought to power the "profile photo on the map" feature
 (Apple-Maps-style avatar pins), so does removing it hurt that feature, and is
 compressing an image even the right way to render a profile neatly on the map?
@@ -128,7 +128,7 @@ URL variant for markers.
 - **Pros:** Smallest client bandwidth/CPU; clean cross-device sync; clients hold only a
   URL.
 - **Cons:** Backend infra + cost; depends on auth/cloud profile model
-  ([FEAT-001](./FEAT-001-user-authentication.md), FEAT-015); overkill on its own for a
+  ([FEAT-001](./done/FEAT-001-user-authentication.md), FEAT-015); overkill on its own for a
   ~150 px pin.
 
 ## Recommended approach
@@ -189,7 +189,7 @@ replaced by the pure-Dart `image` package.
 - [FEAT-015](./FEAT-015-profile-cloud-sync.md) — cross-device avatar fetch (download the
   uploaded marker / avatar by URL).
 - [FEAT-017](./FEAT-017-map-marker-info.md) — styled marker state (pairs with Option D).
-- [FEAT-043](./FEAT-043-image-compression.md) — gallery compression; **done** via the
+- [FEAT-043](./done/FEAT-043-image-compression.md) — gallery compression; **done** via the
   pure-Dart `image` package, whose `image_compressor.dart` utility the avatar path can
   reuse.
 

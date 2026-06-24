@@ -1,6 +1,7 @@
 # Feature Request Template
 
-Copy this file to `requests/FEAT-XXX-short-slug.md` and fill in every section.
+Copy this file to `requests/FEAT-XXX-short-slug.md` and fill in every section. When
+shipped, move the file to `requests/done/` and update [BACKLOG.md](../BACKLOG.md).
 
 ---
 
