@@ -13,3 +13,4 @@ Closes #
 ## Test plan
 
 - [ ]
+- [ ] If this PR changes backend/infra behavior, include the relevant Terraform commands run (for example `terraform plan`, and `terraform apply` if deployed) plus any notable output or follow-up needed.
