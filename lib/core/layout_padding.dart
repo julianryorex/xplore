@@ -16,10 +16,13 @@ class LayoutPadding extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    // Status-bar height. This survives the enclosing SafeArea (which strips
-    // `padding` but keeps `viewPadding`), letting the scrim reach up behind the
-    // status bar so the ambient glow doesn't peek out above it as a hard seam.
-    final topInset = MediaQuery.viewPaddingOf(context).top;
+    // True status-bar height read straight from the render view. We can't use
+    // MediaQuery here: the enclosing SafeArea consumes the top inset and zeroes
+    // it out for its descendants, so MediaQuery would report 0. Reading the
+    // view directly lets the scrim reach up behind the status bar so the
+    // ambient glow doesn't peek out above it as a hard teal band.
+    final view = View.of(context);
+    final topInset = view.viewPadding.top / view.devicePixelRatio;
 
     return Stack(
       // Allow the scrim to paint upward into the status-bar area, above this
