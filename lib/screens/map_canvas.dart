@@ -72,10 +72,6 @@ class _MapCanvasState extends State<MapCanvas> {
           Positioned.fill(
             child: BlocListener<MapCubit, MapStates>(
               listener: (context, state) async {
-                if (state is InitialMapState) {
-                  print('initial');
-                }
-
                 if (state is LoadProfileOnMapState) {
                   await showModalBottomSheet(
                     context: context,
