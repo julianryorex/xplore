@@ -5,7 +5,7 @@ import 'package:xplore/features/gallery/bloc/gallery_cubit.dart';
 import 'package:xplore/features/gallery/models/image_models.dart';
 import 'package:xplore/features/gallery/repository/gallery_repository.dart';
 
-import 'helpers/auth_fixtures.dart';
+import '../../helpers/auth_fixtures.dart';
 
 /// Repository that skips Hive so the cubit can be constructed in a unit test.
 class _EmptyGalleryRepository extends GalleryRepository {
