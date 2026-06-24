@@ -4,6 +4,7 @@ import 'package:xplore/features/auth/presentation/onboarding_page.dart';
 import 'package:xplore/features/auth/presentation/sign_in_page.dart';
 import 'package:xplore/features/gallery/presentation/gallery_focus_view.dart';
 import 'package:xplore/features/itinerary/models/itinerary_models.dart';
+import 'package:xplore/features/notifications/presentation/notifications_page.dart';
 import 'package:xplore/screens/gallery_page.dart';
 import 'package:xplore/screens/generic_error_page.dart';
 import 'package:xplore/screens/home_page.dart';
@@ -26,6 +27,7 @@ class Paths {
   static const itineraryMapView = '/itinerary-map-view';
 
   static const profile = '/profile';
+  static const notifications = '/notifications';
 }
 
 class RouteGenerator {
@@ -41,6 +43,8 @@ class RouteGenerator {
         return FadePageRoute(page: const MapCanvas());
       case Paths.profile:
         return FadePageRoute(page: const ProfilePage());
+      case Paths.notifications:
+        return MaterialPageRoute(builder: (_) => const NotificationsPage());
       case Paths.onboarding:
         return MaterialPageRoute(builder: (_) => const OnboardingPage());
       case Paths.signIn:
