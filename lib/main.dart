@@ -15,6 +15,8 @@ import 'package:xplore/features/location/bloc/location_cubit.dart';
 import 'package:xplore/features/map/bloc/map_cubit.dart';
 import 'package:xplore/features/nav/bloc/nav_cubit.dart';
 import 'package:xplore/features/profile/bloc/profile_cubit.dart';
+import 'package:xplore/features/trip/bloc/trip_cubit.dart';
+import 'package:xplore/features/trip/services/trip_service.dart';
 import 'package:xplore/firebase_options.dart';
 import 'package:xplore/routes.dart';
 import 'package:xplore/utilities/utilities.dart';
@@ -73,14 +75,19 @@ class MyApp extends StatelessWidget {
   Widget build(BuildContext context) {
     // One AuthService instance is the single source of UID truth, composed into
     // every cubit (constructor injection) so none of them import another cubit.
-    return RepositoryProvider<AuthService>(
-      create: (_) => AuthService(),
+    return MultiRepositoryProvider(
+      providers: [
+        RepositoryProvider<AuthService>(create: (_) => AuthService()),
+        RepositoryProvider<TripService>(create: (_) => TripService()),
+      ],
       child: Builder(
         builder: (context) {
           final authService = context.read<AuthService>();
+          final tripService = context.read<TripService>();
           return MultiBlocProvider(
             providers: [
               BlocProvider<AuthCubit>(create: (_) => AuthCubit(authService), lazy: false),
+              BlocProvider<TripCubit>(create: (_) => TripCubit(tripService, authService), lazy: false),
               BlocProvider<LocationCubit>(create: (_) => LocationCubit(authService), lazy: false),
               BlocProvider<NavbarCubit>(create: (_) => NavbarCubit()),
               BlocProvider<ItineraryCubit>(create: (_) => ItineraryCubit()),
