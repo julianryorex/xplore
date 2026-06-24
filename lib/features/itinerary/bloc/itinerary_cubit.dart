@@ -75,6 +75,18 @@ class ItineraryCubit extends Cubit<ItineraryStates> with TripStreamMixin {
         );
   }
 
+  /// Re-attaches the itinerary listener for the active trip after a failure.
+  /// The errored subscription is still set, so reset the active id to force a
+  /// fresh load past [loadForTrip]'s early-return guard.
+  Future<void> retry() async {
+    final tripId = _activeTripId;
+    if (tripId == null) {
+      return;
+    }
+    _activeTripId = null;
+    await loadForTrip(tripId);
+  }
+
   Future<void> _onItinerarySnapshot(String tripId, ItineraryModel? itinerary) async {
     // Ignore late events from a trip we've since switched away from.
     if (_activeTripId != tripId) {

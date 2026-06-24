@@ -80,9 +80,10 @@ class HomePage extends StatelessWidget {
                         EmptyItineraryState() => const _ItineraryPlaceholder(
                           message: 'Create or open a trip to see its daily plans here.',
                         ),
-                        ErrorItineraryState(:final message) => _ItineraryPlaceholder(
-                          message: 'Itinerary could not load: $message',
-                          isError: true,
+                        ErrorItineraryState() => ErrorState(
+                          title: 'Unable to load itinerary',
+                          message: 'Something went wrong. Please try again later',
+                          onRetry: () => context.read<ItineraryCubit>().retry(),
                         ),
                         LoadedItineraryState(:final itinerary) when itinerary.dailyPlans.isEmpty =>
                           const _ItineraryPlaceholder(
@@ -237,26 +238,19 @@ class HomePage extends StatelessWidget {
 }
 
 class _ItineraryPlaceholder extends StatelessWidget {
-  const _ItineraryPlaceholder({required this.message, this.isError = false});
+  const _ItineraryPlaceholder({required this.message});
 
   final String message;
-  final bool isError;
 
   @override
   Widget build(BuildContext context) {
     return GlassSurface(
       child: Row(
         children: [
-          Icon(
-            isError ? Icons.error_outline_rounded : Icons.event_note_outlined,
-            color: isError ? XploreColors.error : XploreColors.alternate,
-          ),
+          Icon(Icons.event_note_outlined, color: XploreColors.alternate),
           const SizedBox(width: paddingUnit),
           Expanded(
-            child: Text(
-              message,
-              style: context.pText.bodySmall?.copyWith(color: isError ? XploreColors.error : XploreColors.mutedText),
-            ),
+            child: Text(message, style: context.pText.bodySmall?.copyWith(color: XploreColors.mutedText)),
           ),
         ],
       ),

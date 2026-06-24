@@ -144,6 +144,35 @@ void main() {
       expect(cubit.state, isA<EmptyItineraryState>());
     });
 
+    test('retry forces a fresh load for the active trip', () async {
+      await firestore.collection('itineraries').doc('trip-1').set({
+        'invitees': ['user-1'],
+        'daily_plans': [_dayPlan(title: 'SkyTree Day')],
+        'pins': <dynamic>[],
+        'last_updated': Timestamp.fromDate(DateTime.utc(2023, 6, 15, 8, 30)),
+      });
+
+      final cubit = buildCubit(user: MockUser(uid: 'user-1'));
+      final firstLoad = _waitFor<LoadedItineraryState>(cubit);
+      _TripStreamHarness().pushTripEvent(TripState.loaded(active: _trip('trip-1'), all: [_trip('trip-1')]));
+      await firstLoad;
+
+      final reloading = _waitFor<LoadingItineraryState>(cubit);
+      final reloaded = _waitFor<LoadedItineraryState>(cubit);
+      await cubit.retry();
+
+      await reloading;
+      expect((await reloaded).itinerary.id, 'trip-1');
+    });
+
+    test('retry is a no-op when no trip is active', () async {
+      final cubit = buildCubit(user: MockUser(uid: 'user-1'));
+
+      await cubit.retry();
+
+      expect(cubit.state, isA<InitialItineraryState>());
+    });
+
     test('offline cache round-trips an itinerary through Hive', () async {
       const itinerary = ItineraryModel(id: 'trip-3', invitees: ['user-1'], dailyPlans: [], pins: [], lastUpdated: null);
 
