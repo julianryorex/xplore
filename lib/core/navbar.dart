@@ -5,34 +5,43 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:xplore/constants/constants.dart';
 import 'package:xplore/core/glass.dart';
 import 'package:xplore/features/nav/bloc/nav_cubit.dart';
-import 'package:xplore/routes.dart';
 
 class _NavBarItem {
-  final String path;
   final String label;
   final IconData icon;
 
-  const _NavBarItem({required this.path, required this.label, required this.icon});
+  const _NavBarItem({required this.label, required this.icon});
 }
 
+/// Order must stay in sync with `RootShell`'s destination list.
 const List<_NavBarItem> _navBarItems = [
-  _NavBarItem(path: Paths.home, label: 'Home', icon: Icons.home_outlined),
-  _NavBarItem(path: Paths.map, label: 'Map', icon: Icons.map_rounded),
+  _NavBarItem(label: 'Home', icon: Icons.home_outlined),
+  _NavBarItem(label: 'Map', icon: Icons.map_rounded),
 ];
 
 class Navbar extends StatelessWidget {
   const Navbar({super.key});
 
+  // The tabs are top-level *siblings* living in `RootShell`'s IndexedStack, so
+  // selecting one only flips the NavbarCubit index — no route is pushed. That's
+  // what keeps tab switches from animating like forward/back navigation.
   void onIconClick(BuildContext ctx, int selectedIndex) {
     final currentIndex = ctx.read<NavbarCubit>().state;
-    if (selectedIndex == 0 && currentIndex != 0) {
+    if (selectedIndex == currentIndex) return;
+
+    if (selectedIndex == 0) {
       HapticFeedback.heavyImpact();
-    } else if (selectedIndex != currentIndex) {
+    } else {
       HapticFeedback.lightImpact();
     }
 
     ctx.read<NavbarCubit>().setNavIndex(selectedIndex);
-    Navigator.pushReplacementNamed(ctx, _navBarItems[selectedIndex].path);
+  }
+
+  /// Horizontal alignment for the selection pill behind item [index].
+  Alignment _pillAlignment(int index) {
+    if (_navBarItems.length < 2) return Alignment.center;
+    return Alignment(-1 + 2 * index / (_navBarItems.length - 1), 0);
   }
 
   @override
@@ -69,16 +78,54 @@ class Navbar extends StatelessWidget {
               height: 62,
               child: BlocBuilder<NavbarCubit, int>(
                 builder: (context, state) {
-                  return Row(
-                    children: _navBarItems
-                        .mapIndexed(
-                          (index, item) => _NavbarButton(
-                            item: item,
-                            isSelected: state == index,
-                            onPressed: state == index ? () {} : () => onIconClick(context, index),
+                  return Stack(
+                    children: [
+                      // Selection pill that glides between tabs. This sliding
+                      // accent is the one bit of motion the tab bar earns —
+                      // it cues the change without the screens themselves
+                      // having to slide.
+                      AnimatedAlign(
+                        duration: const Duration(milliseconds: 280),
+                        curve: Curves.easeOutCubic,
+                        alignment: _pillAlignment(state),
+                        child: FractionallySizedBox(
+                          widthFactor: 1 / _navBarItems.length,
+                          heightFactor: 1,
+                          child: Padding(
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: paddingUnit / 2,
+                              vertical: paddingUnit * 0.6,
+                            ),
+                            child: DecoratedBox(
+                              decoration: BoxDecoration(
+                                color: XploreColors.alternate.withValues(
+                                  alpha: 0.16,
+                                ),
+                                borderRadius: BorderRadius.circular(radiusMd),
+                                border: Border.all(
+                                  color: XploreColors.alternate.withValues(
+                                    alpha: 0.28,
+                                  ),
+                                ),
+                              ),
+                            ),
                           ),
-                        )
-                        .toList(),
+                        ),
+                      ),
+                      Row(
+                        children: _navBarItems
+                            .mapIndexed(
+                              (index, item) => _NavbarButton(
+                                item: item,
+                                isSelected: state == index,
+                                onPressed: state == index
+                                    ? () {}
+                                    : () => onIconClick(context, index),
+                              ),
+                            )
+                            .toList(),
+                      ),
+                    ],
                   );
                 },
               ),
@@ -95,7 +142,11 @@ class _NavbarButton extends StatelessWidget {
   final bool isSelected;
   final VoidCallback onPressed;
 
-  const _NavbarButton({required this.item, required this.isSelected, required this.onPressed});
+  const _NavbarButton({
+    required this.item,
+    required this.isSelected,
+    required this.onPressed,
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -111,7 +162,19 @@ class _NavbarButton extends StatelessWidget {
           child: Column(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              Icon(item.icon, color: isSelected ? activeColor : inactiveColor, size: 28),
+              AnimatedScale(
+                scale: isSelected ? 1.0 : 0.9,
+                duration: const Duration(milliseconds: 280),
+                curve: Curves.easeOutCubic,
+                child: TweenAnimationBuilder<Color?>(
+                  duration: const Duration(milliseconds: 240),
+                  tween: ColorTween(
+                    end: isSelected ? activeColor : inactiveColor,
+                  ),
+                  builder: (context, color, _) =>
+                      Icon(item.icon, color: color, size: 28),
+                ),
+              ),
               const SizedBox(height: 4),
               Text(
                 item.label,

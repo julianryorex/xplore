@@ -7,7 +7,6 @@ import 'package:xplore/core/ambient_background.dart';
 import 'package:xplore/core/error_state.dart';
 import 'package:xplore/core/glass.dart';
 import 'package:xplore/core/header.dart';
-import 'package:xplore/core/navbar.dart';
 import 'package:xplore/core/section_header.dart';
 import 'package:xplore/features/gallery/bloc/gallery_cubit.dart';
 import 'package:xplore/features/itinerary/bloc/itinerary_cubit.dart';
@@ -40,195 +39,214 @@ class HomePage extends StatelessWidget {
     const headerTopGap = paddingUnit * 0.75;
     final headerZone = topInset + headerTopGap + Header.padding;
 
-    return Scaffold(
-      backgroundColor: XploreColors.primaryBg,
-      extendBody: true,
-      bottomNavigationBar: const Navbar(),
-      body: AmbientBackground(
-        child: Stack(
-          children: [
-            // Content runs full-height behind the pinned header and floating
-            // nav bar so the glass surfaces have content to refract.
-            SingleChildScrollView(
-              padding: EdgeInsets.only(
-                left: paddingUnit * 1.5,
-                right: paddingUnit * 1.5,
-                top: headerZone + paddingUnit * 0.5,
-                bottom: bottomClearance,
-              ),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  SectionHeader(
-                    title: 'Daily Plans',
-                    actionLabel: 'See all',
-                    onAction: () => _openCreateTripSheet(context),
-                  ),
-                  const SizedBox(height: paddingUnit),
-                  _TripStatePrompt(onCreateTrip: () => _openCreateTripSheet(context)),
-                  const SizedBox(height: paddingUnit),
+    // Pure content for the RootShell's IndexedStack: the surrounding Scaffold,
+    // background colour and floating glass nav bar live in RootShell.
+    return AmbientBackground(
+      child: Stack(
+        children: [
+          // Content runs full-height behind the pinned header and floating
+          // nav bar so the glass surfaces have content to refract.
+          SingleChildScrollView(
+            padding: EdgeInsets.only(
+              left: paddingUnit * 1.5,
+              right: paddingUnit * 1.5,
+              top: headerZone + paddingUnit * 0.5,
+              bottom: bottomClearance,
+            ),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                SectionHeader(
+                  title: 'Daily Plans',
+                  actionLabel: 'See all',
+                  onAction: () => _openCreateTripSheet(context),
+                ),
+                const SizedBox(height: paddingUnit),
+                _TripStatePrompt(
+                  onCreateTrip: () => _openCreateTripSheet(context),
+                ),
+                const SizedBox(height: paddingUnit),
 
-                  //! Daily Plans Section Containers
-                  BlocBuilder<ItineraryCubit, ItineraryStates>(
-                    builder: (context, state) {
-                      if (state is InitialItineraryState) {
-                        return const SizedBox(
-                          height: 300,
-                          width: 230,
-                          child: Center(child: CircularProgressIndicator()),
-                        );
-                      }
+                //! Daily Plans Section Containers
+                BlocBuilder<ItineraryCubit, ItineraryStates>(
+                  builder: (context, state) {
+                    if (state is InitialItineraryState) {
+                      return const SizedBox(
+                        height: 300,
+                        width: 230,
+                        child: Center(child: CircularProgressIndicator()),
+                      );
+                    }
 
-                      final itinerary = (state as LoadedItineraryState).itinerary;
+                    final itinerary = (state as LoadedItineraryState).itinerary;
 
-                      return SingleChildScrollView(
-                        scrollDirection: Axis.horizontal,
-                        child: Row(
-                          children: [
-                            ...itinerary.dailyPlans.map(
-                              (dailyPlan) => Padding(
-                                padding: const EdgeInsets.only(right: 10),
-                                child: SizedBox(
-                                  width: ItineraryCard.width,
-                                  height: ItineraryCard.height,
-                                  child: ItineraryCard(dailyPlan: dailyPlan),
+                    return SingleChildScrollView(
+                      scrollDirection: Axis.horizontal,
+                      child: Row(
+                        children: [
+                          ...itinerary.dailyPlans.map(
+                            (dailyPlan) => Padding(
+                              padding: const EdgeInsets.only(right: 10),
+                              child: SizedBox(
+                                width: ItineraryCard.width,
+                                height: ItineraryCard.height,
+                                child: ItineraryCard(dailyPlan: dailyPlan),
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
+                    );
+                  },
+                ),
+                const SizedBox(height: paddingUnit * 2),
+
+                //! Gallery Section Header
+                const SectionHeader(title: 'Gallery'),
+                const SizedBox(height: paddingUnit),
+
+                //! Gallery options
+                GlassSurface(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Row(
+                        children: [
+                          Container(
+                            padding: const EdgeInsets.all(paddingUnit * 0.75),
+                            decoration: BoxDecoration(
+                              color: XploreColors.alternate.withValues(
+                                alpha: 0.18,
+                              ),
+                              borderRadius: BorderRadius.circular(radiusSm),
+                              border: Border.all(
+                                color: XploreColors.alternate.withValues(
+                                  alpha: 0.32,
                                 ),
                               ),
                             ),
-                          ],
-                        ),
-                      );
-                    },
-                  ),
-                  const SizedBox(height: paddingUnit * 2),
-
-                  //! Gallery Section Header
-                  const SectionHeader(title: 'Gallery'),
-                  const SizedBox(height: paddingUnit),
-
-                  //! Gallery options
-                  GlassSurface(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Row(
-                          children: [
-                            Container(
-                              padding: const EdgeInsets.all(paddingUnit * 0.75),
-                              decoration: BoxDecoration(
-                                color: XploreColors.alternate.withValues(alpha: 0.18),
-                                borderRadius: BorderRadius.circular(radiusSm),
-                                border: Border.all(color: XploreColors.alternate.withValues(alpha: 0.32)),
-                              ),
-                              child: Icon(Icons.photo_library_outlined, size: 22, color: XploreColors.alternate),
+                            child: Icon(
+                              Icons.photo_library_outlined,
+                              size: 22,
+                              color: XploreColors.alternate,
                             ),
-                            const SizedBox(width: paddingUnit),
-                            Expanded(
-                              child: Column(
-                                crossAxisAlignment: CrossAxisAlignment.start,
-                                children: [
-                                  Text('Shared gallery', style: context.pText.labelLarge),
-                                  const SizedBox(height: 2),
-                                  Text(
-                                    'Keep every trip moment in one place.',
-                                    style: context.pText.bodySmall?.copyWith(color: XploreColors.mutedText),
-                                  ),
-                                ],
-                              ),
-                            ),
-                          ],
-                        ),
-                        const SizedBox(height: paddingUnit * 1.25),
-                        SizedBox(
-                          width: double.infinity,
-                          child: OutlinedButton.icon(
-                            onPressed: () => context.push(Paths.gallery),
-                            icon: const Icon(Icons.arrow_forward_rounded, size: 18),
-                            label: const Text('View gallery'),
                           ),
+                          const SizedBox(width: paddingUnit),
+                          Expanded(
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Text(
+                                  'Shared gallery',
+                                  style: context.pText.labelLarge,
+                                ),
+                                const SizedBox(height: 2),
+                                Text(
+                                  'Keep every trip moment in one place.',
+                                  style: context.pText.bodySmall?.copyWith(
+                                    color: XploreColors.mutedText,
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                        ],
+                      ),
+                      const SizedBox(height: paddingUnit * 1.25),
+                      SizedBox(
+                        width: double.infinity,
+                        child: OutlinedButton.icon(
+                          onPressed: () => context.push(Paths.gallery),
+                          icon: const Icon(
+                            Icons.arrow_forward_rounded,
+                            size: 18,
+                          ),
+                          label: const Text('View gallery'),
                         ),
-                      ],
-                    ),
+                      ),
+                    ],
                   ),
-                  if (kDebugMode) ...[
-                    const SizedBox(height: paddingUnit),
-                    Wrap(
-                      spacing: paddingUnit,
-                      runSpacing: paddingUnit,
-                      children: [
-                        OutlinedButton(
-                          onPressed: () async {
-                            await context.read<ItineraryCubit>().loadDemoItinerary();
-                          },
-                          child: const Text('Load data'),
-                        ),
-                        OutlinedButton(
-                          onPressed: () async {
-                            context.push(Paths.gallery);
-                            await context.read<GalleryCubit>().uploadToGallery();
-                          },
-                          child: const Text('Upload'),
-                        ),
-                        OutlinedButton(
-                          onPressed: () async {
-                            context.read<GalleryCubit>().deleteAll();
-                            // context.read<LocationCubit>().deleteAll();
-                            context.read<ProfileCubit>().deleteAll();
-                          },
-                          child: const Text('Delete Hive'),
-                        ),
-                        OutlinedButton(
-                          onPressed: () => context.read<TripCubit>().debugTriggerError(),
-                          child: const Text('Trigger error'),
-                        ),
-                      ],
-                    ),
-                  ],
+                ),
+                if (kDebugMode) ...[
+                  const SizedBox(height: paddingUnit),
+                  Wrap(
+                    spacing: paddingUnit,
+                    runSpacing: paddingUnit,
+                    children: [
+                      OutlinedButton(
+                        onPressed: () async {
+                          await context
+                              .read<ItineraryCubit>()
+                              .loadDemoItinerary();
+                        },
+                        child: const Text('Load data'),
+                      ),
+                      OutlinedButton(
+                        onPressed: () async {
+                          context.push(Paths.gallery);
+                          await context.read<GalleryCubit>().uploadToGallery();
+                        },
+                        child: const Text('Upload'),
+                      ),
+                      OutlinedButton(
+                        onPressed: () async {
+                          context.read<GalleryCubit>().deleteAll();
+                          // context.read<LocationCubit>().deleteAll();
+                          context.read<ProfileCubit>().deleteAll();
+                        },
+                        child: const Text('Delete Hive'),
+                      ),
+                      OutlinedButton(
+                        onPressed: () => context.read<TripCubit>().debugTriggerError(),
+                        child: const Text('Trigger error'),
+                      ),
+                    ],
+                  ),
                 ],
-              ),
+              ],
             ),
-            // Top scrim: blends the status-bar area into the base colour and
-            // keeps content legible as it scrolls beneath the pinned header.
-            Positioned(
-              top: 0,
-              left: 0,
-              right: 0,
-              child: IgnorePointer(
-                child: Container(
-                  height: headerZone + paddingUnit * 2,
-                  decoration: BoxDecoration(
-                    gradient: LinearGradient(
-                      begin: Alignment.topCenter,
-                      end: Alignment.bottomCenter,
-                      colors: [
-                        XploreColors.primaryBg,
-                        XploreColors.primaryBg,
-                        XploreColors.primaryBg.withValues(alpha: 0),
-                      ],
-                      stops: const [0, 0.6, 1],
-                    ),
+          ),
+          // Top scrim: blends the status-bar area into the base colour and
+          // keeps content legible as it scrolls beneath the pinned header.
+          Positioned(
+            top: 0,
+            left: 0,
+            right: 0,
+            child: IgnorePointer(
+              child: Container(
+                height: headerZone + paddingUnit * 2,
+                decoration: BoxDecoration(
+                  gradient: LinearGradient(
+                    begin: Alignment.topCenter,
+                    end: Alignment.bottomCenter,
+                    colors: [
+                      XploreColors.primaryBg,
+                      XploreColors.primaryBg,
+                      XploreColors.primaryBg.withValues(alpha: 0),
+                    ],
+                    stops: const [0, 0.6, 1],
                   ),
                 ),
               ),
             ),
-            // Pinned header, sitting just below the status bar.
-            Positioned(
-              top: topInset + headerTopGap,
-              left: 0,
-              right: 0,
-              child: Header(
-                leadingWidget: const _ProfileAvatarButton(),
-                titleWidget: const _HomeGreeting(),
-                trailingWidget: GlassIconButton(
-                  size: 44,
-                  iconSize: 22,
-                  icon: Icons.notifications_none_rounded,
-                  onTap: () => context.push(Paths.notifications),
-                ),
+          ),
+          // Pinned header, sitting just below the status bar.
+          Positioned(
+            top: topInset + headerTopGap,
+            left: 0,
+            right: 0,
+            child: Header(
+              leadingWidget: const _ProfileAvatarButton(),
+              titleWidget: const _HomeGreeting(),
+              trailingWidget: GlassIconButton(
+                size: 44,
+                iconSize: 22,
+                icon: Icons.notifications_none_rounded,
+                onTap: () => context.push(Paths.notifications),
               ),
             ),
-          ],
-        ),
+          ),
+        ],
       ),
     );
   }
@@ -247,16 +265,24 @@ class _TripStatePrompt extends StatelessWidget {
           TripEmpty() => GlassSurface(
             child: Row(
               children: [
-                Icon(Icons.travel_explore_rounded, color: XploreColors.alternate),
+                Icon(
+                  Icons.travel_explore_rounded,
+                  color: XploreColors.alternate,
+                ),
                 const SizedBox(width: paddingUnit),
                 Expanded(
                   child: Text(
                     'Create your first trip to start saving plans, photos, and locations together.',
-                    style: context.pText.bodySmall?.copyWith(color: XploreColors.mutedText),
+                    style: context.pText.bodySmall?.copyWith(
+                      color: XploreColors.mutedText,
+                    ),
                   ),
                 ),
                 const SizedBox(width: paddingUnit),
-                FilledButton(onPressed: onCreateTrip, child: const Text('Create')),
+                FilledButton(
+                  onPressed: onCreateTrip,
+                  child: const Text('Create'),
+                ),
               ],
             ),
           ),
@@ -336,7 +362,9 @@ class _CreateTripSheetState extends State<_CreateTripSheet> {
             const SizedBox(height: paddingUnit / 2),
             Text(
               'Give this shared space a name. Dates and cover images will come in the full trip switcher.',
-              style: context.pText.bodySmall?.copyWith(color: XploreColors.mutedText),
+              style: context.pText.bodySmall?.copyWith(
+                color: XploreColors.mutedText,
+              ),
             ),
             const SizedBox(height: paddingUnit),
             TextField(
@@ -344,7 +372,10 @@ class _CreateTripSheetState extends State<_CreateTripSheet> {
               autofocus: true,
               textInputAction: TextInputAction.done,
               onSubmitted: (_) => _isSubmitting ? null : _submit(),
-              decoration: InputDecoration(errorText: _error, labelText: 'Trip name'),
+              decoration: InputDecoration(
+                errorText: _error,
+                labelText: 'Trip name',
+              ),
             ),
             const SizedBox(height: paddingUnit),
             SizedBox(
@@ -384,7 +415,13 @@ class _ProfileAvatarButton extends StatelessWidget {
               strong: true,
               padding: EdgeInsets.zero,
               onTap: open,
-              child: Center(child: Icon(Icons.person_2_outlined, size: 22, color: XploreColors.white)),
+              child: Center(
+                child: Icon(
+                  Icons.person_2_outlined,
+                  size: 22,
+                  color: XploreColors.white,
+                ),
+              ),
             ),
           );
         }
@@ -397,7 +434,10 @@ class _ProfileAvatarButton extends StatelessWidget {
             decoration: BoxDecoration(
               shape: BoxShape.circle,
               border: Border.all(color: XploreColors.glassBorder),
-              image: DecorationImage(image: MemoryImage(picture), fit: BoxFit.cover),
+              image: DecorationImage(
+                image: MemoryImage(picture),
+                fit: BoxFit.cover,
+              ),
             ),
           ),
         );
@@ -421,7 +461,12 @@ class _HomeGreeting extends StatelessWidget {
           mainAxisAlignment: MainAxisAlignment.center,
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Text('Welcome back', style: context.pText.labelSmall?.copyWith(color: XploreColors.subtleText)),
+            Text(
+              'Welcome back',
+              style: context.pText.labelSmall?.copyWith(
+                color: XploreColors.subtleText,
+              ),
+            ),
             Text(
               firstName,
               style: context.pText.labelLarge?.copyWith(letterSpacing: -0.2),
