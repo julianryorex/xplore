@@ -24,7 +24,7 @@ class LocationCubit extends Cubit<LocationState> {
   final AuthService _authService;
 
   /// Timer where every min user location is updated & fetched to/from the cloud
-  late Timer updateLocationTimer;
+  Timer? updateLocationTimer;
 
   StreamSubscription<DatabaseEvent>? locationSubscription;
 
@@ -53,7 +53,7 @@ class LocationCubit extends Cubit<LocationState> {
     updateLocationTimer = Timer.periodic(Duration(seconds: updateInterval), timerCallback);
   }
 
-  void endTimer() => updateLocationTimer.cancel();
+  void endTimer() => updateLocationTimer?.cancel();
 
   /// The active Firebase UID, or null when unauthenticated.
   String? get _uid => _authService.currentUid;
@@ -146,7 +146,7 @@ class LocationCubit extends Cubit<LocationState> {
   @override
   Future<void> close() {
     _logger.d('Disposing');
-    updateLocationTimer.cancel();
+    updateLocationTimer?.cancel();
     locationSubscription?.cancel();
     return super.close();
   }
