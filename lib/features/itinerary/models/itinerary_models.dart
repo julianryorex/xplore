@@ -1,5 +1,5 @@
 import 'package:freezed_annotation/freezed_annotation.dart';
-import 'package:xplore/features/itinerary/models/datetime_json_converter.dart';
+import 'package:xplore/features/itinerary/models/itinerary_date_converter.dart';
 
 part '../../../generated/features/itinerary/models/itinerary_models.freezed.dart';
 part '../../../generated/features/itinerary/models/itinerary_models.g.dart';
@@ -8,10 +8,12 @@ part '../../../generated/features/itinerary/models/itinerary_models.g.dart';
 abstract class ItineraryModel with _$ItineraryModel {
   const factory ItineraryModel({
     required String id,
-    @JsonKey(name: 'last_updated') @DateTimeConverter() required DateTime lastUpdated,
     required List<String> invitees,
     @JsonKey(name: 'daily_plans') required List<DailyPlanModel> dailyPlans,
     required List<dynamic> pins,
+    // Nullable so a freshly seeded doc whose `serverTimestamp()` is still
+    // pending (null on the local snapshot) parses without throwing.
+    @JsonKey(name: 'last_updated') @ItineraryDateConverter() DateTime? lastUpdated,
   }) = _ItineraryModel;
 
   factory ItineraryModel.fromJson(Map<String, Object?> json) => _$ItineraryModelFromJson(json);
