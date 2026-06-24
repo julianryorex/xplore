@@ -2,7 +2,7 @@ import 'package:firebase_auth_mocks/firebase_auth_mocks.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:xplore/features/auth/bloc/auth_cubit.dart';
 
-import 'helpers/auth_fixtures.dart';
+import '../../helpers/auth_fixtures.dart';
 
 void main() {
   TestWidgetsFlutterBinding.ensureInitialized();

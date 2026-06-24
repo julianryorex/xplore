@@ -7,7 +7,7 @@ import 'package:xplore/features/auth/bloc/auth_cubit.dart';
 import 'package:xplore/features/profile/bloc/profile_cubit.dart';
 import 'package:xplore/screens/profile_page.dart';
 
-import 'helpers/auth_fixtures.dart';
+import '../helpers/auth_fixtures.dart';
 
 class _ProfileHarness {
   _ProfileHarness({required this.authCubit, required this.profileCubit});

@@ -4,7 +4,7 @@
 //
 // Run or refresh this test on the Codemagic Apple build host only; Linux text
 // rasterization does not match the checked-in baseline.
-//   flutter test --update-goldens test/itinerary_card_golden_test.dart
+//   flutter test --update-goldens test/features/itinerary/itinerary_card_golden_test.dart
 
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';

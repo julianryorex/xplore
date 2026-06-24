@@ -66,7 +66,8 @@ matching epic or sub-issue before `gh pr create`.
   `fvm flutter analyze` (lint) → `fvm flutter test`. Core, Firebase-free logic
   can be exercised headlessly — e.g. `ItineraryCubit.loadDemoItinerary()` loads
   `assets/demo/*.json` and parses it via the generated models. See
-  `test/itinerary_demo_smoke_test.dart` and `test/itinerary_card_golden_test.dart`
+  `test/features/itinerary/itinerary_demo_smoke_test.dart` and
+  `test/features/itinerary/itinerary_card_golden_test.dart`
   (the latter renders real UI widgets to a PNG via `--update-goldens`).
 
 ### Pre-existing issues (not environment problems)
