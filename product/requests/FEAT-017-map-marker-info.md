@@ -35,3 +35,7 @@ Custom marker tap → bottom sheet with avatar, name, "Last seen 4 min ago", lin
 ## Notes / history
 
 - 2025-06-22: Created
+- 2026-06-23: Partial — marker `InfoWindow` now shows a relative "Last seen X
+  ago" label (replacing the hardcoded `'Julian'`), backed by a unit-tested
+  `formatLastSeen` / `isLocationStale` helper that also drives marker stale
+  opacity. Full bottom-sheet + avatar UX still pending FEAT-015.

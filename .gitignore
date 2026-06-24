@@ -51,6 +51,9 @@ app.*.map.json
 generated/
 Secrets.xcconfig
 
+# Golden test diff output (generated on golden mismatch)
+test/**/failures/
+
 # Terraform (infra/)
 infra/.terraform/
 infra/*.tfstate
