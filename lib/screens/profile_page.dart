@@ -2,9 +2,9 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:xplore/constants/constants.dart';
 import 'package:xplore/constants/extensions.dart';
-import 'package:xplore/core/avatar_map_icon.dart';
+import 'package:xplore/core/ambient_background.dart';
+import 'package:xplore/core/glass.dart';
 import 'package:xplore/core/header.dart';
-import 'package:xplore/core/icon_button.dart';
 import 'package:xplore/core/layout_padding.dart';
 import 'package:xplore/features/auth/bloc/auth_cubit.dart';
 import 'package:xplore/features/profile/bloc/profile_cubit.dart';
@@ -15,81 +15,41 @@ class ProfilePage extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      body: SafeArea(
-        bottom: false,
-        child: LayoutPadding(
-          header: Header(
-            leadingWidget: XploreIconBtn(
-              onTapCallback: () => Navigator.pop(context),
-              bgColor: XploreColors.darkBg,
-              icon: const Icon(Icons.arrow_back, size: headerIconSize),
+      backgroundColor: XploreColors.primaryBg,
+      body: AmbientBackground(
+        child: SafeArea(
+          bottom: false,
+          child: LayoutPadding(
+            header: Header(
+              leadingWidget: GlassIconButton(icon: Icons.arrow_back, onTap: () => Navigator.pop(context)),
+              titleWidget: Text('Edit Profile', textAlign: TextAlign.center, style: context.pText.headlineSmall),
+              // Balances the leading glass button so the title stays centred.
+              trailingWidget: const SizedBox(width: headerIconButtonSize),
             ),
-          ),
-          child: Stack(
-            children: [
-              BlocBuilder<ProfileCubit, ProfileState>(
-                builder: (context, state) {
-                  return SingleChildScrollView(
-                    child: Column(
-                      children: [
-                        Row(
-                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                          children: [
-                            Text(
-                              'Profile',
-                              style: context.pText.headlineMedium,
-                            ),
-                          ],
-                        ),
-                        const SizedBox(height: paddingUnit),
-                        AvatarMapIcon(
-                          size: 100,
-                          image: state.profilePicture != null
-                              ? Image.memory(state.profilePicture!).image
-                              : null,
-                        ),
-                        const SizedBox(height: paddingUnit),
-                        const _SignedInAccountLabel(),
-                        const SizedBox(height: paddingUnit * 2),
-                        OutlinedButton(
-                          onPressed: () async {
-                            await context
-                                .read<ProfileCubit>()
-                                .changeProfilePicture();
-                          },
-                          child: Text(
-                            'Change profile picture',
-                            textAlign: TextAlign.center,
-                            style: context.pText.bodySmall?.copyWith(
-                              fontWeight: FontWeight.w500,
-                            ),
-                          ),
-                        ),
-                        const SizedBox(height: paddingUnit),
-                        OutlinedButton(
-                          onPressed: () async => _confirmAndSignOut(context),
-                          style: OutlinedButton.styleFrom(
-                            foregroundColor: XploreColors.error,
-                            side: BorderSide(
-                              color: XploreColors.error.withValues(alpha: 0.7),
-                            ),
-                          ),
-                          child: Text(
-                            'Sign out',
-                            textAlign: TextAlign.center,
-                            style: context.pText.bodySmall?.copyWith(
-                              color: XploreColors.error,
-                              fontWeight: FontWeight.w500,
-                            ),
-                          ),
-                        ),
-                        const SizedBox(height: paddingUnit),
-                      ],
-                    ),
-                  );
-                },
-              ),
-            ],
+            child: BlocBuilder<ProfileCubit, ProfileState>(
+              builder: (context, profileState) {
+                return SingleChildScrollView(
+                  child: Column(
+                    children: [
+                      const SizedBox(height: paddingUnit),
+                      _GlassAvatar(
+                        image: profileState.profilePicture != null
+                            ? Image.memory(profileState.profilePicture!).image
+                            : null,
+                        onEdit: () => context.read<ProfileCubit>().changeProfilePicture(),
+                      ),
+                      const SizedBox(height: paddingUnit * 2),
+                      _ProfileFieldsCard(name: profileState.name),
+                      const SizedBox(height: paddingUnit * 2),
+                      const _SaveChangesButton(),
+                      const SizedBox(height: paddingUnit),
+                      _DeleteAccountButton(onTap: () => _confirmAndSignOut(context)),
+                      const SizedBox(height: paddingUnit),
+                    ],
+                  ),
+                );
+              },
+            ),
           ),
         ),
       ),
@@ -104,20 +64,12 @@ class ProfilePage extends StatelessWidget {
           builder: (dialogContext) {
             return AlertDialog(
               title: const Text('Sign out?'),
-              content: const Text(
-                'You will return to the sign-in screen and can choose another Google account.',
-              ),
+              content: const Text('You will return to the sign-in screen and can choose another Google account.'),
               actions: [
-                TextButton(
-                  onPressed: () => Navigator.of(dialogContext).pop(false),
-                  child: const Text('Cancel'),
-                ),
+                TextButton(onPressed: () => Navigator.of(dialogContext).pop(false), child: const Text('Cancel')),
                 TextButton(
                   onPressed: () => Navigator.of(dialogContext).pop(true),
-                  child: Text(
-                    'Sign out',
-                    style: TextStyle(color: XploreColors.error),
-                  ),
+                  child: Text('Sign out', style: TextStyle(color: XploreColors.error)),
                 ),
               ],
             );
@@ -131,30 +83,204 @@ class ProfilePage extends StatelessWidget {
   }
 }
 
-class _SignedInAccountLabel extends StatelessWidget {
-  const _SignedInAccountLabel();
+/// Circular avatar wrapped in a liquid-glass rim with a floating glass camera
+/// badge — the badge reads as a separate piece of glass hovering over the photo.
+class _GlassAvatar extends StatelessWidget {
+  final ImageProvider? image;
+  final VoidCallback onEdit;
+
+  const _GlassAvatar({required this.image, required this.onEdit});
+
+  static const double _size = 100;
+  static const double _badge = 34;
 
   @override
   Widget build(BuildContext context) {
-    return BlocBuilder<AuthCubit, AuthState>(
-      buildWhen: (previous, current) =>
-          previous.runtimeType != current.runtimeType ||
-          current is AuthAuthenticated,
-      builder: (context, state) {
-        if (state is! AuthAuthenticated) {
-          return const SizedBox.shrink();
-        }
-
-        final subtitle = state.email ?? state.displayName;
-
-        return Text(
-          'Signed in as $subtitle',
-          textAlign: TextAlign.center,
-          style: context.pText.bodySmall?.copyWith(
-            color: XploreColors.mutedText,
+    return SizedBox(
+      width: _size + _badge / 2,
+      height: _size + _badge / 2,
+      child: Stack(
+        children: [
+          Container(
+            width: _size,
+            height: _size,
+            padding: const EdgeInsets.all(2),
+            decoration: BoxDecoration(
+              shape: BoxShape.circle,
+              color: XploreColors.glassFill,
+              border: Border.all(color: XploreColors.glassBorder),
+              boxShadow: [
+                BoxShadow(
+                  color: XploreColors.black.withValues(alpha: 0.28),
+                  blurRadius: 28,
+                  offset: const Offset(0, 14),
+                ),
+              ],
+            ),
+            child: DecoratedBox(
+              // Neutral, desaturated fallback so an avatar without a photo reads
+              // as a calm placeholder rather than a bright coloured token.
+              decoration: BoxDecoration(
+                shape: BoxShape.circle,
+                gradient: LinearGradient(
+                  begin: Alignment.topLeft,
+                  end: Alignment.bottomRight,
+                  colors: [XploreColors.surfaceElevated, XploreColors.surface],
+                ),
+              ),
+              child: CircleAvatar(
+                foregroundImage: image,
+                backgroundColor: Colors.transparent,
+                child: Text(
+                  'J',
+                  style: context.pText.headlineSmall?.copyWith(
+                    color: XploreColors.mutedText,
+                    fontWeight: FontWeight.w500,
+                  ),
+                ),
+              ),
+            ),
           ),
-        );
-      },
+          Positioned(
+            right: 0,
+            bottom: 0,
+            child: SizedBox(
+              width: _badge,
+              height: _badge,
+              child: GlassSurface(
+                borderRadius: _badge,
+                strong: true,
+                padding: EdgeInsets.zero,
+                onTap: onEdit,
+                child: Center(child: Icon(Icons.photo_camera_rounded, size: 16, color: XploreColors.mutedText)),
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+/// The editable fields grouped onto a single liquid-glass panel, separated by
+/// hairline dividers — matching the stacked-row layout in the design.
+class _ProfileFieldsCard extends StatelessWidget {
+  final String name;
+
+  const _ProfileFieldsCard({required this.name});
+
+  @override
+  Widget build(BuildContext context) {
+    return GlassSurface(
+      padding: EdgeInsets.zero,
+      child: BlocBuilder<AuthCubit, AuthState>(
+        buildWhen: (previous, current) => previous.runtimeType != current.runtimeType || current is AuthAuthenticated,
+        builder: (context, authState) {
+          final email = authState is AuthAuthenticated ? (authState.email ?? '—') : '—';
+          final handleSource = authState is AuthAuthenticated ? authState.displayName : 'you';
+          final handle = '@${handleSource.split('@').first.split(' ').first.toLowerCase()}';
+
+          return Column(
+            children: [
+              _ProfileFieldRow(label: 'Full name', value: name),
+              const _FieldDivider(),
+              const _ProfileFieldRow(label: 'Phone number', value: '0000-0000-0000', muted: true),
+              const _FieldDivider(),
+              _ProfileFieldRow(label: 'Email', value: email),
+              const _FieldDivider(),
+              _ProfileFieldRow(label: 'Username', value: handle),
+            ],
+          );
+        },
+      ),
+    );
+  }
+}
+
+class _ProfileFieldRow extends StatelessWidget {
+  final String label;
+  final String value;
+  final bool muted;
+
+  const _ProfileFieldRow({required this.label, required this.value, this.muted = false});
+
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: paddingUnit * 1.5, vertical: paddingUnit * 1.25),
+      child: Row(
+        children: [
+          Text(label, style: context.pText.labelSmall?.copyWith(color: XploreColors.subtleText, letterSpacing: 0.2)),
+          const SizedBox(width: paddingUnit),
+          Expanded(
+            child: Text(
+              value,
+              textAlign: TextAlign.right,
+              overflow: TextOverflow.ellipsis,
+              style: context.pText.bodyMedium?.copyWith(color: muted ? XploreColors.subtleText : XploreColors.white),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _FieldDivider extends StatelessWidget {
+  const _FieldDivider();
+
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: paddingUnit * 1.5),
+      child: Divider(height: 1, thickness: 1, color: XploreColors.divider),
+    );
+  }
+}
+
+class _SaveChangesButton extends StatelessWidget {
+  const _SaveChangesButton();
+
+  @override
+  Widget build(BuildContext context) {
+    return SizedBox(
+      width: double.infinity,
+      child: ElevatedButton(
+        onPressed: () {},
+        style: ElevatedButton.styleFrom(
+          // A clean near-white primary reads as premium on dark, and keeps the
+          // brand accent for sparing, intentional use elsewhere.
+          backgroundColor: XploreColors.white,
+          foregroundColor: XploreColors.primaryBg,
+          elevation: 0,
+          minimumSize: const Size.fromHeight(54),
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(radiusMd)),
+        ),
+        child: Text('Save Changes', style: context.pText.labelLarge?.copyWith(color: XploreColors.primaryBg)),
+      ),
+    );
+  }
+}
+
+/// Destructive action rendered as a recessed glass slab rather than a loud red
+/// button, keeping the page calm while still reading as a real control.
+class _DeleteAccountButton extends StatelessWidget {
+  final VoidCallback onTap;
+
+  const _DeleteAccountButton({required this.onTap});
+
+  @override
+  Widget build(BuildContext context) {
+    return SizedBox(
+      width: double.infinity,
+      child: GlassSurface(
+        borderRadius: radiusMd,
+        padding: const EdgeInsets.symmetric(vertical: paddingUnit * 1.25),
+        onTap: onTap,
+        child: Center(
+          child: Text('Delete Account', style: context.pText.labelMedium?.copyWith(color: XploreColors.subtleText)),
+        ),
+      ),
     );
   }
 }

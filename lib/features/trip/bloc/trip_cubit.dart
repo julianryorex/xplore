@@ -63,6 +63,25 @@ class TripCubit extends Cubit<TripState> with TripStreamMixin {
     }
   }
 
+  /// Re-attempts loading the trips stream for the current user. Used by the
+  /// error banner's "Retry" action.
+  void retry() {
+    final uid = _authService.currentUid;
+    if (uid == null) {
+      _emitAndPublish(const TripState.empty());
+      return;
+    }
+    _subscribeToTrips(uid);
+  }
+
+  /// Debug-only: forces the error state so the error banner can be previewed
+  /// on-device. Cancels the live stream so it isn't immediately overwritten.
+  void debugTriggerError() {
+    _tripsSubscription?.cancel();
+    _tripsSubscription = null;
+    _emitAndPublish(const TripState.error('Simulated failure for preview.'));
+  }
+
   Future<void> _onUserChanged(User? user) async {
     await _tripsSubscription?.cancel();
     _tripsSubscription = null;
@@ -72,9 +91,14 @@ class TripCubit extends Cubit<TripState> with TripStreamMixin {
       return;
     }
 
+    _subscribeToTrips(user.uid);
+  }
+
+  void _subscribeToTrips(String uid) {
+    _tripsSubscription?.cancel();
     _emitAndPublish(const TripState.loading());
     _tripsSubscription = _tripService
-        .fetchTrips(user.uid)
+        .fetchTrips(uid)
         .listen(
           (trips) {
             if (trips.isEmpty) {

@@ -7,7 +7,7 @@ import 'package:xplore/features/auth/bloc/auth_cubit.dart';
 import 'package:xplore/features/profile/bloc/profile_cubit.dart';
 import 'package:xplore/screens/profile_page.dart';
 
-import 'helpers/auth_fixtures.dart';
+import '../helpers/auth_fixtures.dart';
 
 class _ProfileHarness {
   _ProfileHarness({required this.authCubit, required this.profileCubit});
@@ -19,11 +19,7 @@ class _ProfileHarness {
 Future<_ProfileHarness> _pumpProfilePage(WidgetTester tester) async {
   final authService = fakeAuthService(
     signedIn: true,
-    user: MockUser(
-      uid: 'abc123',
-      displayName: 'Ada Lovelace',
-      email: 'ada@example.com',
-    ),
+    user: MockUser(uid: 'abc123', displayName: 'Ada Lovelace', email: 'ada@example.com'),
   );
   final authCubit = AuthCubit(authService);
   final profileCubit = ProfileCubit(authService, loadLocalProfile: false);
@@ -37,11 +33,7 @@ Future<_ProfileHarness> _pumpProfilePage(WidgetTester tester) async {
         BlocProvider<AuthCubit>.value(value: authCubit),
         BlocProvider<ProfileCubit>.value(value: profileCubit),
       ],
-      child: MaterialApp(
-        debugShowCheckedModeBanner: false,
-        theme: getTheme(),
-        home: const ProfilePage(),
-      ),
+      child: MaterialApp(debugShowCheckedModeBanner: false, theme: getTheme(), home: const ProfilePage()),
     ),
   );
   await tester.pumpAndSettle();
@@ -52,32 +44,23 @@ Future<_ProfileHarness> _pumpProfilePage(WidgetTester tester) async {
 void main() {
   TestWidgetsFlutterBinding.ensureInitialized();
 
-  testWidgets('ProfilePage shows signed-in account and confirms sign-out', (
-    tester,
-  ) async {
+  testWidgets('ProfilePage shows editable fields and confirms sign-out', (tester) async {
     final harness = await _pumpProfilePage(tester);
 
-    expect(find.text('Signed in as ada@example.com'), findsOneWidget);
-    expect(find.widgetWithText(OutlinedButton, 'Sign out'), findsOneWidget);
+    expect(find.text('Edit Profile'), findsOneWidget);
+    expect(find.text('Full name'), findsOneWidget);
+    expect(find.text('Email'), findsOneWidget);
+    expect(find.text('ada@example.com'), findsOneWidget);
+    expect(find.text('Save Changes'), findsOneWidget);
+    expect(find.text('Delete Account'), findsOneWidget);
 
-    await tester.tap(find.widgetWithText(OutlinedButton, 'Sign out'));
+    await tester.tap(find.text('Delete Account'));
     await tester.pumpAndSettle();
 
     expect(find.text('Sign out?'), findsOneWidget);
-    expect(
-      find.text(
-        'You will return to the sign-in screen and can choose another Google account.',
-      ),
-      findsOneWidget,
-    );
     expect(harness.authCubit.state, isA<AuthAuthenticated>());
 
-    await tester.tap(
-      find.descendant(
-        of: find.byType(AlertDialog),
-        matching: find.text('Sign out'),
-      ),
-    );
+    await tester.tap(find.descendant(of: find.byType(AlertDialog), matching: find.text('Sign out')));
     await tester.pumpAndSettle();
 
     expect(harness.authCubit.state, isA<AuthUnauthenticated>());
@@ -92,9 +75,6 @@ void main() {
     await _pumpProfilePage(tester);
     await tester.pumpAndSettle();
 
-    await expectLater(
-      find.byType(ProfilePage),
-      matchesGoldenFile('goldens/profile_page_signed_in.png'),
-    );
+    await expectLater(find.byType(ProfilePage), matchesGoldenFile('goldens/profile_page_signed_in.png'));
   });
 }

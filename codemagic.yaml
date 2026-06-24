@@ -55,7 +55,7 @@ workflows:
         script: flutter build ios --release --no-codesign
 
       - name: Run iOS CI golden test
-        script: flutter test test/itinerary_card_golden_test.dart
+        script: flutter test test/features/itinerary/itinerary_card_golden_test.dart
     artifacts:
       - build/ios/iphoneos/*.app
       - /tmp/xcodebuild_logs/*.log

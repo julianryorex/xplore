@@ -1,11 +1,10 @@
-import 'dart:developer';
-
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:xplore/constants/constants.dart';
 import 'package:xplore/constants/extensions.dart';
 import 'package:xplore/core/ambient_background.dart';
+import 'package:xplore/core/error_state.dart';
 import 'package:xplore/core/glass.dart';
 import 'package:xplore/core/header.dart';
 import 'package:xplore/core/navbar.dart';
@@ -180,6 +179,10 @@ class HomePage extends StatelessWidget {
                           },
                           child: const Text('Delete Hive'),
                         ),
+                        OutlinedButton(
+                          onPressed: () => context.read<TripCubit>().debugTriggerError(),
+                          child: const Text('Trigger error'),
+                        ),
                       ],
                     ),
                   ],
@@ -222,7 +225,7 @@ class HomePage extends StatelessWidget {
                   size: 44,
                   iconSize: 22,
                   icon: Icons.notifications_none_rounded,
-                  onTap: () => log('tapped'),
+                  onTap: () => context.push(Paths.notifications),
                 ),
               ),
             ),
@@ -287,11 +290,10 @@ class _TripStatePrompt extends StatelessWidget {
               ],
             ),
           ),
-          TripError(:final message) => GlassSurface(
-            child: Text(
-              'Trips could not load: $message',
-              style: context.pText.bodySmall?.copyWith(color: XploreColors.error),
-            ),
+          TripError() => ErrorState(
+            title: 'Unable to load trips',
+            message: 'Something went wrong while loading your trips. Please try again.',
+            onRetry: () => context.read<TripCubit>().retry(),
           ),
           _ => const SizedBox.shrink(),
         };
