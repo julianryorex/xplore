@@ -35,13 +35,10 @@ class AuthFailureException implements Exception {
 /// unavailable). Adding Apple later is additive: a `signInWithApple()` method
 /// here plus a button in the sign-in UI — no structural change.
 class AuthService {
-  AuthService({
-    FirebaseAuth? firebaseAuth,
-    FirebaseFirestore? firestore,
-    GoogleSignIn? googleSignIn,
-  }) : _auth = firebaseAuth ?? FirebaseAuth.instance,
-       _firestore = firestore ?? FirebaseFirestore.instanceFor(app: Firebase.app(), databaseId: appDatabaseId),
-       _google = googleSignIn ?? GoogleSignIn.instance;
+  AuthService({FirebaseAuth? firebaseAuth, FirebaseFirestore? firestore, GoogleSignIn? googleSignIn})
+    : _auth = firebaseAuth ?? FirebaseAuth.instance,
+      _firestore = firestore ?? FirebaseFirestore.instanceFor(app: Firebase.app(), databaseId: appDatabaseId),
+      _google = googleSignIn ?? GoogleSignIn.instance;
 
   /// Named Firestore Native database created by the Terraform infra (Phase 1).
   /// The project's default database is Datastore-mode and unusable by the SDKs.

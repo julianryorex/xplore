@@ -1,3 +1,7 @@
+<p align="center">
+  <img src="assets/branding/app_icon.jpg" alt="Xplore app icon" width="128" />
+</p>
+
 # Xplore
 
 A Flutter group-travel companion app featuring shared day-by-day itineraries, real-time location tracking on a custom-styled Google Map, and a collaborative trip photo gallery — powered by Firebase and experimenting with Gemini AI for itinerary generation.

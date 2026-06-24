@@ -70,33 +70,47 @@ class HomePage extends StatelessWidget {
                 //! Daily Plans Section Containers
                 BlocBuilder<ItineraryCubit, ItineraryStates>(
                   builder: (context, state) {
-                    if (state is InitialItineraryState) {
-                      return const SizedBox(
+                    return switch (state) {
+                      InitialItineraryState() ||
+                      LoadingItineraryState() => const SizedBox(
                         height: 300,
                         width: 230,
                         child: Center(child: CircularProgressIndicator()),
-                      );
-                    }
-
-                    final itinerary = (state as LoadedItineraryState).itinerary;
-
-                    return SingleChildScrollView(
-                      scrollDirection: Axis.horizontal,
-                      child: Row(
-                        children: [
-                          ...itinerary.dailyPlans.map(
-                            (dailyPlan) => Padding(
-                              padding: const EdgeInsets.only(right: 10),
-                              child: SizedBox(
-                                width: ItineraryCard.width,
-                                height: ItineraryCard.height,
-                                child: ItineraryCard(dailyPlan: dailyPlan),
-                              ),
-                            ),
-                          ),
-                        ],
                       ),
-                    );
+                      EmptyItineraryState() => const _ItineraryPlaceholder(
+                        message:
+                            'Create or open a trip to see its daily plans here.',
+                      ),
+                      ErrorItineraryState() => ErrorState(
+                        title: 'Unable to load itinerary',
+                        message: 'Something went wrong. Please try again later',
+                        onRetry: () => context.read<ItineraryCubit>().retry(),
+                      ),
+                      LoadedItineraryState(:final itinerary)
+                          when itinerary.dailyPlans.isEmpty =>
+                        const _ItineraryPlaceholder(
+                          message:
+                              'No plans yet. Days and stops will appear here once added.',
+                        ),
+                      LoadedItineraryState(:final itinerary) =>
+                        SingleChildScrollView(
+                          scrollDirection: Axis.horizontal,
+                          child: Row(
+                            children: [
+                              ...itinerary.dailyPlans.map(
+                                (dailyPlan) => Padding(
+                                  padding: const EdgeInsets.only(right: 10),
+                                  child: SizedBox(
+                                    width: ItineraryCard.width,
+                                    height: ItineraryCard.height,
+                                    child: ItineraryCard(dailyPlan: dailyPlan),
+                                  ),
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                    };
                   },
                 ),
                 const SizedBox(height: paddingUnit * 2),
@@ -245,6 +259,27 @@ class HomePage extends StatelessWidget {
                 onTap: () => context.push(Paths.notifications),
               ),
             ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _ItineraryPlaceholder extends StatelessWidget {
+  const _ItineraryPlaceholder({required this.message});
+
+  final String message;
+
+  @override
+  Widget build(BuildContext context) {
+    return GlassSurface(
+      child: Row(
+        children: [
+          Icon(Icons.event_note_outlined, color: XploreColors.alternate),
+          const SizedBox(width: paddingUnit),
+          Expanded(
+            child: Text(message, style: context.pText.bodySmall?.copyWith(color: XploreColors.mutedText)),
           ),
         ],
       ),
