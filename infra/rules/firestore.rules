@@ -2,9 +2,99 @@ rules_version = '2';
 
 service cloud.firestore {
   match /databases/{database}/documents {
+    function isSignedIn() {
+      return request.auth != null;
+    }
+
+    function tripFields() {
+      return [
+        'title',
+        'memberIds',
+        'createdBy',
+        'lastUpdatedBy',
+        'createdAt',
+        'lastUpdatedAt',
+        'startDate',
+        'endDate',
+        'coverImageUrl',
+      ];
+    }
+
+    function requiredTripFields() {
+      return ['title', 'memberIds', 'createdBy', 'lastUpdatedBy', 'createdAt', 'lastUpdatedAt'];
+    }
+
+    function optionalTimestamp(data, field) {
+      return !(field in data) || data[field] == null || data[field] is timestamp;
+    }
+
+    function optionalString(data, field, maxLength) {
+      return !(field in data)
+        || data[field] == null
+        || (data[field] is string && data[field].size() <= maxLength);
+    }
+
+    function validTripShape(data) {
+      return data.keys().hasOnly(tripFields())
+        && data.keys().hasAll(requiredTripFields())
+        && data.title is string
+        && data.title.size() > 0
+        && data.title.size() <= 80
+        && data.memberIds is list
+        && data.memberIds.size() > 0
+        && data.memberIds.size() <= 50
+        && data.createdBy is string
+        && data.createdBy.size() > 0
+        && data.createdBy.size() <= 128
+        && data.lastUpdatedBy is string
+        && data.lastUpdatedBy.size() > 0
+        && data.lastUpdatedBy.size() <= 128
+        && data.createdAt is timestamp
+        && data.lastUpdatedAt is timestamp
+        && optionalTimestamp(data, 'startDate')
+        && optionalTimestamp(data, 'endDate')
+        && optionalString(data, 'coverImageUrl', 2048)
+        && (!('startDate' in data) || !('endDate' in data) || data.startDate == null || data.endDate == null || data.startDate <= data.endDate);
+    }
+
+    function validTripCreate() {
+      return isSignedIn()
+        && validTripShape(request.resource.data)
+        && request.resource.data.memberIds == [request.auth.uid]
+        && request.resource.data.createdBy == request.auth.uid
+        && request.resource.data.lastUpdatedBy == request.auth.uid
+        && request.resource.data.createdAt == request.time
+        && request.resource.data.lastUpdatedAt == request.time;
+    }
+
+    function validTripUpdate() {
+      return isSignedIn()
+        && request.auth.uid in resource.data.memberIds
+        && request.auth.uid in request.resource.data.memberIds
+        && validTripShape(request.resource.data)
+        && request.resource.data.diff(resource.data).affectedKeys().hasOnly([
+          'title',
+          'lastUpdatedBy',
+          'lastUpdatedAt',
+          'startDate',
+          'endDate',
+          'coverImageUrl',
+        ])
+        && request.resource.data.lastUpdatedBy == request.auth.uid
+        && request.resource.data.lastUpdatedAt == request.time;
+    }
 
     match /users/{uid} {
-      allow read, write: if request.auth != null && request.auth.uid == uid;
+      allow read, write: if isSignedIn() && request.auth.uid == uid;
+    }
+
+    match /trips/{tripId} {
+      allow read: if isSignedIn()
+        && request.auth.uid in resource.data.memberIds;
+
+      allow create: if validTripCreate();
+
+      allow update: if validTripUpdate();
     }
 
     match /{document=**} {
