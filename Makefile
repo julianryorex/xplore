@@ -1,4 +1,4 @@
-.PHONY: clean get init gen format check-format test test-gold delete-gold test-cov cov reboot build-ios build-ios-testflight build-mac deploy-ios redeploy-ios prep-ipad prep-mac pub-reset
+.PHONY: clean get init gen format check-format analyze verify test test-gold delete-gold test-cov cov reboot build-ios build-ios-testflight build-mac deploy-ios redeploy-ios prep-ipad prep-mac pub-reset
 
 FVM ?= fvm
 FLUTTER := $(FVM) flutter
@@ -70,6 +70,13 @@ format:
 
 check-format:
 	$(DART) format --output=none -l 120 --set-exit-if-changed $(DART_FORMAT_DIRS)
+
+analyze:
+	$(FLUTTER) analyze $(DART_FORMAT_DIRS)
+
+# Canonical agent/CI verification: codegen, formatting, lint, then tests.
+# Run this (not ad hoc fvm commands) to verify a change.
+verify: gen check-format analyze test
 
 test:
 	$(FLUTTER) test
