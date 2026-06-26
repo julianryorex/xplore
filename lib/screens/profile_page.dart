@@ -243,8 +243,6 @@ class _ProfileFieldsCard extends StatelessWidget {
             children: [
               _ProfileFieldRow(label: 'Full name', value: name),
               const _FieldDivider(),
-              const _ProfileFieldRow(label: 'Phone number', value: '0000-0000-0000', muted: true),
-              const _FieldDivider(),
               _ProfileFieldRow(label: 'Email', value: email),
               const _FieldDivider(),
               _ProfileFieldRow(label: 'Username', value: handle),
@@ -259,9 +257,8 @@ class _ProfileFieldsCard extends StatelessWidget {
 class _ProfileFieldRow extends StatelessWidget {
   final String label;
   final String value;
-  final bool muted;
 
-  const _ProfileFieldRow({required this.label, required this.value, this.muted = false});
+  const _ProfileFieldRow({required this.label, required this.value});
 
   @override
   Widget build(BuildContext context) {
@@ -276,7 +273,7 @@ class _ProfileFieldRow extends StatelessWidget {
               value,
               textAlign: TextAlign.right,
               overflow: TextOverflow.ellipsis,
-              style: context.pText.bodyMedium?.copyWith(color: muted ? XploreColors.subtleText : XploreColors.white),
+              style: context.pText.bodyMedium?.copyWith(color: XploreColors.white),
             ),
           ),
         ],
