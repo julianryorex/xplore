@@ -87,8 +87,10 @@ class NotificationSection {
 /// Total unread across every section.
 int unreadCountFor(List<NotificationSection> sections) => sections.fold(0, (sum, section) => sum + section.unreadCount);
 
-/// Static sample feed used by every variant + the goldens. Replace with a real
-/// `NotificationCubit` stream when the backend lands.
+/// Static sample feed used ONLY by widget/golden tests to render the populated
+/// notification list. The runtime app no longer shows this — [NotificationsPage]
+/// defaults to an empty feed (the "all caught up" empty state) until the real
+/// `NotificationCubit` stream lands with the backend (FEAT-012).
 const List<NotificationSection> sampleNotifications = [
   NotificationSection(
     label: 'Today',
