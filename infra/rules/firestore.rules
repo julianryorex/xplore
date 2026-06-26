@@ -17,7 +17,28 @@ service cloud.firestore {
         'startDate',
         'endDate',
         'coverImageUrl',
+        'destination',
+        'preferences',
       ];
+    }
+
+    function preferenceFields() {
+      return ['interests', 'pace', 'budget', 'groupKind', 'groupSize', 'notes'];
+    }
+
+    function validPreferences(data) {
+      return data is map
+        && data.keys().hasOnly(preferenceFields())
+        && data.interests is list
+        && optionalString(data, 'pace', 32)
+        && optionalString(data, 'budget', 32)
+        && optionalString(data, 'groupKind', 32)
+        && optionalString(data, 'notes', 500)
+        && (!('groupSize' in data) || data.groupSize == null || data.groupSize is int);
+    }
+
+    function optionalPreferences(data) {
+      return !('preferences' in data) || data.preferences == null || validPreferences(data.preferences);
     }
 
     function requiredTripFields() {
@@ -54,6 +75,8 @@ service cloud.firestore {
         && optionalTimestamp(data, 'startDate')
         && optionalTimestamp(data, 'endDate')
         && optionalString(data, 'coverImageUrl', 2048)
+        && optionalString(data, 'destination', 120)
+        && optionalPreferences(data)
         && (!('startDate' in data) || !('endDate' in data) || data.startDate == null || data.endDate == null || data.startDate <= data.endDate);
     }
 

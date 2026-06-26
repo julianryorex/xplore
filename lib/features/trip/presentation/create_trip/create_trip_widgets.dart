@@ -50,11 +50,14 @@ class SelectableChip extends StatelessWidget {
             mainAxisSize: MainAxisSize.min,
             children: [
               if (icon != null) ...[Icon(icon, size: 17, color: foreground), const SizedBox(width: paddingUnit * 0.5)],
-              Text(
-                label,
-                style: context.pText.labelLarge?.copyWith(
-                  color: foreground,
-                  fontWeight: selected ? FontWeight.w600 : FontWeight.w500,
+              Flexible(
+                child: Text(
+                  label,
+                  overflow: TextOverflow.ellipsis,
+                  style: context.pText.labelLarge?.copyWith(
+                    color: foreground,
+                    fontWeight: selected ? FontWeight.w600 : FontWeight.w500,
+                  ),
                 ),
               ),
             ],
