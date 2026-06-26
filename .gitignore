@@ -38,6 +38,8 @@ docs/plans/
 !.fvmrc
 /build/
 
+test/**/failures/**/*.png
+
 # Symbolication related
 app.*.symbols
 

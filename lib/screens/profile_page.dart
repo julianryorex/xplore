@@ -34,13 +34,12 @@ class ProfilePage extends StatelessWidget {
                     children: [
                       const SizedBox(height: paddingUnit),
                       _GlassAvatar(
-                        image: profileState.profilePicture != null
-                            ? Image.memory(profileState.profilePicture!).image
-                            : null,
+                        image: _avatarImage(profileState),
+                        initial: _initialFor(profileState.name),
                         onEdit: () => context.read<ProfileCubit>().changeProfilePicture(),
                       ),
                       const SizedBox(height: paddingUnit * 2),
-                      _ProfileFieldsCard(name: profileState.name),
+                      _ProfileFieldsCard(name: profileState.name, username: profileState.username),
                       const SizedBox(height: paddingUnit * 2),
                       const _SaveChangesButton(),
                       const SizedBox(height: paddingUnit),
@@ -57,6 +56,23 @@ class ProfilePage extends StatelessWidget {
         ),
       ),
     );
+  }
+
+  /// Freshly-picked bytes win; otherwise fall back to the synced cloud avatar.
+  ImageProvider? _avatarImage(ProfileState state) {
+    if (state.profilePicture != null) {
+      return Image.memory(state.profilePicture!).image;
+    }
+    final url = state.photoUrl;
+    if (url != null && url.isNotEmpty) {
+      return NetworkImage(url);
+    }
+    return null;
+  }
+
+  String _initialFor(String name) {
+    final trimmed = name.trim();
+    return trimmed.isEmpty ? '?' : trimmed.substring(0, 1).toUpperCase();
   }
 
   Future<void> _confirmAndSignOut(BuildContext context) async {
@@ -127,9 +143,10 @@ class ProfilePage extends StatelessWidget {
 /// badge — the badge reads as a separate piece of glass hovering over the photo.
 class _GlassAvatar extends StatelessWidget {
   final ImageProvider? image;
+  final String initial;
   final VoidCallback onEdit;
 
-  const _GlassAvatar({required this.image, required this.onEdit});
+  const _GlassAvatar({required this.image, required this.initial, required this.onEdit});
 
   static const double _size = 100;
   static const double _badge = 34;
@@ -172,7 +189,7 @@ class _GlassAvatar extends StatelessWidget {
                 foregroundImage: image,
                 backgroundColor: Colors.transparent,
                 child: Text(
-                  'J',
+                  initial,
                   style: context.pText.headlineSmall?.copyWith(
                     color: XploreColors.mutedText,
                     fontWeight: FontWeight.w500,
@@ -206,8 +223,9 @@ class _GlassAvatar extends StatelessWidget {
 /// hairline dividers — matching the stacked-row layout in the design.
 class _ProfileFieldsCard extends StatelessWidget {
   final String name;
+  final String? username;
 
-  const _ProfileFieldsCard({required this.name});
+  const _ProfileFieldsCard({required this.name, required this.username});
 
   @override
   Widget build(BuildContext context) {
@@ -217,14 +235,13 @@ class _ProfileFieldsCard extends StatelessWidget {
         buildWhen: (previous, current) => previous.runtimeType != current.runtimeType || current is AuthAuthenticated,
         builder: (context, authState) {
           final email = authState is AuthAuthenticated ? (authState.email ?? '—') : '—';
-          final handleSource = authState is AuthAuthenticated ? authState.displayName : 'you';
-          final handle = '@${handleSource.split('@').first.split(' ').first.toLowerCase()}';
+          // Handle is the synced cloud value (auto-generated at sign-up; chosen
+          // in onboarding). '—' until the cloud profile hydrates.
+          final handle = (username != null && username!.isNotEmpty) ? '@$username' : '—';
 
           return Column(
             children: [
               _ProfileFieldRow(label: 'Full name', value: name),
-              const _FieldDivider(),
-              const _ProfileFieldRow(label: 'Phone number', value: '0000-0000-0000', muted: true),
               const _FieldDivider(),
               _ProfileFieldRow(label: 'Email', value: email),
               const _FieldDivider(),
@@ -240,9 +257,8 @@ class _ProfileFieldsCard extends StatelessWidget {
 class _ProfileFieldRow extends StatelessWidget {
   final String label;
   final String value;
-  final bool muted;
 
-  const _ProfileFieldRow({required this.label, required this.value, this.muted = false});
+  const _ProfileFieldRow({required this.label, required this.value});
 
   @override
   Widget build(BuildContext context) {
@@ -257,7 +273,7 @@ class _ProfileFieldRow extends StatelessWidget {
               value,
               textAlign: TextAlign.right,
               overflow: TextOverflow.ellipsis,
-              style: context.pText.bodyMedium?.copyWith(color: muted ? XploreColors.subtleText : XploreColors.white),
+              style: context.pText.bodyMedium?.copyWith(color: XploreColors.white),
             ),
           ),
         ],

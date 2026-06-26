@@ -5,6 +5,8 @@ Ranked feature requests for Xplore. **Work top-to-bottom within each tier.**
 Legend: **Status** — `backlog` · `ready_for_dev` (full spec written) · `in_progress` · `done` · `wont_do`
 
 > **Next up:** [FEAT-006 Production itinerary data layer](./requests/FEAT-006-itinerary-firebase-sync.md) — makes the active trip from FEAT-002 load real cloud itinerary data instead of demo JSON.
+>
+> **Early ideas** not yet specced live in [FEATURES_UNDER_CONSIDERATION.md](./FEATURES_UNDER_CONSIDERATION.md).
 
 ---
 
@@ -33,6 +35,8 @@ Completes the promise: plan together, stay together, remember together.
 | FEAT-015 | Profile sync (name, avatar, handle to cloud) | retention | L | backlog | [→](./requests/FEAT-015-profile-cloud-sync.md) |
 | FEAT-016 | Itinerary checklist completion sync | retention | M | backlog | [→](./requests/FEAT-016-itinerary-completion-sync.md) |
 | FEAT-017 | Map marker info & last-seen UX | indirect | S | backlog | [→](./requests/FEAT-017-map-marker-info.md) |
+| FEAT-018 | In-trip Today/Now view | retention | M | backlog | [→](./requests/FEAT-018-today-now-view.md) |
+| FEAT-019 | Richer itinerary block types | enabler | L | backlog | [→](./requests/FEAT-019-itinerary-block-types.md) |
 
 ---
 
@@ -66,6 +70,8 @@ New platforms, partnerships, and power features.
 | FEAT-035 | CI/CD pipeline | indirect | M | backlog | [→](./requests/FEAT-035-cicd-pipeline.md) |
 | FEAT-036 | Test suite (unit, widget, integration) | indirect | L | `in_progress` | [→](./requests/FEAT-036-test-suite.md) |
 | FEAT-037 | Tool-augmented AI planning & travel integrations | direct | XL | backlog | [→](./requests/FEAT-037-travel-integrations.md) |
+| FEAT-038 | Collaborative packing list & checklist | retention | M | backlog | [→](./requests/FEAT-038-packing-list-checklist.md) |
+| FEAT-039 | Saved places / wishlist + share-in capture | indirect | M | backlog | [→](./requests/FEAT-039-saved-places-share-capture.md) |
 
 ---
 
@@ -81,6 +87,8 @@ Quality-of-life and experimental; pick up when higher tiers are stable.
 | FEAT-044 | Neighborhood / geofence alerts | retention | L | backlog | [→](./requests/FEAT-044-geofence-alerts.md) |
 | FEAT-045 | B2B tour operator dashboard | direct | XL | backlog | [→](./requests/FEAT-045-b2b-dashboard.md) |
 | FEAT-046 | Profile avatar map-marker pipeline | retention | M | backlog | [→](./requests/FEAT-046-map-avatar-marker-pipeline.md) |
+| FEAT-047 | Destination arrival moments | retention | M | backlog | [→](./requests/FEAT-047-destination-arrival-moments.md) |
+| FEAT-048 | Personal travel profile & stats ("passport") | retention | M | backlog | [→](./requests/FEAT-048-travel-profile-stats.md) |
 
 ---
 

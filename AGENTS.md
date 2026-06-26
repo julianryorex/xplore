@@ -8,6 +8,15 @@ Gemini). See `docs/DEVELOPMENT.md` and the `Makefile` for the canonical commands
 (`make get`, `make gen`, `make format`, `make check-format`); `README.md` is the
 trimmed, recruiter-facing overview.
 
+**Verification — always use the `make` targets, never ad hoc `fvm` commands.** To
+verify any change, run `make verify` (codegen → `check-format` → `analyze` → `test`),
+or the individual targets when iterating: `make gen`, `make format` /
+`make check-format`, `make analyze`, `make test`. This keeps formatting (`-l 120`),
+lint scope (`lib test`), and codegen consistent with CI. Do **not** invoke
+`fvm dart format` / `fvm flutter analyze` / `fvm flutter test` directly for
+verification — wrap new checks in a `Makefile` target instead so everyone runs the
+same thing.
+
 **Product backlog:** Before starting net-new features, read `product/BACKLOG.md`
 (prioritized P0–P4 requests with acceptance criteria and code pointers). Add new
 requests via `product/requests/_TEMPLATE.md`.
@@ -66,8 +75,8 @@ matching epic or sub-issue before `gh pr create`.
  gallery **thumbnails** are now compressed with the pure-Dart `image` package
  (`lib/features/gallery/services/image_compressor.dart`), while the
  **full-resolution original is still uploaded** to Storage for full-detail viewing.
-- On Linux the practical dev loop is: `make gen` (codegen) →
-  `fvm flutter analyze` (lint) → `fvm flutter test`. Core, Firebase-free logic
+- On Linux the practical dev loop is `make verify` (or `make gen` →
+  `make analyze` → `make test`). Core, Firebase-free logic
   can be exercised headlessly — e.g. `ItineraryCubit.loadDemoItinerary()` loads
   `assets/demo/*.json` and parses it via the generated models. See
   `test/features/itinerary/itinerary_demo_smoke_test.dart` and
