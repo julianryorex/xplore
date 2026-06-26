@@ -3,9 +3,18 @@ rules_version = '2';
 service firebase.storage {
   match /b/{bucket}/o {
 
+    // Gallery objects are trip-scoped: gallery/{tripId}/{uid}/**.
+    // Only members of trips/{tripId} (membership lives in the Firestore
+    // `memberIds` array) may read the prefix, and a member may only write
+    // under their own uid segment.
     match /gallery/{tripId}/{uid}/{allPaths=**} {
-      allow read: if request.auth != null;
-      allow write: if request.auth != null && request.auth.uid == uid;
+      function isTripMember() {
+        return request.auth != null
+          && request.auth.uid in firestore.get(/databases/(default)/documents/trips/$(tripId)).data.memberIds;
+      }
+
+      allow read: if isTripMember();
+      allow write: if isTripMember() && request.auth.uid == uid;
     }
 
     match /{allPaths=**} {

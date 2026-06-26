@@ -31,9 +31,12 @@ These still block real multi-user group travel:
 const itineraryId = 'ph4kd';
 ```
 
-`location` and `gallery` cubits still use `_activeTripId ?? itineraryId` until FEAT-014
-tightens gallery storage paths. Itinerary production reads no longer depend on demo JSON
-at runtime — `loadDemoItinerary()` is test/golden-only.
+The `location` cubit still uses `_activeTripId ?? itineraryId` as a late-subscriber/demo
+fallback. The `gallery` cubit no longer does: uploads are strictly trip-scoped
+(`gallery/{activeTripId}/{uid}/{imageId}`) and fail fast without an active trip, and Hive
+caches are namespaced per trip ([FEAT-014](./requests/FEAT-014-trip-scoped-gallery.md)).
+Itinerary production reads no longer depend on demo JSON at runtime —
+`loadDemoItinerary()` is test/golden-only.
 
 Also outstanding:
 
@@ -41,7 +44,7 @@ Also outstanding:
 - Itinerary **editing CRUD** not built; gated on FEAT-024 organizer roles → FEAT-006 follow-up
 - Mock onboarding placeholder only → **FEAT-005**
 - No trip invites / deep links → **FEAT-003**
-- Gallery uploads not fully trip-scoped in Storage rules → **FEAT-014**
+- Gallery Storage rules updated to gate `gallery/{tripId}/**` by trip membership (FEAT-014); rules **deploy** (terraform/console) still pending
 - Profile name / avatar not synced to cloud → **FEAT-015**
 - Push notifications not wired (screen exists; no FCM) → **FEAT-012**
 - GitHub auth issues still Apple-titled despite Google shipping → reconcile via Issue Filer
@@ -61,8 +64,9 @@ Also outstanding:
 ## Data model readiness
 
 `ItineraryModel` and `TripModel` include fields useful for production. Itinerary data
-lives at `itineraries/{tripId}` in Firestore. Location and gallery layers consume
-`TripCubit.activeTripId` with the `ph4kd` demo fallback for late subscribers and tests.
+lives at `itineraries/{tripId}` in Firestore. The location layer consumes
+`TripCubit.activeTripId` with the `ph4kd` demo fallback for late subscribers and tests;
+the gallery layer is now strictly trip-scoped with no fallback.
 
 ## Engineering debt affecting product timeline
 

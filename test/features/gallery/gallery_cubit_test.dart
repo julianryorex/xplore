@@ -26,5 +26,16 @@ void main() {
 
       await cubit.close();
     });
+
+    // FEAT-014: uploads are strictly trip-scoped (gallery/{tripId}/{uid}/...),
+    // so with no active trip the upload must fail fast instead of falling back
+    // to the removed `ph4kd` demo id.
+    test('errors out when there is no active trip', () async {
+      final cubit = GalleryCubit(fakeAuthService(signedIn: true), repo: _EmptyGalleryRepository());
+
+      await expectLater(cubit.uploadImage(File('unused.jpg'), 'image-1'), throwsA(isA<StateError>()));
+
+      await cubit.close();
+    });
   });
 }
