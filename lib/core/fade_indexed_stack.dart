@@ -30,23 +30,15 @@ class FadeIndexedStack extends StatefulWidget {
   State<FadeIndexedStack> createState() => _FadeIndexedStackState();
 }
 
-class _FadeIndexedStackState extends State<FadeIndexedStack>
-    with SingleTickerProviderStateMixin {
+class _FadeIndexedStackState extends State<FadeIndexedStack> with SingleTickerProviderStateMixin {
   late final AnimationController _controller;
   late final List<bool> _activated;
 
   @override
   void initState() {
     super.initState();
-    _controller = AnimationController(
-      vsync: this,
-      duration: widget.duration,
-      value: 1,
-    );
-    _activated = List<bool>.generate(
-      widget.children.length,
-      (i) => i == widget.index,
-    );
+    _controller = AnimationController(vsync: this, duration: widget.duration, value: 1);
+    _activated = List<bool>.generate(widget.children.length, (i) => i == widget.index);
   }
 
   @override
@@ -82,8 +74,7 @@ class _FadeIndexedStackState extends State<FadeIndexedStack>
         index: widget.index,
         sizing: StackFit.expand,
         children: [
-          for (var i = 0; i < widget.children.length; i++)
-            _activated[i] ? widget.children[i] : const SizedBox.shrink(),
+          for (var i = 0; i < widget.children.length; i++) _activated[i] ? widget.children[i] : const SizedBox.shrink(),
         ],
       ),
     );

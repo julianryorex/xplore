@@ -3,19 +3,14 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:xplore/core/fade_indexed_stack.dart';
 
 void main() {
-  testWidgets('lazily builds tabs and preserves activated tab state', (
-    tester,
-  ) async {
+  testWidgets('lazily builds tabs and preserves activated tab state', (tester) async {
     var homeInitCount = 0;
     var mapInitCount = 0;
 
     await tester.pumpWidget(
       MaterialApp(
         home: Scaffold(
-          body: _FadeIndexedStackHarness(
-            onHomeInit: () => homeInitCount++,
-            onMapInit: () => mapInitCount++,
-          ),
+          body: _FadeIndexedStackHarness(onHomeInit: () => homeInitCount++, onMapInit: () => mapInitCount++),
         ),
       ),
     );
@@ -44,10 +39,7 @@ void main() {
 }
 
 class _FadeIndexedStackHarness extends StatefulWidget {
-  const _FadeIndexedStackHarness({
-    required this.onHomeInit,
-    required this.onMapInit,
-  });
+  const _FadeIndexedStackHarness({required this.onHomeInit, required this.onMapInit});
 
   static const homeButtonKey = ValueKey('show-home-tab');
   static const mapButtonKey = ValueKey('show-map-tab');
@@ -56,8 +48,7 @@ class _FadeIndexedStackHarness extends StatefulWidget {
   final VoidCallback onMapInit;
 
   @override
-  State<_FadeIndexedStackHarness> createState() =>
-      _FadeIndexedStackHarnessState();
+  State<_FadeIndexedStackHarness> createState() => _FadeIndexedStackHarnessState();
 }
 
 class _FadeIndexedStackHarnessState extends State<_FadeIndexedStackHarness> {

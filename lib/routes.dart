@@ -45,16 +45,11 @@ class RouteGenerator {
         // route entries still resolve to the shell, with `/map` selecting the
         // Map tab for deep links and old callers.
         return MaterialPageRoute(
-          builder: (_) => RootShell(
-            initialTab: settings.name == Paths.map ? AppTab.map : AppTab.home,
-          ),
+          builder: (_) => RootShell(initialTab: settings.name == Paths.map ? AppTab.map : AppTab.home),
           settings: settings,
         );
       case Paths.profile:
-        return MaterialPageRoute(
-          builder: (_) => const ProfilePage(),
-          settings: settings,
-        );
+        return MaterialPageRoute(builder: (_) => const ProfilePage(), settings: settings);
       case Paths.notifications:
         return MaterialPageRoute(builder: (_) => const NotificationsPage());
       case Paths.onboarding:
@@ -69,13 +64,8 @@ class RouteGenerator {
         return FadeThroughPageRoute(
           settings: settings,
           builder: (_) {
-            if (args is Map<String, dynamic> &&
-                args.containsKey('gallery') &&
-                args.containsKey('initialIndex')) {
-              return GalleryFocusView(
-                images: args['gallery'],
-                initialIndex: args['initialIndex'],
-              );
+            if (args is Map<String, dynamic> && args.containsKey('gallery') && args.containsKey('initialIndex')) {
+              return GalleryFocusView(images: args['gallery'], initialIndex: args['initialIndex']);
             }
 
             _logger.e('argument is not of type "ImageModel"');
@@ -127,8 +117,7 @@ class FadeThroughPageRoute<T> extends PageRouteBuilder<T> {
     : super(
         transitionDuration: const Duration(milliseconds: 300),
         reverseTransitionDuration: const Duration(milliseconds: 250),
-        pageBuilder: (context, animation, secondaryAnimation) =>
-            builder(context),
+        pageBuilder: (context, animation, secondaryAnimation) => builder(context),
         transitionsBuilder: (context, animation, secondaryAnimation, child) {
           return FadeThroughTransition(
             animation: animation,

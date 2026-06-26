@@ -7,60 +7,15 @@ import 'package:xplore/constants/constants.dart';
 // on `ThemeData.fontFamily` alone leaves those raw TextStyles on the platform
 // default font, which breaks typographic consistency across controls.
 final defaultTextTheme = TextTheme(
-  headlineLarge: TextStyle(
-    fontSize: 34,
-    fontWeight: FontWeight.w600,
-    height: 1.08,
-    color: XploreColors.white,
-  ),
-  headlineMedium: TextStyle(
-    fontSize: 28,
-    fontWeight: FontWeight.w600,
-    height: 1.12,
-    color: XploreColors.white,
-  ),
-  headlineSmall: TextStyle(
-    fontSize: 22,
-    fontWeight: FontWeight.w600,
-    height: 1.18,
-    color: XploreColors.white,
-  ),
-  bodyLarge: TextStyle(
-    fontSize: 18,
-    fontWeight: FontWeight.w500,
-    height: 1.45,
-    color: XploreColors.white,
-  ),
-  bodyMedium: TextStyle(
-    fontSize: 16,
-    fontWeight: FontWeight.w500,
-    height: 1.45,
-    color: XploreColors.white,
-  ),
-  bodySmall: TextStyle(
-    fontSize: 14,
-    fontWeight: FontWeight.w500,
-    height: 1.45,
-    color: XploreColors.mutedText,
-  ),
-  labelLarge: TextStyle(
-    fontSize: 16,
-    fontWeight: FontWeight.w600,
-    height: 1.3,
-    color: XploreColors.white,
-  ),
-  labelMedium: TextStyle(
-    fontSize: 14,
-    fontWeight: FontWeight.w600,
-    height: 1.3,
-    color: XploreColors.white,
-  ),
-  labelSmall: TextStyle(
-    fontSize: 12,
-    fontWeight: FontWeight.w500,
-    height: 1.3,
-    color: XploreColors.mutedText,
-  ),
+  headlineLarge: TextStyle(fontSize: 34, fontWeight: FontWeight.w600, height: 1.08, color: XploreColors.white),
+  headlineMedium: TextStyle(fontSize: 28, fontWeight: FontWeight.w600, height: 1.12, color: XploreColors.white),
+  headlineSmall: TextStyle(fontSize: 22, fontWeight: FontWeight.w600, height: 1.18, color: XploreColors.white),
+  bodyLarge: TextStyle(fontSize: 18, fontWeight: FontWeight.w500, height: 1.45, color: XploreColors.white),
+  bodyMedium: TextStyle(fontSize: 16, fontWeight: FontWeight.w500, height: 1.45, color: XploreColors.white),
+  bodySmall: TextStyle(fontSize: 14, fontWeight: FontWeight.w500, height: 1.45, color: XploreColors.mutedText),
+  labelLarge: TextStyle(fontSize: 16, fontWeight: FontWeight.w600, height: 1.3, color: XploreColors.white),
+  labelMedium: TextStyle(fontSize: 14, fontWeight: FontWeight.w600, height: 1.3, color: XploreColors.white),
+  labelSmall: TextStyle(fontSize: 12, fontWeight: FontWeight.w500, height: 1.3, color: XploreColors.mutedText),
 ).apply(fontFamily: 'Poppins');
 
 ThemeData getTheme() => ThemeData(
@@ -98,18 +53,12 @@ ThemeData getTheme() => ThemeData(
     color: XploreColors.surfaceElevated,
     elevation: 0,
     margin: EdgeInsets.zero,
-    shape: RoundedRectangleBorder(
-      borderRadius: BorderRadius.circular(radiusLg),
-    ),
+    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(radiusLg)),
   ),
-  progressIndicatorTheme: ProgressIndicatorThemeData(
-    color: XploreColors.secondary,
-  ),
+  progressIndicatorTheme: ProgressIndicatorThemeData(color: XploreColors.secondary),
   elevatedButtonTheme: ElevatedButtonThemeData(
     style: ButtonStyle(
-      shape: WidgetStatePropertyAll(
-        RoundedRectangleBorder(borderRadius: BorderRadius.circular(radiusMd)),
-      ),
+      shape: WidgetStatePropertyAll(RoundedRectangleBorder(borderRadius: BorderRadius.circular(radiusMd))),
       backgroundColor: WidgetStatePropertyAll(XploreColors.alternate),
       foregroundColor: WidgetStatePropertyAll(XploreColors.white),
       textStyle: WidgetStatePropertyAll(defaultTextTheme.labelLarge),
@@ -118,29 +67,18 @@ ThemeData getTheme() => ThemeData(
   ),
   outlinedButtonTheme: OutlinedButtonThemeData(
     style: ButtonStyle(
-      shape: WidgetStatePropertyAll(
-        RoundedRectangleBorder(borderRadius: BorderRadius.circular(radiusMd)),
-      ),
+      shape: WidgetStatePropertyAll(RoundedRectangleBorder(borderRadius: BorderRadius.circular(radiusMd))),
       foregroundColor: WidgetStatePropertyAll(XploreColors.white),
       textStyle: WidgetStatePropertyAll(defaultTextTheme.labelMedium),
-      side: WidgetStatePropertyAll(
-        BorderSide(
-          color: XploreColors.alternate.withValues(alpha: 0.72),
-          width: 1,
-        ),
-      ),
-      overlayColor: WidgetStatePropertyAll(
-        XploreColors.alternate.withValues(alpha: 0.08),
-      ),
+      side: WidgetStatePropertyAll(BorderSide(color: XploreColors.alternate.withValues(alpha: 0.72), width: 1)),
+      overlayColor: WidgetStatePropertyAll(XploreColors.alternate.withValues(alpha: 0.08)),
       minimumSize: const WidgetStatePropertyAll(Size(132, 54)),
     ),
   ),
   textButtonTheme: TextButtonThemeData(
     style: ButtonStyle(
       foregroundColor: WidgetStateProperty.resolveWith(
-        (states) => states.contains(WidgetState.disabled)
-            ? XploreColors.subtleText
-            : XploreColors.alternate,
+        (states) => states.contains(WidgetState.disabled) ? XploreColors.subtleText : XploreColors.alternate,
       ),
       textStyle: WidgetStatePropertyAll(defaultTextTheme.labelMedium),
     ),

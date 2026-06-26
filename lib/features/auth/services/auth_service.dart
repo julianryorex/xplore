@@ -50,12 +50,16 @@ class AuthService {
     GoogleSignIn? googleSignIn,
     AppleCredentialRequester? appleCredentialRequester,
     Future<void> Function(String authorizationCode)? appleTokenRevoker,
+    Future<void> Function()? googleAuthorizationRevoker,
   }) : _auth = firebaseAuth ?? FirebaseAuth.instance,
        _firestore = firestore ?? FirebaseFirestore.instanceFor(app: Firebase.app(), databaseId: appDatabaseId),
        _google = googleSignIn ?? GoogleSignIn.instance,
        _requestAppleCredential = appleCredentialRequester ?? SignInWithApple.getAppleIDCredential,
-       // Field is private; the public-facing param name can't be an initializing formal.
-       _appleTokenRevoker = appleTokenRevoker; // ignore: prefer_initializing_formals
+       // Fields are private; the public-facing param names can't be initializing formals.
+       // ignore: prefer_initializing_formals
+       _appleTokenRevoker = appleTokenRevoker,
+       // ignore: prefer_initializing_formals
+       _googleAuthorizationRevoker = googleAuthorizationRevoker;
 
   /// Named Firestore Native database created by the Terraform infra (Phase 1).
   /// The project's default database is Datastore-mode and unusable by the SDKs.
@@ -69,6 +73,11 @@ class AuthService {
   /// Apple token revocation seam. Defaults to [FirebaseAuth.revokeTokenWithAuthorizationCode]
   /// at call time; overridable in tests (the mock doesn't implement it).
   final Future<void> Function(String authorizationCode)? _appleTokenRevoker;
+
+  /// Google authorization revocation seam. Defaults to the real
+  /// [GoogleSignIn.disconnect] flow; overridable in tests (the v7 SDK can't be
+  /// constructed with fakes).
+  final Future<void> Function()? _googleAuthorizationRevoker;
 
   final Logger _logger = createLogger('AuthService');
 
@@ -200,10 +209,18 @@ class AuthService {
   /// Permanently deletes the signed-in account.
   ///
   /// Re-authenticates with the user's provider (deletion is a privileged op that
-  /// requires a recent login), revokes the Apple token (App Store guideline
-  /// 5.1.1(v)), removes the Firestore `users/{uid}` profile, then deletes the
-  /// Firebase user. The `authStateChanges` stream then emits null, routing the
-  /// app back to onboarding.
+  /// requires a recent login), removes the Firestore `users/{uid}` profile, then
+  /// deletes the Firebase user. The `authStateChanges` stream then emits null,
+  /// routing the app back to onboarding.
+  ///
+  /// Linked accounts: a single Firebase user can have BOTH `apple.com` and
+  /// `google.com` linked. We only need one successful re-auth, but we revoke
+  /// EVERY linked provider so neither service is left thinking the app still has
+  /// access — Apple via [FirebaseAuth.revokeTokenWithAuthorizationCode] (App
+  /// Store 5.1.1(v)) and Google via [GoogleSignIn.disconnect]. We prefer Apple
+  /// for re-auth because its interactive flow also yields the authorization code
+  /// the revoke call requires. Revocation is best-effort: a transient failure is
+  /// logged rather than stranding the user with an undeletable account.
   ///
   /// Throws [AuthCancelledException] if the user backs out of the re-auth sheet,
   /// or [AuthFailureException] on any other error.
@@ -217,24 +234,43 @@ class AuthService {
     }
 
     final providerIds = user.providerData.map((info) => info.providerId).toSet();
+    final hasApple = providerIds.contains('apple.com');
+    final hasGoogle = providerIds.contains('google.com');
 
     try {
-      if (providerIds.contains('apple.com')) {
-        await _reauthAndDeleteApple(user);
-      } else if (providerIds.contains('google.com')) {
-        await _reauthAndDeleteGoogle(user);
-      } else {
-        // No known interactive provider; attempt a direct delete. May throw
-        // requires-recent-login, which surfaces as a failure for the user.
-        await _deleteUserData(user.uid);
-        await user.delete();
+      // 1. Re-authenticate once. Prefer Apple so we also capture the
+      //    authorization code needed to revoke its token below.
+      AuthorizationCredentialAppleID? appleCredential;
+      var reauthedViaGoogle = false;
+      if (hasApple) {
+        appleCredential = await _appleReauth(user);
+      } else if (hasGoogle) {
+        await _googleReauth(user);
+        reauthedViaGoogle = true;
       }
+
+      // 2. Purge app data while still authenticated (rules require request.auth).
+      await _deleteUserData(user.uid);
+
+      // 3. Notify every linked provider before the user is gone.
+      if (hasApple && appleCredential != null) {
+        await _revokeApple(appleCredential.authorizationCode);
+      }
+      if (hasGoogle) {
+        await _revokeGoogle(alreadyAuthenticated: reauthedViaGoogle);
+      }
+
+      // 4. Delete the Firebase user. With no known interactive provider this is
+      //    a direct delete and may throw requires-recent-login.
+      await user.delete();
     } on FirebaseAuthException catch (e) {
       throw AuthFailureException(e.message ?? 'Account deletion failed.');
     }
   }
 
-  Future<void> _reauthAndDeleteApple(User user) async {
+  /// Runs the interactive Apple flow and re-authenticates [user], returning the
+  /// credential (its `authorizationCode` is needed to revoke the Apple token).
+  Future<AuthorizationCredentialAppleID> _appleReauth(User user) async {
     final rawNonce = _generateNonce();
     final hashedNonce = _sha256OfString(rawNonce);
 
@@ -259,17 +295,12 @@ class AuthService {
     final credential = OAuthProvider(
       'apple.com',
     ).credential(idToken: idToken, rawNonce: rawNonce, accessToken: appleCredential.authorizationCode);
-
     await user.reauthenticateWithCredential(credential);
-    // Purge app data while still authenticated (rules require request.auth).
-    await _deleteUserData(user.uid);
-    // Revoke the Apple token so the app disappears from the user's Apple ID
-    // settings and refresh tokens are invalidated (App Store requirement).
-    await (_appleTokenRevoker ?? _auth.revokeTokenWithAuthorizationCode)(appleCredential.authorizationCode);
-    await user.delete();
+    return appleCredential;
   }
 
-  Future<void> _reauthAndDeleteGoogle(User user) async {
+  /// Runs the interactive Google flow and re-authenticates [user].
+  Future<void> _googleReauth(User user) async {
     try {
       await _ensureGoogleInitialized();
       final account = await _google.authenticate(scopeHint: const ['email']);
@@ -280,19 +311,42 @@ class AuthService {
 
       final credential = GoogleAuthProvider.credential(idToken: idToken);
       await user.reauthenticateWithCredential(credential);
-      await _deleteUserData(user.uid);
-      await user.delete();
-
-      try {
-        await _google.signOut();
-      } catch (_) {
-        // Best-effort: the Firebase user is already gone.
-      }
     } on GoogleSignInException catch (e) {
       if (e.code == GoogleSignInExceptionCode.canceled) {
         throw const AuthCancelledException();
       }
       throw AuthFailureException(e.description ?? 'Google re-authentication failed.');
+    }
+  }
+
+  /// Revokes the Apple refresh token so the app is removed from the user's Apple
+  /// ID settings (App Store 5.1.1(v)). Best-effort: logged, never fatal.
+  Future<void> _revokeApple(String authorizationCode) async {
+    try {
+      await (_appleTokenRevoker ?? _auth.revokeTokenWithAuthorizationCode)(authorizationCode);
+    } catch (e) {
+      _logger.w('Apple token revocation failed; continuing with deletion: $e');
+    }
+  }
+
+  /// Revokes the Google OAuth grant via [GoogleSignIn.disconnect]. When the
+  /// Google flow wasn't already run for re-auth, silently restores the persisted
+  /// session first so there is a grant to revoke. Best-effort: logged, never
+  /// fatal.
+  Future<void> _revokeGoogle({required bool alreadyAuthenticated}) async {
+    try {
+      if (_googleAuthorizationRevoker != null) {
+        await _googleAuthorizationRevoker();
+        return;
+      }
+      await _ensureGoogleInitialized();
+      if (!alreadyAuthenticated) {
+        // No UI: restores the last signed-in Google account if one is cached.
+        await _google.attemptLightweightAuthentication();
+      }
+      await _google.disconnect();
+    } catch (e) {
+      _logger.w('Google authorization revocation failed; continuing with deletion: $e');
     }
   }
 
