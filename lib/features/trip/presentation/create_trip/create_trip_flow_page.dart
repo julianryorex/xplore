@@ -33,45 +33,54 @@ class CreateTripFlowPage extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      backgroundColor: XploreColors.primaryBg,
-      resizeToAvoidBottomInset: true,
-      body: AmbientBackground(
-        child: SafeArea(
-          child: BlocBuilder<TripCreationCubit, TripCreationState>(
-            builder: (context, state) {
-              return Column(
-                children: [
-                  _FlowTopBar(state: state),
-                  Expanded(
-                    child: AnimatedSwitcher(
-                      duration: const Duration(milliseconds: 250),
-                      transitionBuilder: (child, animation) => FadeTransition(
-                        opacity: animation,
-                        child: SlideTransition(
-                          position: Tween<Offset>(begin: const Offset(0.04, 0), end: Offset.zero).animate(animation),
-                          child: child,
+    return BlocBuilder<TripCreationCubit, TripCreationState>(
+      builder: (context, state) {
+        // Block leaving the flow while an itinerary is generating or a trip is
+        // being created: popping mid-await would dispose the cubit/context while
+        // the in-flight work is still running. This covers the system back
+        // gesture and predictive back, not just our close button.
+        final isBusy = state.phase == TripCreationPhase.generating || state.phase == TripCreationPhase.submitting;
+
+        return PopScope(
+          canPop: !isBusy,
+          child: Scaffold(
+            backgroundColor: XploreColors.primaryBg,
+            resizeToAvoidBottomInset: true,
+            body: AmbientBackground(
+              child: SafeArea(
+                child: Column(
+                  children: [
+                    _FlowTopBar(state: state),
+                    Expanded(
+                      child: AnimatedSwitcher(
+                        duration: const Duration(milliseconds: 250),
+                        transitionBuilder: (child, animation) => FadeTransition(
+                          opacity: animation,
+                          child: SlideTransition(
+                            position: Tween<Offset>(begin: const Offset(0.04, 0), end: Offset.zero).animate(animation),
+                            child: child,
+                          ),
                         ),
-                      ),
-                      child: SingleChildScrollView(
-                        key: ValueKey(state.currentStep),
-                        padding: const EdgeInsets.fromLTRB(
-                          paddingUnit * 1.5,
-                          paddingUnit,
-                          paddingUnit * 1.5,
-                          paddingUnit * 2,
+                        child: SingleChildScrollView(
+                          key: ValueKey(state.currentStep),
+                          padding: const EdgeInsets.fromLTRB(
+                            paddingUnit * 1.5,
+                            paddingUnit,
+                            paddingUnit * 1.5,
+                            paddingUnit * 2,
+                          ),
+                          child: _stepBody(state.currentStep),
                         ),
-                        child: _stepBody(state.currentStep),
                       ),
                     ),
-                  ),
-                  _FlowBottomBar(state: state, onSubmit: () => _submit(context)),
-                ],
-              );
-            },
+                    _FlowBottomBar(state: state, onSubmit: () => _submit(context)),
+                  ],
+                ),
+              ),
+            ),
           ),
-        ),
-      ),
+        );
+      },
     );
   }
 
@@ -98,6 +107,9 @@ class _FlowTopBar extends StatelessWidget {
     final cubit = context.read<TripCreationCubit>();
     // Once the trip exists (invite step), there's nothing to go back to.
     final canGoBack = !state.isFirstStep && state.phase != TripCreationPhase.submitted;
+    // Closing mid-generation/submit would dispose the flow while an await is in
+    // flight; block it until the in-flight work settles.
+    final isBusy = state.phase == TripCreationPhase.generating || state.phase == TripCreationPhase.submitting;
 
     return Padding(
       padding: const EdgeInsets.fromLTRB(paddingUnit, paddingUnit * 0.5, paddingUnit, paddingUnit * 0.5),
@@ -123,8 +135,11 @@ class _FlowTopBar extends StatelessWidget {
             ),
           ),
           IconButton(
-            onPressed: () => Navigator.of(context).maybePop(),
-            icon: Icon(Icons.close_rounded, color: XploreColors.white),
+            onPressed: isBusy ? null : () => Navigator.of(context).maybePop(),
+            icon: Icon(
+              Icons.close_rounded,
+              color: isBusy ? XploreColors.white.withValues(alpha: 0.3) : XploreColors.white,
+            ),
           ),
         ],
       ),

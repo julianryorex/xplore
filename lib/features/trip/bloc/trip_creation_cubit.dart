@@ -37,7 +37,10 @@ class TripCreationCubit extends Cubit<TripCreationState> {
 
   // --- Draft mutations ------------------------------------------------------
 
-  void setDestination(String value) => _update(state.draft.copyWith(destination: value));
+  void setDestination(String value) {
+    _update(state.draft.copyWith(destination: value));
+    _invalidateGeneration();
+  }
 
   void setExactDates(DateTime start, DateTime end) {
     _update(state.draft.copyWith(datesAreFlexible: false, startDate: start, endDate: end));
@@ -52,9 +55,13 @@ class TripCreationCubit extends Cubit<TripCreationState> {
   void setGroup(TripGroupKind kind, {int? size}) {
     final resolvedSize = size ?? _defaultSizeFor(kind);
     _update(state.draft.copyWith(groupKind: kind, groupSize: resolvedSize));
+    _invalidateGeneration();
   }
 
-  void setGroupSize(int size) => _update(state.draft.copyWith(groupSize: size.clamp(1, 50)));
+  void setGroupSize(int size) {
+    _update(state.draft.copyWith(groupSize: size.clamp(1, 50)));
+    _invalidateGeneration();
+  }
 
   void toggleInterest(TripInterest interest) {
     final next = Set<TripInterest>.from(state.draft.interests);
@@ -62,14 +69,25 @@ class TripCreationCubit extends Cubit<TripCreationState> {
       next.remove(interest);
     }
     _update(state.draft.copyWith(interests: next));
+    _invalidateGeneration();
   }
 
-  void setPace(TripPace pace) => _update(state.draft.copyWith(pace: pace));
+  void setPace(TripPace pace) {
+    _update(state.draft.copyWith(pace: pace));
+    _invalidateGeneration();
+  }
 
-  void setBudget(TripBudget budget) => _update(state.draft.copyWith(budget: budget));
+  void setBudget(TripBudget budget) {
+    _update(state.draft.copyWith(budget: budget));
+    _invalidateGeneration();
+  }
 
-  void setNotes(String notes) => _update(state.draft.copyWith(notes: notes));
+  void setNotes(String notes) {
+    _update(state.draft.copyWith(notes: notes));
+    _invalidateGeneration();
+  }
 
+  // Title is cosmetic and not fed to the generator, so it never invalidates.
   void setTitle(String title) => _update(state.draft.copyWith(title: title));
 
   int _defaultSizeFor(TripGroupKind kind) => switch (kind) {

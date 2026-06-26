@@ -87,6 +87,41 @@ void main() {
       expect(cubit.state.itinerary, isEmpty);
     });
 
+    test('non-date prompt inputs also invalidate an existing skeleton', () async {
+      for (final mutate in <void Function()>[
+        () => cubit.setDestination('Kyoto'),
+        () => cubit.setGroup(TripGroupKind.friends),
+        () => cubit.toggleInterest(TripInterest.food),
+        () => cubit.setPace(TripPace.packed),
+        () => cubit.setBudget(TripBudget.luxury),
+        () => cubit.setNotes('No early mornings'),
+      ]) {
+        cubit.setDestination('Tokyo');
+        while (cubit.state.currentStep != CreateTripStep.generate) {
+          cubit.next();
+        }
+        await cubit.generate();
+        expect(cubit.state.phase, TripCreationPhase.generated);
+
+        mutate();
+        expect(cubit.state.phase, TripCreationPhase.editing);
+        expect(cubit.state.itinerary, isEmpty);
+      }
+    });
+
+    test('setTitle does not invalidate an existing skeleton', () async {
+      cubit.setDestination('Tokyo');
+      while (cubit.state.currentStep != CreateTripStep.generate) {
+        cubit.next();
+      }
+      await cubit.generate();
+      expect(cubit.state.phase, TripCreationPhase.generated);
+
+      cubit.setTitle('My big trip');
+      expect(cubit.state.phase, TripCreationPhase.generated);
+      expect(cubit.state.itinerary, isNotEmpty);
+    });
+
     test('toggleInterest adds then removes', () {
       cubit.toggleInterest(TripInterest.food);
       expect(cubit.state.draft.interests, contains(TripInterest.food));
