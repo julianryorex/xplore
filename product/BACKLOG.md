@@ -4,7 +4,7 @@ Ranked feature requests for Xplore. **Work top-to-bottom within each tier.**
 
 Legend: **Status** — `backlog` · `ready_for_dev` (full spec written) · `in_progress` · `done` · `wont_do`
 
-> **Next up:** [FEAT-006 Production itinerary data layer](./requests/FEAT-006-itinerary-firebase-sync.md) — makes the active trip from FEAT-002 load real cloud itinerary data instead of demo JSON.
+> **Next up:** [FEAT-007 Generative trip creation](./requests/FEAT-007-generative-trip-creation.md) — multi-step create flow that ends in a generated itinerary (absorbs FEAT-010, resolves the FEAT-006 content-seed gap).
 
 ---
 
@@ -14,6 +14,7 @@ Cannot onboard real groups or operate as a product without these.
 
 | ID | Feature | Revenue | Effort | Status | Request |
 |----|---------|---------|--------|--------|---------|
+| FEAT-007 | Generative trip creation flow | retention | L | `in_progress` | [→](./requests/FEAT-007-generative-trip-creation.md) |
 | FEAT-005 | Onboarding flow | blocker | M | backlog | [→](./requests/FEAT-005-onboarding.md) |
 | FEAT-006 | Production itinerary data layer | blocker | L | backlog | [→](./requests/FEAT-006-itinerary-firebase-sync.md) |
 
@@ -25,7 +26,9 @@ Completes the promise: plan together, stay together, remember together.
 
 | ID | Feature | Revenue | Effort | Status | Request |
 |----|---------|---------|--------|--------|---------|
-| FEAT-010 | Wire Gemini AI itinerary generation into UI | retention | L | backlog | [→](./requests/FEAT-010-ai-itinerary-ui.md) |
+| FEAT-008 | Developer tools page (off production Home) | none | S | `done` | [→](./requests/FEAT-008-dev-tools-page.md) |
+| FEAT-009 | Home redesign (hero trip card, CTAs, states) | retention | M | `in_progress` | [→](./requests/FEAT-009-home-redesign.md) |
+| FEAT-010 | Wire Gemini AI itinerary generation into UI | retention | L | `absorbed` → FEAT-007 phase 2 | [→](./requests/FEAT-010-ai-itinerary-ui.md) |
 | FEAT-011 | Gallery sync across devices (cloud fetch) | retention | M | backlog | [→](./requests/FEAT-011-gallery-cloud-sync.md) |
 | FEAT-012 | Push notifications | retention | M | backlog | [→](./requests/FEAT-012-push-notifications.md) |
 | FEAT-013 | Background location updates | retention | L | backlog | [→](./requests/FEAT-013-background-location.md) |

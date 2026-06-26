@@ -4,9 +4,11 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:logger/logger.dart';
 import 'package:xplore/features/auth/services/auth_service.dart';
+import 'package:xplore/features/itinerary/models/itinerary_models.dart';
 import 'package:xplore/features/itinerary/services/itinerary_service.dart';
 import 'package:xplore/features/trip/bloc/trip_state.dart';
 import 'package:xplore/features/trip/bloc/trip_stream_mixin.dart';
+import 'package:xplore/features/trip/models/trip_draft.dart';
 import 'package:xplore/features/trip/models/trip_model.dart';
 import 'package:xplore/features/trip/services/trip_service.dart';
 import 'package:xplore/utilities/utilities.dart';
@@ -61,31 +63,54 @@ class TripCubit extends Cubit<TripState> with TripStreamMixin {
     return null;
   }
 
+  /// Creates a minimally-specified trip from just a title (legacy/quick path).
   Future<void> createTrip(String title) async {
+    await createTripFromDraft(TripDraft(title: title.trim(), destination: ''));
+  }
+
+  /// Creates a trip from the multi-step create flow's [draft] (FEAT-007),
+  /// persisting destination/dates/preferences and seeding the itinerary with
+  /// the generated [itinerary] skeleton. The created trip is marked active so
+  /// the flow's invite step (and the rest of the app) sees it immediately.
+  ///
+  /// Returns the created [TripModel] so the caller can share/invite against it.
+  Future<TripModel> createTripFromDraft(TripDraft draft, {List<DailyPlanModel> itinerary = const []}) async {
     final uid = _authService.currentUid;
     if (uid == null) {
       throw StateError('Cannot create a trip while unauthenticated.');
     }
 
-    final trimmedTitle = title.trim();
-    if (trimmedTitle.isEmpty) {
-      throw ArgumentError.value(title, 'title', 'Trip title cannot be empty.');
+    final resolvedTitle = draft.title.trim().isEmpty ? draft.suggestedTitle : draft.title.trim();
+    if (resolvedTitle.isEmpty) {
+      throw ArgumentError.value(draft.title, 'title', 'Trip title cannot be empty.');
     }
 
-    final trip = await _tripService.createTrip(trimmedTitle, uid);
-    await _seedItinerary(trip);
+    final destination = draft.destination.trim();
+    final trip = await _tripService.createTrip(
+      resolvedTitle,
+      uid,
+      destination: destination.isEmpty ? null : destination,
+      startDate: draft.datesAreFlexible ? null : draft.startDate,
+      endDate: draft.datesAreFlexible ? null : draft.endDate,
+      coverImageUrl: draft.coverImageUrl,
+      preferences: draft.toPreferences(),
+    );
+
+    await _seedItinerary(trip, itinerary);
+    setActiveTrip(trip.id);
+    return trip;
   }
 
   /// Best-effort: a failed seed must not fail trip creation. The itinerary
   /// cubit lazily seeds the document on first load if this never lands.
-  Future<void> _seedItinerary(TripModel trip) async {
+  Future<void> _seedItinerary(TripModel trip, List<DailyPlanModel> dailyPlans) async {
     final service = _itineraryService;
     if (service == null) {
       return;
     }
 
     try {
-      await service.seedItinerary(trip.id, trip.memberIds);
+      await service.seedItinerary(trip.id, trip.memberIds, dailyPlans: dailyPlans);
     } catch (err) {
       _logger.w('Failed to seed itinerary for trip ${trip.id}: $err');
     }

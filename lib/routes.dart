@@ -8,12 +8,16 @@ import 'package:xplore/core/root_shell.dart';
 import 'package:xplore/features/auth/presentation/onboarding_page.dart';
 import 'package:xplore/features/auth/presentation/sign_in_page.dart';
 import 'package:xplore/features/auth/services/auth_service.dart';
+import 'package:xplore/features/dev/presentation/dev_tools_page.dart';
 import 'package:xplore/features/gallery/presentation/gallery_focus_view.dart';
 import 'package:xplore/features/itinerary/models/itinerary_models.dart';
 import 'package:xplore/features/notifications/presentation/notifications_page.dart';
 import 'package:xplore/features/trip/bloc/join_trip_cubit.dart';
+import 'package:xplore/features/trip/bloc/trip_creation_cubit.dart';
+import 'package:xplore/features/trip/presentation/create_trip/create_trip_flow_page.dart';
 import 'package:xplore/features/trip/presentation/join_trip_page.dart';
 import 'package:xplore/features/trip/services/invite_link.dart';
+import 'package:xplore/features/trip/services/itinerary_generator.dart';
 import 'package:xplore/features/trip/services/trip_service.dart';
 import 'package:xplore/screens/gallery_page.dart';
 import 'package:xplore/screens/generic_error_page.dart';
@@ -36,6 +40,13 @@ class Paths {
 
   static const profile = '/profile';
   static const notifications = '/notifications';
+
+  /// Developer tools page (FEAT-008), gated behind `kDebugMode` at its
+  /// entry-points.
+  static const dev = '/dev';
+
+  /// Multi-step generative trip-creation flow (FEAT-007).
+  static const createTrip = '/create-trip';
 
   /// Invite join-confirmation screen. Reached via an invite deep link
   /// (`https://xplore.app/join?trip=...&token=...`); expects an
@@ -61,6 +72,8 @@ class RouteGenerator {
         );
       case Paths.profile:
         return MaterialPageRoute(builder: (_) => const ProfilePage(), settings: settings);
+      case Paths.dev:
+        return MaterialPageRoute(builder: (_) => const DevToolsPage(), settings: settings);
       case Paths.notifications:
         return MaterialPageRoute(builder: (_) => const NotificationsPage());
       case Paths.joinTrip:
@@ -82,6 +95,14 @@ class RouteGenerator {
             _logger.e('argument is not of type "InviteLinkData"');
             return const ErrorScreen();
           },
+        );
+      case Paths.createTrip:
+        return MaterialPageRoute(
+          settings: settings,
+          builder: (context) => BlocProvider<TripCreationCubit>(
+            create: (ctx) => TripCreationCubit(ctx.read<ItineraryGenerator>()),
+            child: const CreateTripFlowPage(),
+          ),
         );
       case Paths.onboarding:
         return MaterialPageRoute(builder: (_) => const OnboardingPage());

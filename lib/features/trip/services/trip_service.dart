@@ -4,6 +4,7 @@ import 'package:uuid/uuid.dart';
 import 'package:xplore/features/auth/services/auth_service.dart';
 import 'package:xplore/features/trip/models/trip_invite.dart';
 import 'package:xplore/features/trip/models/trip_model.dart';
+import 'package:xplore/features/trip/models/trip_preferences.dart';
 import 'package:xplore/features/trip/services/invite_link.dart';
 import 'package:xplore/features/trip/services/invite_results.dart';
 
@@ -20,17 +21,41 @@ class TripService {
 
   CollectionReference<Map<String, dynamic>> _invites(String tripId) => _trips.doc(tripId).collection('invites');
 
-  Future<TripModel> createTrip(String title, String uid) async {
+  Future<TripModel> createTrip(
+    String title,
+    String uid, {
+    String? destination,
+    DateTime? startDate,
+    DateTime? endDate,
+    String? coverImageUrl,
+    TripPreferences? preferences,
+  }) async {
     final doc = _trips.doc();
     final data = <String, dynamic>{
       'title': title,
       'memberIds': [uid],
+      'destination': ?destination,
+      if (startDate != null) 'startDate': Timestamp.fromDate(startDate),
+      if (endDate != null) 'endDate': Timestamp.fromDate(endDate),
+      'coverImageUrl': ?coverImageUrl,
+      if (preferences != null) 'preferences': preferences.toJson(),
       ..._auditFields(uid, isCreate: true),
     };
 
     await doc.set(data);
 
-    return TripModel(id: doc.id, title: title, memberIds: [uid], createdBy: uid, lastUpdatedBy: uid);
+    return TripModel(
+      id: doc.id,
+      title: title,
+      memberIds: [uid],
+      createdBy: uid,
+      lastUpdatedBy: uid,
+      destination: destination,
+      startDate: startDate,
+      endDate: endDate,
+      coverImageUrl: coverImageUrl,
+      preferences: preferences,
+    );
   }
 
   Stream<List<TripModel>> fetchTrips(String uid) {

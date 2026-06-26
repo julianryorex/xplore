@@ -1,4 +1,3 @@
-import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
@@ -11,7 +10,6 @@ import 'package:xplore/core/glass.dart';
 import 'package:xplore/core/header.dart';
 import 'package:xplore/core/section_header.dart';
 import 'package:xplore/features/auth/services/auth_service.dart';
-import 'package:xplore/features/gallery/bloc/gallery_cubit.dart';
 import 'package:xplore/features/itinerary/bloc/itinerary_cubit.dart';
 import 'package:xplore/features/itinerary/widgets/itinerary_card.dart';
 import 'package:xplore/features/profile/bloc/profile_cubit.dart';
@@ -24,33 +22,19 @@ import 'package:xplore/routes.dart';
 class HomePage extends StatelessWidget {
   const HomePage({super.key});
 
-  void _openCreateTripSheet(BuildContext context) {
-    showModalBottomSheet<void>(
-      context: context,
-      isScrollControlled: true,
-      backgroundColor: Colors.transparent,
-      builder: (_) => const _CreateTripSheet(),
-    );
-  }
+  void _openCreateTripFlow(BuildContext context) => context.push(Paths.createTrip);
 
   @override
   Widget build(BuildContext context) {
     final viewPadding = MediaQuery.viewPaddingOf(context);
     final topInset = viewPadding.top;
-    // Space the scroll content needs to clear the floating glass nav bar (its
-    // height + the device's bottom safe-area inset).
     final bottomClearance = viewPadding.bottom + navBarHeight;
-    // Gap between the status bar and the header controls.
     const headerTopGap = paddingUnit * 0.75;
     final headerZone = topInset + headerTopGap + Header.padding;
 
-    // Pure content for the RootShell's IndexedStack: the surrounding Scaffold,
-    // background colour and floating glass nav bar live in RootShell.
     return AmbientBackground(
       child: Stack(
         children: [
-          // Content runs full-height behind the pinned header and floating
-          // nav bar so the glass surfaces have content to refract.
           SingleChildScrollView(
             padding: EdgeInsets.only(
               left: paddingUnit * 1.5,
@@ -61,16 +45,14 @@ class HomePage extends StatelessWidget {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                SectionHeader(
-                  title: 'Daily Plans',
-                  actionLabel: 'See all',
-                  onAction: () => _openCreateTripSheet(context),
-                ),
+                SectionHeader(title: 'Your trip', actionLabel: 'New', onAction: () => _openCreateTripFlow(context)),
                 const SizedBox(height: paddingUnit),
-                _TripStatePrompt(onCreateTrip: () => _openCreateTripSheet(context)),
-                const SizedBox(height: paddingUnit),
+                _TripHero(onCreateTrip: () => _openCreateTripFlow(context)),
+                const SizedBox(height: paddingUnit * 2),
 
-                //! Daily Plans Section Containers
+                //! Daily Plans Section
+                const SectionHeader(title: 'Daily plans'),
+                const SizedBox(height: paddingUnit),
                 BlocBuilder<ItineraryCubit, ItineraryStates>(
                   builder: (context, state) {
                     return switch (state) {
@@ -113,11 +95,9 @@ class HomePage extends StatelessWidget {
                 ),
                 const SizedBox(height: paddingUnit * 2),
 
-                //! Gallery Section Header
+                //! Gallery Section
                 const SectionHeader(title: 'Gallery'),
                 const SizedBox(height: paddingUnit),
-
-                //! Gallery options
                 GlassSurface(
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
@@ -161,39 +141,9 @@ class HomePage extends StatelessWidget {
                     ],
                   ),
                 ),
-                if (kDebugMode) ...[
-                  const SizedBox(height: paddingUnit),
-                  Wrap(
-                    spacing: paddingUnit,
-                    runSpacing: paddingUnit,
-                    children: [
-                      OutlinedButton(
-                        onPressed: () async {
-                          context.push(Paths.gallery);
-                          await context.read<GalleryCubit>().uploadToGallery();
-                        },
-                        child: const Text('Upload'),
-                      ),
-                      OutlinedButton(
-                        onPressed: () async {
-                          context.read<GalleryCubit>().deleteAll();
-                          // context.read<LocationCubit>().deleteAll();
-                          context.read<ProfileCubit>().deleteAll();
-                        },
-                        child: const Text('Delete Hive'),
-                      ),
-                      OutlinedButton(
-                        onPressed: () => context.read<TripCubit>().debugTriggerError(),
-                        child: const Text('Trigger error'),
-                      ),
-                    ],
-                  ),
-                ],
               ],
             ),
           ),
-          // Top scrim: blends the status-bar area into the base colour and
-          // keeps content legible as it scrolls beneath the pinned header.
           Positioned(
             top: 0,
             left: 0,
@@ -216,7 +166,6 @@ class HomePage extends StatelessWidget {
               ),
             ),
           ),
-          // Pinned header, sitting just below the status bar.
           Positioned(
             top: topInset + headerTopGap,
             left: 0,
@@ -259,8 +208,10 @@ class _ItineraryPlaceholder extends StatelessWidget {
   }
 }
 
-class _TripStatePrompt extends StatelessWidget {
-  const _TripStatePrompt({required this.onCreateTrip});
+/// Switches between the empty-state "plan a trip" prompt and the hero card for
+/// the active trip.
+class _TripHero extends StatelessWidget {
+  const _TripHero({required this.onCreateTrip});
 
   final VoidCallback onCreateTrip;
 
@@ -269,48 +220,91 @@ class _TripStatePrompt extends StatelessWidget {
     return BlocBuilder<TripCubit, TripState>(
       builder: (context, state) {
         return switch (state) {
-          TripEmpty() => GlassSurface(
-            child: Row(
-              children: [
-                Icon(Icons.travel_explore_rounded, color: XploreColors.alternate),
-                const SizedBox(width: paddingUnit),
-                Expanded(
-                  child: Text(
-                    'Create your first trip to start saving plans, photos, and locations together.',
-                    style: context.pText.bodySmall?.copyWith(color: XploreColors.mutedText),
-                  ),
-                ),
-                const SizedBox(width: paddingUnit),
-                FilledButton(onPressed: onCreateTrip, child: const Text('Create')),
-              ],
-            ),
-          ),
+          TripEmpty() => _CreateTripPrompt(onCreateTrip: onCreateTrip),
           TripError() => ErrorState(
             title: 'Unable to load trips',
             message: 'Something went wrong while loading your trips. Please try again.',
             onRetry: () => context.read<TripCubit>().retry(),
           ),
-          TripLoaded(:final active) => _InviteTripCard(trip: active),
-          _ => const SizedBox.shrink(),
+          TripLoaded(:final active) => _ActiveTripCard(trip: active),
+          _ => const SizedBox(height: 180, child: Center(child: CircularProgressIndicator())),
         };
       },
     );
   }
 }
 
-/// A liquid-glass prompt to invite friends to the active trip. Tapping "Invite"
-/// mints a fresh invite link via [TripService] and opens the OS share sheet.
-class _InviteTripCard extends StatefulWidget {
-  const _InviteTripCard({required this.trip});
+/// First-run / no-trips prompt. The primary CTA launches the FEAT-007 flow.
+class _CreateTripPrompt extends StatelessWidget {
+  const _CreateTripPrompt({required this.onCreateTrip});
+
+  final VoidCallback onCreateTrip;
+
+  @override
+  Widget build(BuildContext context) {
+    return GlassSurface(
+      strong: true,
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Container(
+            padding: const EdgeInsets.all(paddingUnit * 0.75),
+            decoration: BoxDecoration(
+              color: XploreColors.alternate.withValues(alpha: 0.18),
+              borderRadius: BorderRadius.circular(radiusSm),
+              border: Border.all(color: XploreColors.alternate.withValues(alpha: 0.32)),
+            ),
+            child: Icon(Icons.travel_explore_rounded, size: 24, color: XploreColors.alternate),
+          ),
+          const SizedBox(height: paddingUnit),
+          Text('Plan your next trip', style: context.pText.headlineSmall?.copyWith(letterSpacing: -0.3)),
+          const SizedBox(height: paddingUnit * 0.5),
+          Text(
+            'Tell us where you\u2019re headed and we\u2019ll generate a day-by-day starting point — solo or with your crew.',
+            style: context.pText.bodyMedium?.copyWith(color: XploreColors.mutedText),
+          ),
+          const SizedBox(height: paddingUnit * 1.25),
+          SizedBox(
+            width: double.infinity,
+            child: FilledButton.icon(
+              onPressed: onCreateTrip,
+              icon: const Icon(Icons.auto_awesome_rounded, size: 18),
+              label: const Text('Start planning'),
+              style: FilledButton.styleFrom(minimumSize: const Size.fromHeight(50)),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+/// Hero card for the active trip: gradient cover, title, destination, dates,
+/// group size, and an *available* invite action (never a nag — a solo trip is
+/// complete on its own).
+class _ActiveTripCard extends StatefulWidget {
+  const _ActiveTripCard({required this.trip});
 
   final TripModel trip;
 
   @override
-  State<_InviteTripCard> createState() => _InviteTripCardState();
+  State<_ActiveTripCard> createState() => _ActiveTripCardState();
 }
 
-class _InviteTripCardState extends State<_InviteTripCard> {
+class _ActiveTripCardState extends State<_ActiveTripCard> {
   bool _isCreating = false;
+
+  static const _monthAbbr = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+
+  String? get _dateLabel {
+    final start = widget.trip.startDate;
+    final end = widget.trip.endDate;
+    if (start == null || end == null) {
+      return null;
+    }
+    String fmt(DateTime d) => '${_monthAbbr[d.month - 1]} ${d.day}';
+    return '${fmt(start)} – ${fmt(end)}';
+  }
 
   Future<void> _share() async {
     if (_isCreating) {
@@ -321,7 +315,6 @@ class _InviteTripCardState extends State<_InviteTripCard> {
     final messenger = ScaffoldMessenger.of(context);
     final tripService = context.read<TripService>();
     final uid = context.read<AuthService>().currentUid;
-
     if (uid == null) {
       setState(() => _isCreating = false);
       return;
@@ -344,41 +337,115 @@ class _InviteTripCardState extends State<_InviteTripCard> {
 
   @override
   Widget build(BuildContext context) {
-    return GlassSurface(
-      child: Row(
-        children: [
-          Container(
-            padding: const EdgeInsets.all(paddingUnit * 0.75),
-            decoration: BoxDecoration(
-              color: XploreColors.alternate.withValues(alpha: 0.18),
-              borderRadius: BorderRadius.circular(radiusSm),
-              border: Border.all(color: XploreColors.alternate.withValues(alpha: 0.32)),
-            ),
-            child: Icon(Icons.group_add_rounded, size: 22, color: XploreColors.alternate),
+    final trip = widget.trip;
+    final memberCount = trip.memberIds.length;
+    final dateLabel = _dateLabel;
+    final radius = BorderRadius.circular(radiusLg);
+
+    return DecoratedBox(
+      decoration: BoxDecoration(
+        borderRadius: radius,
+        gradient: LinearGradient(
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+          colors: [
+            Color.lerp(XploreColors.alternate, XploreColors.primary, 0.12)!,
+            Color.lerp(XploreColors.secondary, XploreColors.primary, 0.3)!,
+            XploreColors.primary,
+          ],
+          stops: const [0, 0.5, 1],
+        ),
+        border: Border.all(color: XploreColors.white.withValues(alpha: 0.12)),
+        boxShadow: [
+          BoxShadow(
+            color: XploreColors.alternate.withValues(alpha: 0.16),
+            blurRadius: 32,
+            spreadRadius: -6,
+            offset: const Offset(0, 18),
           ),
-          const SizedBox(width: paddingUnit),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
+        ],
+      ),
+      child: Padding(
+        padding: const EdgeInsets.all(paddingUnit * 1.5),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
               children: [
-                Text('Invite friends', style: context.pText.labelLarge),
-                const SizedBox(height: 2),
-                Text(
-                  'Share a link so they can join ${widget.trip.title}.',
-                  style: context.pText.bodySmall?.copyWith(color: XploreColors.mutedText),
-                  maxLines: 2,
-                  overflow: TextOverflow.ellipsis,
+                _HeroChip(icon: Icons.flight_takeoff_rounded, label: 'Active trip'),
+                const Spacer(),
+                if (dateLabel != null) _HeroChip(icon: Icons.event_rounded, label: dateLabel),
+              ],
+            ),
+            const SizedBox(height: paddingUnit * 1.5),
+            Text(
+              trip.title,
+              style: context.pText.headlineMedium?.copyWith(letterSpacing: -0.4, height: 1.05),
+              maxLines: 2,
+              overflow: TextOverflow.ellipsis,
+            ),
+            const SizedBox(height: paddingUnit * 0.5),
+            Row(
+              children: [
+                Icon(Icons.place_outlined, size: 16, color: XploreColors.white.withValues(alpha: 0.82)),
+                const SizedBox(width: 4),
+                Expanded(
+                  child: Text(
+                    trip.destination?.trim().isNotEmpty == true ? trip.destination! : 'Destination not set',
+                    style: context.pText.bodyMedium?.copyWith(color: XploreColors.white.withValues(alpha: 0.82)),
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                  ),
                 ),
               ],
             ),
-          ),
-          const SizedBox(width: paddingUnit),
-          FilledButton.icon(
-            onPressed: _isCreating ? null : _share,
-            icon: _isCreating
-                ? const SizedBox(height: 16, width: 16, child: CircularProgressIndicator(strokeWidth: 2))
-                : const Icon(Icons.ios_share_rounded, size: 18),
-            label: const Text('Invite'),
+            const SizedBox(height: paddingUnit * 1.25),
+            Row(
+              children: [
+                Icon(
+                  memberCount > 1 ? Icons.groups_rounded : Icons.person_rounded,
+                  size: 16,
+                  color: XploreColors.white.withValues(alpha: 0.7),
+                ),
+                const SizedBox(width: 5),
+                Text(
+                  memberCount > 1 ? '$memberCount travelers' : 'Solo trip',
+                  style: context.pText.bodySmall?.copyWith(color: XploreColors.white.withValues(alpha: 0.7)),
+                ),
+                const Spacer(),
+                _HeroInviteButton(busy: _isCreating, onTap: _share),
+              ],
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+class _HeroChip extends StatelessWidget {
+  const _HeroChip({required this.icon, required this.label});
+
+  final IconData icon;
+  final String label;
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: paddingUnit * 0.75, vertical: paddingUnit / 2),
+      decoration: BoxDecoration(
+        color: XploreColors.white.withValues(alpha: 0.16),
+        borderRadius: BorderRadius.circular(radiusSm),
+        border: Border.all(color: XploreColors.white.withValues(alpha: 0.18)),
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Icon(icon, size: 13, color: XploreColors.white),
+          const SizedBox(width: 5),
+          Text(
+            label,
+            style: context.pText.labelSmall?.copyWith(color: XploreColors.white, fontWeight: FontWeight.w600),
           ),
         ],
       ),
@@ -386,89 +453,35 @@ class _InviteTripCardState extends State<_InviteTripCard> {
   }
 }
 
-class _CreateTripSheet extends StatefulWidget {
-  const _CreateTripSheet();
+class _HeroInviteButton extends StatelessWidget {
+  const _HeroInviteButton({required this.busy, required this.onTap});
 
-  @override
-  State<_CreateTripSheet> createState() => _CreateTripSheetState();
-}
-
-class _CreateTripSheetState extends State<_CreateTripSheet> {
-  final TextEditingController _controller = TextEditingController();
-  bool _isSubmitting = false;
-  String? _error;
-
-  @override
-  void dispose() {
-    _controller.dispose();
-    super.dispose();
-  }
-
-  Future<void> _submit() async {
-    final title = _controller.text.trim();
-    if (title.isEmpty) {
-      setState(() => _error = 'Name your trip first.');
-      return;
-    }
-
-    setState(() {
-      _isSubmitting = true;
-      _error = null;
-    });
-
-    try {
-      await context.read<TripCubit>().createTrip(title);
-      if (mounted) {
-        Navigator.of(context).pop();
-      }
-    } catch (error) {
-      if (!mounted) {
-        return;
-      }
-      setState(() {
-        _isSubmitting = false;
-        _error = error.toString();
-      });
-    }
-  }
+  final bool busy;
+  final VoidCallback onTap;
 
   @override
   Widget build(BuildContext context) {
-    return Padding(
-      padding: EdgeInsets.only(
-        left: paddingUnit,
-        right: paddingUnit,
-        bottom: MediaQuery.viewInsetsOf(context).bottom + paddingUnit,
-      ),
-      child: GlassSurface(
-        strong: true,
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text('Create a trip', style: context.pText.headlineSmall),
-            const SizedBox(height: paddingUnit / 2),
-            Text(
-              'Give this shared space a name. Dates and cover images will come in the full trip switcher.',
-              style: context.pText.bodySmall?.copyWith(color: XploreColors.mutedText),
-            ),
-            const SizedBox(height: paddingUnit),
-            TextField(
-              controller: _controller,
-              autofocus: true,
-              textInputAction: TextInputAction.done,
-              onSubmitted: (_) => _isSubmitting ? null : _submit(),
-              decoration: InputDecoration(errorText: _error, labelText: 'Trip name'),
-            ),
-            const SizedBox(height: paddingUnit),
-            SizedBox(
-              width: double.infinity,
-              child: FilledButton(
-                onPressed: _isSubmitting ? null : _submit,
-                child: Text(_isSubmitting ? 'Creating...' : 'Create trip'),
+    return Material(
+      color: XploreColors.white.withValues(alpha: 0.16),
+      borderRadius: BorderRadius.circular(radiusSm),
+      clipBehavior: Clip.hardEdge,
+      child: InkWell(
+        onTap: busy ? null : onTap,
+        child: Padding(
+          padding: const EdgeInsets.symmetric(horizontal: paddingUnit * 0.85, vertical: paddingUnit / 2),
+          child: Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              busy
+                  ? const SizedBox(height: 14, width: 14, child: CircularProgressIndicator(strokeWidth: 2))
+                  : Icon(Icons.ios_share_rounded, size: 15, color: XploreColors.white),
+              const SizedBox(width: 6),
+              Text(
+                'Invite',
+                style: context.pText.labelSmall?.copyWith(color: XploreColors.white, fontWeight: FontWeight.w600),
               ),
-            ),
-          ],
+            ],
+          ),
         ),
       ),
     );
