@@ -5,11 +5,9 @@ import 'dart:typed_data';
 import 'package:firebase_storage/firebase_storage.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:freezed_annotation/freezed_annotation.dart';
-import 'package:hive_ce_flutter/hive_ce_flutter.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:logger/logger.dart';
 import 'package:uuid/uuid.dart';
-import 'package:xplore/constants/constants.dart';
 import 'package:xplore/core/enums.dart';
 import 'package:xplore/features/auth/services/auth_service.dart';
 import 'package:xplore/features/gallery/models/image_models.dart';
@@ -23,8 +21,6 @@ part '../../../generated/features/gallery/bloc/gallery_cubit.freezed.dart';
 part 'gallery_states.dart';
 
 // TODOs:
-// - Keep `itineraryId` as the late-subscriber/demo fallback until trip switching
-//   can replay or synchronously expose the active trip id.
 // - Support selection & compression w/ video
 // - Implement GCP fetches/downloads after fetching cache
 class GalleryCubit extends Cubit<GalleryState> with TripStreamMixin {
@@ -44,8 +40,6 @@ class GalleryCubit extends Cubit<GalleryState> with TripStreamMixin {
 
   /// The uploader's Firebase UID, or null when unauthenticated.
   String? get _uid => _authService.currentUid;
-
-  String get _tripScopeId => _activeTripId ?? itineraryId;
 
   void loadImgFromCache() {
     _logger.d('Load cached gallery');
@@ -143,11 +137,10 @@ class GalleryCubit extends Cubit<GalleryState> with TripStreamMixin {
 
   Future<Uint8List> fetchHighResAsset(String id) async {
     final watch = Stopwatch()..start();
-    final box = await Hive.openBox('gallery-res');
-    final Uint8List currentImgBytes = await box.get(id);
+    final currentImgBytes = await repository.loadHighResImage(id);
     watch.stop();
     _logger.d('Hive fetch took ${watch.elapsedMilliseconds}ms');
-    return currentImgBytes;
+    return currentImgBytes ?? Uint8List(0);
   }
 
   //! -------------------------------------------------------------------------
@@ -162,12 +155,23 @@ class GalleryCubit extends Cubit<GalleryState> with TripStreamMixin {
   void _onTripStateChanged(TripState tripState) {
     switch (tripState) {
       case TripLoaded(:final active):
-        _activeTripId = active.id;
+        _switchTrip(active.id);
       case TripEmpty() || TripError():
-        _activeTripId = null;
+        _switchTrip(null);
       case TripLoading():
         break;
     }
+  }
+
+  /// Points the gallery at [tripId] and reloads its cache. Hive boxes are
+  /// namespaced per trip, so switching trips drops the previous trip's photos
+  /// from memory and surfaces only the new trip's cached photos (or none).
+  void _switchTrip(String? tripId) {
+    if (tripId == _activeTripId) return;
+    _activeTripId = tripId;
+    repository.setTrip(tripId);
+    emit(state.copyWith(imageMap: const {}, status: EBlocStatus.loading));
+    loadImgFromCache();
   }
 
   /// Converts image file to more generic file
@@ -188,9 +192,14 @@ class GalleryCubit extends Cubit<GalleryState> with TripStreamMixin {
       return Future.error(StateError('Cannot upload to gallery while unauthenticated.'));
     }
 
+    final tripId = _activeTripId;
+    if (tripId == null) {
+      return Future.error(StateError('Cannot upload to gallery without an active trip.'));
+    }
+
     try {
       FirebaseStorage storage = FirebaseStorage.instance;
-      Reference ref = storage.ref().child('gallery/$_tripScopeId/$uid/$imageName');
+      Reference ref = storage.ref().child('gallery/$tripId/$uid/$imageName');
       UploadTask uploadTask = ref.putFile(imageFile);
       TaskSnapshot taskSnapshot = await uploadTask;
       String downloadURL = await taskSnapshot.ref.getDownloadURL();
