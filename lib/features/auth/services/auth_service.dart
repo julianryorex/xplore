@@ -376,10 +376,18 @@ class AuthService {
       'uid': user.uid,
       'displayName': user.displayName ?? '',
       'email': user.email,
-      'photoUrl': user.photoURL,
       'lastSeenAt': FieldValue.serverTimestamp(),
       'providers': FieldValue.arrayUnion([provider]),
     };
+
+    // `photoUrl` is owned by the app's avatar pipeline (ProfileService.setPhotoUrl,
+    // FEAT-015), NOT the auth provider. Only seed it from the provider for a
+    // brand-new account and only when the provider actually supplies one (Apple
+    // never does). Writing it on every sign-in would merge the provider's null
+    // over a user-set avatar and wipe it — the FEAT-015 cross-session bug.
+    if (!snapshot.exists && user.photoURL != null) {
+      data['photoUrl'] = user.photoURL;
+    }
 
     if (newHandle != null) {
       data['username'] = newHandle;

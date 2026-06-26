@@ -1,3 +1,4 @@
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:fake_cloud_firestore/fake_cloud_firestore.dart';
 import 'package:firebase_auth_mocks/firebase_auth_mocks.dart';
 import 'package:firebase_auth_platform_interface/firebase_auth_platform_interface.dart';
@@ -143,6 +144,24 @@ void main() {
       final second = (await firestore.collection('users').doc('apple-user').get()).data()!['username'];
 
       expect(second, first);
+    });
+
+    test('a later sign-in does not overwrite a user-set photoUrl', () async {
+      final firestore = FakeFirebaseFirestore();
+      final service = _appleAuthService(firestore: firestore);
+
+      // First sign-in creates the profile; then the app's avatar pipeline
+      // (ProfileService.setPhotoUrl) writes the Storage URL.
+      await service.signInWithApple();
+      const avatarUrl = 'https://example.com/avatars/apple-user/avatar?token=abc';
+      await firestore.collection('users').doc('apple-user').set({'photoUrl': avatarUrl}, SetOptions(merge: true));
+
+      // Re-sign-in (Apple => provider photoURL is null). It must NOT clobber the
+      // avatar back to null — the FEAT-015 cross-session regression.
+      await service.signInWithApple();
+
+      final doc = await firestore.collection('users').doc('apple-user').get();
+      expect(doc.data()!['photoUrl'], avatarUrl);
     });
 
     test('backfills a handle for a pre-existing profile without one', () async {

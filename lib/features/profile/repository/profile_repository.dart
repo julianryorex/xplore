@@ -54,4 +54,17 @@ class ProfileRepository {
       _logger.w('Failed to clear cached profile for $uid: $err');
     }
   }
+
+  /// Drops every cached profile (used on sign-out, when the uid is already gone,
+  /// so no account's profile bleeds onto the next one on this device). Empties
+  /// the box in place rather than deleting it from disk, so the still-open box
+  /// stays usable for the next account without a reopen.
+  Future<void> clearAll() async {
+    try {
+      final box = await _hive.openBox(cacheBoxName);
+      await box.clear();
+    } catch (err) {
+      _logger.w('Failed to clear profile cache: $err');
+    }
+  }
 }

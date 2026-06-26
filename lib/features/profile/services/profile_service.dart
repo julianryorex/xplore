@@ -48,6 +48,18 @@ class ProfileService {
     return task.ref.getDownloadURL();
   }
 
+  /// Avatars are capped at 512px / quality 85 on upload, so a few MB is a safe
+  /// ceiling for the download.
+  static const _maxAvatarBytes = 8 * 1024 * 1024;
+
+  /// Downloads the avatar bytes at `avatars/{uid}/avatar`, or `null` when the
+  /// object is missing. Used to rehydrate the local avatar on a device that has
+  /// the cloud URL but no cached bytes (fresh install / post sign-out wipe).
+  Future<Uint8List?> downloadAvatar(String uid) async {
+    final ref = _storageInstance.ref().child('avatars/$uid/avatar');
+    return ref.getData(_maxAvatarBytes);
+  }
+
   /// Persists the avatar [url] onto `users/{uid}`.
   Future<void> setPhotoUrl(String uid, String url) async {
     await _users.doc(uid).set({'photoUrl': url}, SetOptions(merge: true));

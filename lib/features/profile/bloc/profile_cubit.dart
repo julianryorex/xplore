@@ -7,6 +7,7 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:freezed_annotation/freezed_annotation.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:path_provider/path_provider.dart';
+import 'package:xplore/features/auth/bloc/auth_cleanup_mixin.dart';
 import 'package:xplore/features/auth/services/auth_service.dart';
 import 'package:xplore/features/map/services/marker_service.dart';
 import 'package:xplore/features/profile/models/profile_models.dart';
@@ -25,7 +26,7 @@ part 'profile_state.dart';
 /// writer to the cache; write methods go to Firestore and let the snapshot echo
 /// back (mirrors `ItineraryCubit`). [ProfileService] is created lazily so the
 /// Firebase-free test path can construct the cubit with `hydrate: false`.
-class ProfileCubit extends Cubit<ProfileState> {
+class ProfileCubit extends Cubit<ProfileState> with AuthCleanupMixin {
   final _logger = createLogger('Profile');
   final AuthService _authService;
   final ProfileRepository _profileRepository;
@@ -43,6 +44,11 @@ class ProfileCubit extends Cubit<ProfileState> {
        super(ProfileState(id: _authService.currentUid ?? '', name: _authService.currentUser?.displayName ?? '')) {
     markerService = MarkerService();
     if (hydrate) {
+      // Wipe this device's profile data on sign-out and re-hydrate for the next
+      // account, so a persistent cubit never bleeds one user's avatar/name into
+      // another's session. Gated with `hydrate` so the Firebase-free test path
+      // never attaches the listener.
+      bindAuthCleanup(_authService);
       hydrateProfile();
     }
   }
@@ -102,6 +108,33 @@ class ProfileCubit extends Cubit<ProfileState> {
 
   Future<void> deleteAll() async => await markerService.deleteAll();
 
+  /// Sign-out cleanup (via [AuthCleanupMixin]): drop every trace of the current
+  /// user's profile from this device — the live listener, the local avatar file,
+  /// the cached profile, the generated map marker, and the in-memory state — so
+  /// none of it bleeds into the next account that signs in here.
+  @override
+  Future<void> onSignedOut() async {
+    await _profileSubscription?.cancel();
+    _profileSubscription = null;
+    await _deleteLocalProfilePicture();
+    await _profileRepository.clearAll();
+    await markerService.deleteAll();
+    if (!isClosed) {
+      emit(const ProfileState(id: '', name: ''));
+    }
+    _logger.d('Cleared local profile data on sign-out');
+  }
+
+  /// Re-hydrate for the account that just signed in. The cubit is app-scoped, so
+  /// without this an account switch would leave the previous (now-cleared) state
+  /// in place until the next app launch.
+  @override
+  Future<void> onSignedIn(String uid) async {
+    if (isClosed) return;
+    emit(ProfileState(id: uid, name: _authService.currentUser?.displayName ?? ''));
+    await hydrateProfile();
+  }
+
   //! -------------------------------------------------------------------------
   //! Private Methods
   //! -------------------------------------------------------------------------
@@ -142,6 +175,27 @@ class ProfileCubit extends Cubit<ProfileState> {
         photoUrl: profile.photoUrl,
       ),
     );
+    unawaited(_ensureLocalAvatarBytes(profile));
+  }
+
+  /// When the cloud profile has an avatar URL but this device has no local bytes
+  /// (fresh install, or after a sign-out wiped the file), pull the bytes once and
+  /// cache them. `profilePicture` is the single source the home avatar and map
+  /// marker render from, so without this they'd stay blank even though the cloud
+  /// URL is set (the profile page's `NetworkImage` fallback masked the gap).
+  Future<void> _ensureLocalAvatarBytes(UserProfile profile) async {
+    if (state.profilePicture != null) return;
+    final url = profile.photoUrl;
+    if (url == null || url.isEmpty) return;
+
+    try {
+      final bytes = await _profileService.downloadAvatar(profile.uid);
+      if (bytes == null || isClosed || state.profilePicture != null) return;
+      emit(state.copyWith(profilePicture: bytes));
+      await saveProfilePicture(bytes);
+    } catch (err) {
+      _logger.w('Failed to fetch cloud avatar bytes: $err');
+    }
   }
 
   @visibleForTesting
@@ -149,8 +203,7 @@ class ProfileCubit extends Cubit<ProfileState> {
     // Best-effort: a missing avatar (or platform channel in tests) must not
     // abort cloud hydration.
     try {
-      final directory = await getApplicationDocumentsDirectory();
-      final file = File(('${directory.path}/profile_picture.png'));
+      final file = await _profilePictureFile();
 
       if (!await file.exists()) {
         _logger.w('No local profile picture found');
@@ -166,9 +219,26 @@ class ProfileCubit extends Cubit<ProfileState> {
 
   @visibleForTesting
   Future<void> saveProfilePicture(Uint8List imageData) async {
-    final directory = await getApplicationDocumentsDirectory();
-    final file = File(('${directory.path}/profile_picture.png'));
+    final file = await _profilePictureFile();
     await file.writeAsBytes(imageData);
+  }
+
+  /// The avatar is stored at a fixed (non-uid-scoped) path, so it must be deleted
+  /// on sign-out or it would surface for the next account on this device.
+  Future<void> _deleteLocalProfilePicture() async {
+    try {
+      final file = await _profilePictureFile();
+      if (await file.exists()) {
+        await file.delete();
+      }
+    } catch (err) {
+      _logger.w('Failed to delete local profile picture: $err');
+    }
+  }
+
+  Future<File> _profilePictureFile() async {
+    final directory = await getApplicationDocumentsDirectory();
+    return File('${directory.path}/profile_picture.png');
   }
 
   @override
