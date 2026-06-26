@@ -37,7 +37,7 @@ at runtime — `loadDemoItinerary()` is test/golden-only.
 
 Also outstanding:
 
-- New trips seed an **empty** cloud itinerary (`daily_plans: []`); Tokyo demo content not copied on create → FEAT-006 follow-up
+- New trips seed the **Tokyo demo** cloud itinerary (`daily_plans`/`pins` copied from `assets/demo/itinerary.json`) on create, so Home is populated end-to-end → FEAT-006 follow-up shipped
 - Itinerary **editing CRUD** not built; gated on FEAT-024 organizer roles → FEAT-006 follow-up
 - Mock onboarding placeholder only → **FEAT-005**
 - No trip invites / deep links → **FEAT-003**

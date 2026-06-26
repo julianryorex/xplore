@@ -120,18 +120,20 @@ void main() {
       expect((await updated).itinerary.dailyPlans.map((d) => d.title), ['SkyTree Day', 'Shinjuku Day']);
     });
 
-    test('lazily seeds a starter itinerary when the document is missing', () async {
+    test('lazily seeds the Tokyo demo itinerary when the document is missing', () async {
       final cubit = buildCubit(user: MockUser(uid: 'user-1'));
       final loaded = _waitFor<LoadedItineraryState>(cubit);
 
       _TripStreamHarness().pushTripEvent(TripState.loaded(active: _trip('trip-2'), all: [_trip('trip-2')]));
 
-      expect((await loaded).itinerary.dailyPlans, isEmpty);
+      final itinerary = (await loaded).itinerary;
+      expect(itinerary.dailyPlans, isNotEmpty);
+      expect(itinerary.dailyPlans.first.title, 'SkyTree Day');
 
       final seeded = await firestore.collection('itineraries').doc('trip-2').get();
       expect(seeded.exists, isTrue);
       expect(seeded.data()!['invitees'], ['user-1']);
-      expect(seeded.data()!['daily_plans'], isEmpty);
+      expect(seeded.data()!['daily_plans'], isNotEmpty);
     });
 
     test('emits empty when the active trip clears', () async {
