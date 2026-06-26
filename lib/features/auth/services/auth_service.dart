@@ -358,10 +358,19 @@ class AuthService {
   }
 
   /// Creates or refreshes `users/{uid}`. `createdAt` is written once;
-  /// `lastSeenAt` and the `providers` set are always updated.
+  /// `lastSeenAt` and the `providers` set are always updated. A first-time (or
+  /// handle-less, i.e. pre-FEAT-015) user also has a globally unique `username`
+  /// auto-generated and claimed (FEAT-015).
   Future<void> _upsertUserProfile(User user, {required String provider}) async {
     final doc = _firestore.collection('users').doc(user.uid);
     final snapshot = await doc.get();
+
+    // Seed a unique handle for new users and backfill pre-FEAT-015 accounts.
+    // Done before the write so the username lands in the single `users/{uid}`
+    // merge below. Best-effort: a claim failure leaves the handle unset and must
+    // never block sign-in (the profile / a later onboarding step can prompt).
+    final existingHandle = (snapshot.data()?['username'] as String?)?.trim() ?? '';
+    final newHandle = existingHandle.isEmpty ? await _claimNewHandle(user.uid, user.displayName) : null;
 
     final data = <String, dynamic>{
       'uid': user.uid,
@@ -372,11 +381,69 @@ class AuthService {
       'providers': FieldValue.arrayUnion([provider]),
     };
 
+    if (newHandle != null) {
+      data['username'] = newHandle;
+      data['usernameLower'] = newHandle.toLowerCase();
+    }
+
     if (!snapshot.exists) {
       data['createdAt'] = FieldValue.serverTimestamp();
     }
 
     await doc.set(data, SetOptions(merge: true));
+  }
+
+  /// Lowercase characters allowed in a generated handle suffix.
+  static const _handleSuffixCharset = 'abcdefghijklmnopqrstuvwxyz0123456789';
+
+  /// Auto-generates and claims a globally unique handle for [uid], returning the
+  /// claimed value (or null if none could be claimed).
+  ///
+  /// The handle value is the document id in the `usernames/{usernameLower}`
+  /// registry, so a claim is an atomic "create if absent" transaction. On a
+  /// collision a fresh suffix is generated and retried. Best-effort: never
+  /// throws, so sign-in is never blocked.
+  Future<String?> _claimNewHandle(String uid, String? displayName) async {
+    final base = _handleBase(displayName);
+
+    for (var attempt = 0; attempt < 6; attempt++) {
+      final candidate = '$base-${_randomHandleSuffix()}';
+      final lower = candidate.toLowerCase();
+      try {
+        final claimed = await _firestore.runTransaction<bool>((tx) async {
+          final handleRef = _firestore.collection('usernames').doc(lower);
+          final existing = await tx.get(handleRef);
+          if (existing.exists) {
+            return false;
+          }
+          tx.set(handleRef, {'uid': uid});
+          return true;
+        });
+        if (claimed) {
+          _logger.d('Claimed handle "$candidate" for $uid');
+          return candidate;
+        }
+      } catch (e) {
+        _logger.w('Handle claim attempt ${attempt + 1} failed for $uid: $e');
+      }
+    }
+
+    _logger.w('Could not claim a unique handle for $uid after retries; leaving unset.');
+    return null;
+  }
+
+  /// Derives the handle stem from the user's first name, e.g. "Julian
+  /// Rechsteiner" -> "julian". Falls back to "traveler" when there's nothing
+  /// usable (Apple Hide-My-Email users with no name, etc.).
+  String _handleBase(String? displayName) {
+    final firstName = (displayName ?? '').trim().split(RegExp(r'\s+')).first;
+    final slug = firstName.toLowerCase().replaceAll(RegExp(r'[^a-z0-9]'), '');
+    return slug.isEmpty ? 'traveler' : slug;
+  }
+
+  String _randomHandleSuffix([int length = 4]) {
+    final random = Random.secure();
+    return List.generate(length, (_) => _handleSuffixCharset[random.nextInt(_handleSuffixCharset.length)]).join();
   }
 
   static const _nonceCharset = '0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz-._';
