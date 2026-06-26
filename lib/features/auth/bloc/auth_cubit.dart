@@ -48,6 +48,22 @@ class AuthCubit extends Cubit<AuthState> {
     }
   }
 
+  /// Forwards to [AuthService]; the `authStateChanges` stream drives the actual
+  /// transition to [AuthAuthenticated]. Rethrows so the UI can surface errors.
+  Future<void> signInWithApple() async {
+    analytics.signInStarted(provider: 'apple');
+    try {
+      await _authService.signInWithApple();
+      analytics.signInSucceeded(provider: 'apple');
+    } on AuthCancelledException {
+      analytics.signInFailed(provider: 'apple', reason: 'cancelled');
+      rethrow;
+    } on AuthFailureException catch (e) {
+      analytics.signInFailed(provider: 'apple', reason: e.message);
+      rethrow;
+    }
+  }
+
   Future<void> signOut() async {
     await _authService.signOut();
     analytics.signOut();

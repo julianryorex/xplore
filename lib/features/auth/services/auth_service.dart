@@ -1,11 +1,21 @@
 import 'dart:async';
+import 'dart:convert';
+import 'dart:math';
 
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:crypto/crypto.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:google_sign_in/google_sign_in.dart';
 import 'package:logger/logger.dart';
+import 'package:sign_in_with_apple/sign_in_with_apple.dart';
 import 'package:xplore/utilities/utilities.dart';
+
+/// Requests an Apple ID credential. Defaults to the real
+/// [SignInWithApple.getAppleIDCredential]; overridable in tests so the native
+/// authorization sheet doesn't have to run.
+typedef AppleCredentialRequester =
+    Future<AuthorizationCredentialAppleID> Function({required List<AppleIDAuthorizationScopes> scopes, String? nonce});
 
 /// Thrown when the user cancels an interactive sign-in. Non-blocking: the UI
 /// should simply return to the idle sign-in state.
@@ -31,14 +41,18 @@ class AuthFailureException implements Exception {
 /// + Google sign-in and upserts the Firestore `users/{uid}` profile in the named
 /// `xplore-app` database created by the Terraform infra.
 ///
-/// Google is the first provider (interim, while Apple Developer enrollment is
-/// unavailable). Adding Apple later is additive: a `signInWithApple()` method
-/// here plus a button in the sign-in UI — no structural change.
+/// Apple is the primary provider (App Store policy); Google is also supported.
+/// Both funnel through Firebase credentials and the same `users/{uid}` upsert.
 class AuthService {
-  AuthService({FirebaseAuth? firebaseAuth, FirebaseFirestore? firestore, GoogleSignIn? googleSignIn})
-    : _auth = firebaseAuth ?? FirebaseAuth.instance,
-      _firestore = firestore ?? FirebaseFirestore.instanceFor(app: Firebase.app(), databaseId: appDatabaseId),
-      _google = googleSignIn ?? GoogleSignIn.instance;
+  AuthService({
+    FirebaseAuth? firebaseAuth,
+    FirebaseFirestore? firestore,
+    GoogleSignIn? googleSignIn,
+    AppleCredentialRequester? appleCredentialRequester,
+  }) : _auth = firebaseAuth ?? FirebaseAuth.instance,
+       _firestore = firestore ?? FirebaseFirestore.instanceFor(app: Firebase.app(), databaseId: appDatabaseId),
+       _google = googleSignIn ?? GoogleSignIn.instance,
+       _requestAppleCredential = appleCredentialRequester ?? SignInWithApple.getAppleIDCredential;
 
   /// Named Firestore Native database created by the Terraform infra (Phase 1).
   /// The project's default database is Datastore-mode and unusable by the SDKs.
@@ -47,6 +61,7 @@ class AuthService {
   final FirebaseAuth _auth;
   final FirebaseFirestore _firestore;
   final GoogleSignIn _google;
+  final AppleCredentialRequester _requestAppleCredential;
   final Logger _logger = createLogger('AuthService');
 
   bool _googleInitialized = false;
@@ -106,6 +121,65 @@ class AuthService {
     }
   }
 
+  /// Interactive Sign in with Apple -> Firebase credential -> `users/{uid}`
+  /// upsert. The primary provider (App Store policy mandates Apple when offering
+  /// third-party sign-in on iOS).
+  ///
+  /// Throws [AuthCancelledException] if the user backs out, or
+  /// [AuthFailureException] on any other error.
+  Future<UserCredential> signInWithApple() async {
+    // A nonce ties the Apple ID token to this request (replay protection). The
+    // SHA-256 digest goes to Apple; the raw value goes to Firebase to verify.
+    final rawNonce = _generateNonce();
+    final hashedNonce = _sha256OfString(rawNonce);
+
+    try {
+      final appleCredential = await _requestAppleCredential(
+        scopes: const [AppleIDAuthorizationScopes.email, AppleIDAuthorizationScopes.fullName],
+        nonce: hashedNonce,
+      );
+
+      final idToken = appleCredential.identityToken;
+      if (idToken == null) {
+        throw const AuthFailureException('Apple did not return an identity token.');
+      }
+
+      final credential = OAuthProvider(
+        'apple.com',
+      ).credential(idToken: idToken, rawNonce: rawNonce, accessToken: appleCredential.authorizationCode);
+      final userCredential = await _auth.signInWithCredential(credential);
+
+      final user = userCredential.user;
+      if (user == null) {
+        throw const AuthFailureException('Firebase returned no user.');
+      }
+
+      // Apple only sends the name on the *first* authorization and never
+      // populates FirebaseAuth.displayName, so capture it now or it's lost.
+      await _captureAppleDisplayName(user, appleCredential);
+
+      await _upsertUserProfile(user, provider: 'apple');
+      return userCredential;
+    } on SignInWithAppleAuthorizationException catch (e) {
+      if (e.code == AuthorizationErrorCode.canceled) {
+        throw const AuthCancelledException();
+      }
+      throw AuthFailureException(e.message);
+    } on FirebaseAuthException catch (e) {
+      throw AuthFailureException(e.message ?? 'Authentication failed.');
+    }
+  }
+
+  Future<void> _captureAppleDisplayName(User user, AuthorizationCredentialAppleID appleCredential) async {
+    final hasName = (user.displayName ?? '').trim().isNotEmpty;
+    if (hasName) return;
+
+    final fullName = [appleCredential.givenName, appleCredential.familyName].whereType<String>().join(' ').trim();
+
+    if (fullName.isEmpty) return;
+    await user.updateDisplayName(fullName);
+  }
+
   Future<void> signOut() async {
     try {
       await _google.signOut();
@@ -136,4 +210,14 @@ class AuthService {
 
     await doc.set(data, SetOptions(merge: true));
   }
+
+  static const _nonceCharset = '0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz-._';
+
+  /// A cryptographically secure random string for the Apple sign-in nonce.
+  String _generateNonce([int length = 32]) {
+    final random = Random.secure();
+    return List.generate(length, (_) => _nonceCharset[random.nextInt(_nonceCharset.length)]).join();
+  }
+
+  String _sha256OfString(String input) => sha256.convert(utf8.encode(input)).toString();
 }
