@@ -13,11 +13,15 @@ import 'package:xplore/features/notifications/presentation/variants/refined_list
 ///
 /// Read state is held locally for now (tap a row, or "mark all read") so the UI
 /// feels live; swap [sections] for a `NotificationCubit` stream when the backend
-/// lands — the widget tree won't need to change.
+/// (FEAT-012) lands — the widget tree won't need to change.
+///
+/// [sections] defaults to an empty list so the runtime app shows the polished
+/// "all caught up" empty state until that backend exists. Tests pass
+/// `sampleNotifications` explicitly to exercise the populated feed.
 class NotificationsPage extends StatefulWidget {
   final List<NotificationSection> sections;
 
-  const NotificationsPage({this.sections = sampleNotifications, super.key});
+  const NotificationsPage({this.sections = const [], super.key});
 
   @override
   State<NotificationsPage> createState() => _NotificationsPageState();
