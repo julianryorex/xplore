@@ -98,21 +98,22 @@ class _MapCanvasState extends State<MapCanvas> {
                               const Text('Hello'),
                               OutlinedButton(
                                 onPressed: () async {
-                                  await context
-                                      .read<MapCubit>()
-                                      .initialMarkerUpdate()
-                                      .then((value) async {
-                                        final locations = context
-                                            .read<LocationCubit>()
-                                            .state
-                                            .locations
-                                            .values
-                                            .toList();
-                                        await context
-                                            .read<MapCubit>()
-                                            .updateUserMarkers(locations);
-                                      })
-                                      .then((value) => Navigator.pop(context));
+                                  final mapCubit = context.read<MapCubit>();
+                                  final locationCubit = context
+                                      .read<LocationCubit>();
+                                  final navigator = Navigator.of(context);
+
+                                  await mapCubit.initialMarkerUpdate();
+                                  final locations = locationCubit
+                                      .state
+                                      .locations
+                                      .values
+                                      .toList();
+                                  await mapCubit.updateUserMarkers(locations);
+
+                                  if (navigator.mounted) {
+                                    navigator.pop();
+                                  }
                                 },
                                 child: const Text('Sounds good!'),
                               ),
