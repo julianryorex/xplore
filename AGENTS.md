@@ -3,7 +3,7 @@
 ## Cursor Cloud specific instructions
 
 Xplore is a Flutter group-travel app (state via flutter_bloc/Cubit, Freezed +
-json_serializable models, Hive local cache, Firebase backend, Google Maps,
+json_serializable models, Hive CE (`hive_ce`) local cache, Firebase backend, Google Maps,
 Gemini). See `README.md` and the `Makefile` for the canonical commands
 (`make get`, `make gen`, `make format`, `make check-format`).
 
@@ -36,8 +36,11 @@ matching epic or sub-issue before `gh pr create`.
   Run `make gen` / `fvm dart run build_runner build` before
   `fvm flutter analyze`, `fvm flutter test`, or any build, or you'll get missing
   `part` file errors. The
-  startup update script handles this automatically. Note: `hive_generator` was
-  removed — Hive `TypeAdapter`s are now hand-written in
+  startup update script handles this automatically. Note: local storage uses
+  **Hive CE (`hive_ce` / `hive_ce_flutter`)**, the maintained community fork of
+  the now-discontinued `hive`; the on-disk format and `TypeAdapter` API are
+  compatible. `hive_generator` was never adopted — Hive CE `TypeAdapter`s are
+  hand-written in
   `lib/features/gallery/models/image_models_adapters.dart`. Also, build_runner
   ≥2.15 ignores the old `--delete-conflicting-outputs` flag (harmless no-op).
 - `assets/.env` is **git-ignored and required** by `fvm flutter run` /

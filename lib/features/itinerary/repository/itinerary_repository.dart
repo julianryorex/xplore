@@ -1,6 +1,6 @@
 import 'dart:convert';
 
-import 'package:hive/hive.dart';
+import 'package:hive_ce/hive.dart';
 import 'package:logger/logger.dart';
 import 'package:xplore/features/itinerary/models/itinerary_models.dart';
 import 'package:xplore/utilities/utilities.dart';

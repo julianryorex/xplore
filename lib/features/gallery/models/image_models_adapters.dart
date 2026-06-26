@@ -1,6 +1,6 @@
 import 'dart:typed_data';
 
-import 'package:hive/hive.dart';
+import 'package:hive_ce/hive.dart';
 import 'package:xplore/features/gallery/models/image_models.dart';
 
 /// Hand-written Hive [TypeAdapter]s for the gallery models.
