@@ -43,6 +43,13 @@ void main() {
     downloadUrl: 'https://example.com/$id.jpg',
   );
 
+  ImageModel image(String id) => ImageModel(
+    id: id,
+    createdAt: DateTime.utc(2024),
+    lowResImage: Uint8List.fromList([1, 2, 3]),
+    isUploading: EUploadStatus.complete,
+  );
+
   group('GalleryRepository persistence (hive_ce migration guard)', () {
     test('cacheMetadata persists an ImageModel that loadImgFromCache restores', () async {
       final repository = GalleryRepository()..setTrip('trip-1');
@@ -80,13 +87,6 @@ void main() {
   });
 
   group('GalleryRepository trip scoping', () {
-    ImageModel image(String id) => ImageModel(
-      id: id,
-      createdAt: DateTime.utc(2024),
-      lowResImage: Uint8List.fromList([1, 2, 3]),
-      isUploading: EUploadStatus.complete,
-    );
-
     test('returns empty and no-ops when no trip is active', () async {
       final repo = GalleryRepository();
 
