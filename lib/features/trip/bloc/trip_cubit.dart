@@ -28,10 +28,38 @@ class TripCubit extends Cubit<TripState> with TripStreamMixin {
   StreamSubscription<User?>? _authSubscription;
   StreamSubscription<List<TripModel>>? _tripsSubscription;
 
+  /// A trip the user just joined/selected that should become active as soon as
+  /// it appears in the trips stream (it may not be the newest trip).
+  String? _pendingActiveTripId;
+
   String? get activeTripId => switch (state) {
     TripLoaded(:final active) => active.id,
     _ => null,
   };
+
+  /// Marks [tripId] as the active trip. If it is already in the loaded set the
+  /// switch is immediate; otherwise it is applied once the trips stream catches
+  /// up (e.g. right after accepting an invite). Imports no other cubit.
+  void setActiveTrip(String tripId) {
+    _pendingActiveTripId = tripId;
+    final current = state;
+    if (current is TripLoaded) {
+      final match = _firstWhereOrNull(current.all, tripId);
+      if (match != null) {
+        _pendingActiveTripId = null;
+        _emitAndPublish(TripState.loaded(active: match, all: current.all));
+      }
+    }
+  }
+
+  TripModel? _firstWhereOrNull(List<TripModel> trips, String tripId) {
+    for (final trip in trips) {
+      if (trip.id == tripId) {
+        return trip;
+      }
+    }
+    return null;
+  }
 
   Future<void> createTrip(String title) async {
     final uid = _authService.currentUid;
@@ -106,7 +134,17 @@ class TripCubit extends Cubit<TripState> with TripStreamMixin {
               return;
             }
 
-            _emitAndPublish(TripState.loaded(active: trips.first, all: trips));
+            var active = trips.first;
+            final desired = _pendingActiveTripId;
+            if (desired != null) {
+              final match = _firstWhereOrNull(trips, desired);
+              if (match != null) {
+                active = match;
+                _pendingActiveTripId = null;
+              }
+            }
+
+            _emitAndPublish(TripState.loaded(active: active, all: trips));
           },
           onError: (Object error) {
             _emitAndPublish(TripState.error(error.toString()));

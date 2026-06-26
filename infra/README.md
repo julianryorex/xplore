@@ -152,6 +152,72 @@ Apple cannot be fully expressed in Terraform. Steps:
 Until `apple_services_id` is set, the Apple IdP resource is skipped (count = 0)
 and the rest of the infra still applies.
 
+## Trip invite deep links (FEAT-003) — manual Mac/Xcode + hosting follow-up
+
+The in-app invite flow (create link, share, preview, accept/join, member-cap
+enforcement, Firestore rules) ships and is exercised headlessly. What is **not**
+wired here — because it needs a Mac/Xcode + a hosted domain and cannot be tested
+in the Linux/CI environment — is the OS-level **universal link** delivery. Until
+the steps below are done, shared links are valid strings but tapping one will
+not open the app.
+
+> **Placeholder domain.** The invite base lives in a single constant,
+> `InviteLink.base` in `lib/features/trip/services/invite_link.dart`
+> (currently `https://xplore.app/join`). The production domain is an open
+> product question — replace this constant once decided, and use the same host
+> in every step below.
+
+### 1. Apple App Site Association (AASA) file — hosting
+Host a file at **`https://<domain>/.well-known/apple-app-site-association`**
+(served as `application/json`, **no** `.json` extension, HTTPS, no redirects):
+
+```json
+{
+  "applinks": {
+    "details": [
+      {
+        "appIDs": ["<TEAM_ID>.com.olympuslabs.xplore"],
+        "components": [{ "/": "/join*", "comment": "Trip invite links" }]
+      }
+    ]
+  }
+}
+```
+
+`TEAM_ID` is the Apple Developer Team ID (same one used for Sign in with Apple
+above). The bundle id is `com.olympuslabs.xplore`.
+
+### 2. Associated Domains entitlement — Xcode
+In **Xcode → Runner target → Signing & Capabilities** add the **Associated
+Domains** capability with:
+
+```text
+applinks:<domain>
+```
+
+This updates `ios/Runner/Runner.entitlements` and requires the Associated
+Domains capability to be enabled on the App ID in the Apple Developer portal.
+(Repeat for the macOS target if macOS universal links are wanted.)
+
+### 3. App-side delivery
+`app_links` is already wired (`DeepLinkService` + `DeepLinkHandler` in
+`lib/features/trip/`); no extra Flutter code is needed. The handler parses
+`*/join?trip=...&token=...`, waits for auth if needed, then pushes the join
+screen.
+
+### 4. Verify (requires a real device or simulator)
+- `xcrun simctl openurl booted "https://<domain>/join?trip=<id>&token=<tok>"`
+  (or tap a link in Notes/Messages on a device) should foreground the app on
+  the join-confirmation screen.
+- Apple's CDN caches the AASA; use a fresh install / `swcutil` to debug.
+
+### Security follow-up (tracked, not blocking the cut line)
+The join write is gated by the `validTripJoin` Firestore rule (self-add only +
+member cap). Invite **revocation/expiry** is validated client-side against the
+readable invite doc, and the random 20-char trip id + token act as the
+capability. A hardened version (server-side token verification, e.g. a Cloud
+Function or a rule that cross-checks the invite doc) is a future enhancement.
+
 ## State & secrets
 
 - Local state (`infra/terraform.tfstate`) is git-ignored.

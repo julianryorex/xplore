@@ -1,6 +1,8 @@
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:share_plus/share_plus.dart';
 import 'package:xplore/constants/constants.dart';
 import 'package:xplore/constants/extensions.dart';
 import 'package:xplore/core/ambient_background.dart';
@@ -8,12 +10,15 @@ import 'package:xplore/core/error_state.dart';
 import 'package:xplore/core/glass.dart';
 import 'package:xplore/core/header.dart';
 import 'package:xplore/core/section_header.dart';
+import 'package:xplore/features/auth/services/auth_service.dart';
 import 'package:xplore/features/gallery/bloc/gallery_cubit.dart';
 import 'package:xplore/features/itinerary/bloc/itinerary_cubit.dart';
 import 'package:xplore/features/itinerary/widgets/itinerary_card.dart';
 import 'package:xplore/features/profile/bloc/profile_cubit.dart';
 import 'package:xplore/features/trip/bloc/trip_cubit.dart';
 import 'package:xplore/features/trip/bloc/trip_state.dart';
+import 'package:xplore/features/trip/models/trip_model.dart';
+import 'package:xplore/features/trip/services/trip_service.dart';
 import 'package:xplore/routes.dart';
 
 class HomePage extends StatelessWidget {
@@ -62,54 +67,47 @@ class HomePage extends StatelessWidget {
                   onAction: () => _openCreateTripSheet(context),
                 ),
                 const SizedBox(height: paddingUnit),
-                _TripStatePrompt(
-                  onCreateTrip: () => _openCreateTripSheet(context),
-                ),
+                _TripStatePrompt(onCreateTrip: () => _openCreateTripSheet(context)),
                 const SizedBox(height: paddingUnit),
 
                 //! Daily Plans Section Containers
                 BlocBuilder<ItineraryCubit, ItineraryStates>(
                   builder: (context, state) {
                     return switch (state) {
-                      InitialItineraryState() ||
-                      LoadingItineraryState() => const SizedBox(
+                      InitialItineraryState() || LoadingItineraryState() => const SizedBox(
                         height: 300,
                         width: 230,
                         child: Center(child: CircularProgressIndicator()),
                       ),
                       EmptyItineraryState() => const _ItineraryPlaceholder(
-                        message:
-                            'Create or open a trip to see its daily plans here.',
+                        message: 'Create or open a trip to see its daily plans here.',
                       ),
                       ErrorItineraryState() => ErrorState(
                         title: 'Unable to load itinerary',
                         message: 'Something went wrong. Please try again later',
                         onRetry: () => context.read<ItineraryCubit>().retry(),
                       ),
-                      LoadedItineraryState(:final itinerary)
-                          when itinerary.dailyPlans.isEmpty =>
+                      LoadedItineraryState(:final itinerary) when itinerary.dailyPlans.isEmpty =>
                         const _ItineraryPlaceholder(
-                          message:
-                              'No plans yet. Days and stops will appear here once added.',
+                          message: 'No plans yet. Days and stops will appear here once added.',
                         ),
-                      LoadedItineraryState(:final itinerary) =>
-                        SingleChildScrollView(
-                          scrollDirection: Axis.horizontal,
-                          child: Row(
-                            children: [
-                              ...itinerary.dailyPlans.map(
-                                (dailyPlan) => Padding(
-                                  padding: const EdgeInsets.only(right: 10),
-                                  child: SizedBox(
-                                    width: ItineraryCard.width,
-                                    height: ItineraryCard.height,
-                                    child: ItineraryCard(dailyPlan: dailyPlan),
-                                  ),
+                      LoadedItineraryState(:final itinerary) => SingleChildScrollView(
+                        scrollDirection: Axis.horizontal,
+                        child: Row(
+                          children: [
+                            ...itinerary.dailyPlans.map(
+                              (dailyPlan) => Padding(
+                                padding: const EdgeInsets.only(right: 10),
+                                child: SizedBox(
+                                  width: ItineraryCard.width,
+                                  height: ItineraryCard.height,
+                                  child: ItineraryCard(dailyPlan: dailyPlan),
                                 ),
                               ),
-                            ],
-                          ),
+                            ),
+                          ],
                         ),
+                      ),
                     };
                   },
                 ),
@@ -129,37 +127,22 @@ class HomePage extends StatelessWidget {
                           Container(
                             padding: const EdgeInsets.all(paddingUnit * 0.75),
                             decoration: BoxDecoration(
-                              color: XploreColors.alternate.withValues(
-                                alpha: 0.18,
-                              ),
+                              color: XploreColors.alternate.withValues(alpha: 0.18),
                               borderRadius: BorderRadius.circular(radiusSm),
-                              border: Border.all(
-                                color: XploreColors.alternate.withValues(
-                                  alpha: 0.32,
-                                ),
-                              ),
+                              border: Border.all(color: XploreColors.alternate.withValues(alpha: 0.32)),
                             ),
-                            child: Icon(
-                              Icons.photo_library_outlined,
-                              size: 22,
-                              color: XploreColors.alternate,
-                            ),
+                            child: Icon(Icons.photo_library_outlined, size: 22, color: XploreColors.alternate),
                           ),
                           const SizedBox(width: paddingUnit),
                           Expanded(
                             child: Column(
                               crossAxisAlignment: CrossAxisAlignment.start,
                               children: [
-                                Text(
-                                  'Shared gallery',
-                                  style: context.pText.labelLarge,
-                                ),
+                                Text('Shared gallery', style: context.pText.labelLarge),
                                 const SizedBox(height: 2),
                                 Text(
                                   'Keep every trip moment in one place.',
-                                  style: context.pText.bodySmall?.copyWith(
-                                    color: XploreColors.mutedText,
-                                  ),
+                                  style: context.pText.bodySmall?.copyWith(color: XploreColors.mutedText),
                                 ),
                               ],
                             ),
@@ -171,10 +154,7 @@ class HomePage extends StatelessWidget {
                         width: double.infinity,
                         child: OutlinedButton.icon(
                           onPressed: () => context.push(Paths.gallery),
-                          icon: const Icon(
-                            Icons.arrow_forward_rounded,
-                            size: 18,
-                          ),
+                          icon: const Icon(Icons.arrow_forward_rounded, size: 18),
                           label: const Text('View gallery'),
                         ),
                       ),
@@ -203,8 +183,7 @@ class HomePage extends StatelessWidget {
                         child: const Text('Delete Hive'),
                       ),
                       OutlinedButton(
-                        onPressed: () =>
-                            context.read<TripCubit>().debugTriggerError(),
+                        onPressed: () => context.read<TripCubit>().debugTriggerError(),
                         child: const Text('Trigger error'),
                       ),
                     ],
@@ -272,12 +251,7 @@ class _ItineraryPlaceholder extends StatelessWidget {
           Icon(Icons.event_note_outlined, color: XploreColors.alternate),
           const SizedBox(width: paddingUnit),
           Expanded(
-            child: Text(
-              message,
-              style: context.pText.bodySmall?.copyWith(
-                color: XploreColors.mutedText,
-              ),
-            ),
+            child: Text(message, style: context.pText.bodySmall?.copyWith(color: XploreColors.mutedText)),
           ),
         ],
       ),
@@ -298,36 +272,116 @@ class _TripStatePrompt extends StatelessWidget {
           TripEmpty() => GlassSurface(
             child: Row(
               children: [
-                Icon(
-                  Icons.travel_explore_rounded,
-                  color: XploreColors.alternate,
-                ),
+                Icon(Icons.travel_explore_rounded, color: XploreColors.alternate),
                 const SizedBox(width: paddingUnit),
                 Expanded(
                   child: Text(
                     'Create your first trip to start saving plans, photos, and locations together.',
-                    style: context.pText.bodySmall?.copyWith(
-                      color: XploreColors.mutedText,
-                    ),
+                    style: context.pText.bodySmall?.copyWith(color: XploreColors.mutedText),
                   ),
                 ),
                 const SizedBox(width: paddingUnit),
-                FilledButton(
-                  onPressed: onCreateTrip,
-                  child: const Text('Create'),
-                ),
+                FilledButton(onPressed: onCreateTrip, child: const Text('Create')),
               ],
             ),
           ),
           TripError() => ErrorState(
             title: 'Unable to load trips',
-            message:
-                'Something went wrong while loading your trips. Please try again.',
+            message: 'Something went wrong while loading your trips. Please try again.',
             onRetry: () => context.read<TripCubit>().retry(),
           ),
+          TripLoaded(:final active) => _InviteTripCard(trip: active),
           _ => const SizedBox.shrink(),
         };
       },
+    );
+  }
+}
+
+/// A liquid-glass prompt to invite friends to the active trip. Tapping "Invite"
+/// mints a fresh invite link via [TripService] and opens the OS share sheet.
+class _InviteTripCard extends StatefulWidget {
+  const _InviteTripCard({required this.trip});
+
+  final TripModel trip;
+
+  @override
+  State<_InviteTripCard> createState() => _InviteTripCardState();
+}
+
+class _InviteTripCardState extends State<_InviteTripCard> {
+  bool _isCreating = false;
+
+  Future<void> _share() async {
+    if (_isCreating) {
+      return;
+    }
+    setState(() => _isCreating = true);
+
+    final messenger = ScaffoldMessenger.of(context);
+    final tripService = context.read<TripService>();
+    final uid = context.read<AuthService>().currentUid;
+
+    if (uid == null) {
+      setState(() => _isCreating = false);
+      return;
+    }
+
+    try {
+      final handle = await tripService.createInvite(widget.trip.id, uid);
+      HapticFeedback.lightImpact();
+      await SharePlus.instance.share(
+        ShareParams(text: 'Join "${widget.trip.title}" on Xplore:\n${handle.link}', subject: 'Join my trip on Xplore'),
+      );
+    } catch (_) {
+      messenger.showSnackBar(const SnackBar(content: Text('Couldn\u2019t create an invite link. Please try again.')));
+    } finally {
+      if (mounted) {
+        setState(() => _isCreating = false);
+      }
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return GlassSurface(
+      child: Row(
+        children: [
+          Container(
+            padding: const EdgeInsets.all(paddingUnit * 0.75),
+            decoration: BoxDecoration(
+              color: XploreColors.alternate.withValues(alpha: 0.18),
+              borderRadius: BorderRadius.circular(radiusSm),
+              border: Border.all(color: XploreColors.alternate.withValues(alpha: 0.32)),
+            ),
+            child: Icon(Icons.group_add_rounded, size: 22, color: XploreColors.alternate),
+          ),
+          const SizedBox(width: paddingUnit),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text('Invite friends', style: context.pText.labelLarge),
+                const SizedBox(height: 2),
+                Text(
+                  'Share a link so they can join ${widget.trip.title}.',
+                  style: context.pText.bodySmall?.copyWith(color: XploreColors.mutedText),
+                  maxLines: 2,
+                  overflow: TextOverflow.ellipsis,
+                ),
+              ],
+            ),
+          ),
+          const SizedBox(width: paddingUnit),
+          FilledButton.icon(
+            onPressed: _isCreating ? null : _share,
+            icon: _isCreating
+                ? const SizedBox(height: 16, width: 16, child: CircularProgressIndicator(strokeWidth: 2))
+                : const Icon(Icons.ios_share_rounded, size: 18),
+            label: const Text('Invite'),
+          ),
+        ],
+      ),
     );
   }
 }
@@ -396,9 +450,7 @@ class _CreateTripSheetState extends State<_CreateTripSheet> {
             const SizedBox(height: paddingUnit / 2),
             Text(
               'Give this shared space a name. Dates and cover images will come in the full trip switcher.',
-              style: context.pText.bodySmall?.copyWith(
-                color: XploreColors.mutedText,
-              ),
+              style: context.pText.bodySmall?.copyWith(color: XploreColors.mutedText),
             ),
             const SizedBox(height: paddingUnit),
             TextField(
@@ -406,10 +458,7 @@ class _CreateTripSheetState extends State<_CreateTripSheet> {
               autofocus: true,
               textInputAction: TextInputAction.done,
               onSubmitted: (_) => _isSubmitting ? null : _submit(),
-              decoration: InputDecoration(
-                errorText: _error,
-                labelText: 'Trip name',
-              ),
+              decoration: InputDecoration(errorText: _error, labelText: 'Trip name'),
             ),
             const SizedBox(height: paddingUnit),
             SizedBox(
@@ -449,13 +498,7 @@ class _ProfileAvatarButton extends StatelessWidget {
               strong: true,
               padding: EdgeInsets.zero,
               onTap: open,
-              child: Center(
-                child: Icon(
-                  Icons.person_2_outlined,
-                  size: 22,
-                  color: XploreColors.white,
-                ),
-              ),
+              child: Center(child: Icon(Icons.person_2_outlined, size: 22, color: XploreColors.white)),
             ),
           );
         }
@@ -468,10 +511,7 @@ class _ProfileAvatarButton extends StatelessWidget {
             decoration: BoxDecoration(
               shape: BoxShape.circle,
               border: Border.all(color: XploreColors.glassBorder),
-              image: DecorationImage(
-                image: MemoryImage(picture),
-                fit: BoxFit.cover,
-              ),
+              image: DecorationImage(image: MemoryImage(picture), fit: BoxFit.cover),
             ),
           ),
         );
@@ -495,12 +535,7 @@ class _HomeGreeting extends StatelessWidget {
           mainAxisAlignment: MainAxisAlignment.center,
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Text(
-              'Welcome back',
-              style: context.pText.labelSmall?.copyWith(
-                color: XploreColors.subtleText,
-              ),
-            ),
+            Text('Welcome back', style: context.pText.labelSmall?.copyWith(color: XploreColors.subtleText)),
             Text(
               firstName,
               style: context.pText.labelLarge?.copyWith(letterSpacing: -0.2),
