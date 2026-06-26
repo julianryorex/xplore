@@ -78,5 +78,5 @@ Choose deliberately between action-driven and session/reactive auth patterns:
 - **Feature-first modules** — each domain owns its `bloc/`, `models/`,
   `services/`, and `presentation/`.
 - **Immutable state** via Freezed (`@freezed`), generated into `lib/generated/`.
-- **Offline-first data** — Hive for local cache, Firebase for cloud sync.
-- **Repository pattern** for data abstractions (e.g. gallery over Hive).
+- **Offline-first data** — Hive CE (`hive_ce`) for local cache, Firebase for cloud sync.
+- **Repository pattern** for data abstractions (e.g. gallery over Hive CE).
