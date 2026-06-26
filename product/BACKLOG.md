@@ -30,7 +30,7 @@ Completes the promise: plan together, stay together, remember together.
 | FEAT-012 | Push notifications | retention | M | backlog | [→](./requests/FEAT-012-push-notifications.md) |
 | FEAT-013 | Background location updates | retention | L | backlog | [→](./requests/FEAT-013-background-location.md) |
 | FEAT-014 | Trip-scoped gallery & storage paths | enabler | S | backlog | [→](./requests/FEAT-014-trip-scoped-gallery.md) |
-| FEAT-015 | Profile sync (name, avatar to cloud) | retention | M | backlog | [→](./requests/FEAT-015-profile-cloud-sync.md) |
+| FEAT-015 | Profile sync (name, avatar, handle to cloud) | retention | L | backlog | [→](./requests/FEAT-015-profile-cloud-sync.md) |
 | FEAT-016 | Itinerary checklist completion sync | retention | M | backlog | [→](./requests/FEAT-016-itinerary-completion-sync.md) |
 | FEAT-017 | Map marker info & last-seen UX | indirect | S | backlog | [→](./requests/FEAT-017-map-marker-info.md) |
 
@@ -65,6 +65,7 @@ New platforms, partnerships, and power features.
 | FEAT-034 | Expense splitting (Splitwise-lite) | retention | L | backlog | [→](./requests/FEAT-034-expense-splitting.md) |
 | FEAT-035 | CI/CD pipeline | indirect | M | backlog | [→](./requests/FEAT-035-cicd-pipeline.md) |
 | FEAT-036 | Test suite (unit, widget, integration) | indirect | L | `in_progress` | [→](./requests/FEAT-036-test-suite.md) |
+| FEAT-037 | Tool-augmented AI planning & travel integrations | direct | XL | backlog | [→](./requests/FEAT-037-travel-integrations.md) |
 
 ---
 
