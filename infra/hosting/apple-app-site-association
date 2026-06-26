@@ -1,0 +1,10 @@
+{
+  "applinks": {
+    "details": [
+      {
+        "appIDs": ["NY5PB8UM8W.com.olympuslabs.xplore"],
+        "components": [{ "/": "/join*", "comment": "Trip invite links" }]
+      }
+    ]
+  }
+}

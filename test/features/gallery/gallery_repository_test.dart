@@ -1,7 +1,13 @@
-// FEAT-014: gallery Hive boxes are namespaced per trip so one trip's cached
-// photos never bleed into another. These tests drive a real Hive (temp dir,
-// same setup as `image_model_adapter_test.dart`) and assert that switching the
-// active trip isolates the metadata and high-res caches.
+// Tests for `GalleryRepository` against a real `hive_ce` store.
+//
+// Two concerns are covered:
+//   1. Persistence round-trip — the repository writes an `ImageModel` (via the
+//      hand-written `TypeAdapter`) and a raw `Uint8List` high-res blob, then
+//      reads both back to prove hive_ce persists and restores them unchanged
+//      (the Hive -> hive_ce migration guard).
+//   2. Trip scoping (FEAT-014) — Hive boxes are namespaced per trip so one
+//      trip's cached photos never bleed into another, and reads/writes no-op
+//      when no trip is active.
 
 import 'dart:io';
 import 'dart:typed_data';
@@ -13,6 +19,8 @@ import 'package:xplore/features/gallery/models/image_models_adapters.dart';
 import 'package:xplore/features/gallery/repository/gallery_repository.dart';
 
 void main() {
+  TestWidgetsFlutterBinding.ensureInitialized();
+
   late Directory tempDir;
 
   setUp(() {
@@ -27,12 +35,56 @@ void main() {
     tempDir.deleteSync(recursive: true);
   });
 
+  ImageModel buildModel(String id) => ImageModel(
+    id: id,
+    createdAt: DateTime.utc(2024, 1, 2, 3, 4),
+    lowResImage: Uint8List.fromList(List<int>.generate(32, (i) => i)),
+    isUploading: EUploadStatus.complete,
+    downloadUrl: 'https://example.com/$id.jpg',
+  );
+
   ImageModel image(String id) => ImageModel(
     id: id,
     createdAt: DateTime.utc(2024),
     lowResImage: Uint8List.fromList([1, 2, 3]),
     isUploading: EUploadStatus.complete,
   );
+
+  group('GalleryRepository persistence (hive_ce migration guard)', () {
+    test('cacheMetadata persists an ImageModel that loadImgFromCache restores', () async {
+      final repository = GalleryRepository()..setTrip('trip-1');
+      final model = buildModel('img-1');
+
+      await repository.cacheMetadata(model);
+      final loaded = await repository.loadImgFromCache();
+
+      expect(loaded.keys, ['img-1']);
+      expect(loaded['img-1'], model);
+      expect(loaded['img-1']!.lowResImage, model.lowResImage);
+    });
+
+    test('cacheHighResImage stores the original bytes verbatim', () async {
+      final repository = GalleryRepository()..setTrip('trip-1');
+      final bytes = Uint8List.fromList(List<int>.generate(256, (i) => i % 256));
+      final file = File('${tempDir.path}/high-res.bin')..writeAsBytesSync(bytes);
+
+      await repository.cacheHighResImage('img-1', file);
+
+      expect(await repository.loadHighResImage('img-1'), bytes);
+    });
+
+    test('reset clears both the metadata and high-res boxes', () async {
+      final repository = GalleryRepository()..setTrip('trip-1');
+      final file = File('${tempDir.path}/high-res.bin')..writeAsBytesSync(Uint8List.fromList([9, 8, 7]));
+      await repository.cacheMetadata(buildModel('img-1'));
+      await repository.cacheHighResImage('img-1', file);
+
+      await repository.reset();
+
+      expect(await repository.loadImgFromCache(), isEmpty);
+      expect(await repository.loadHighResImage('img-1'), isNull);
+    });
+  });
 
   group('GalleryRepository trip scoping', () {
     test('returns empty and no-ops when no trip is active', () async {

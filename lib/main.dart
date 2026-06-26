@@ -17,6 +17,8 @@ import 'package:xplore/features/map/bloc/map_cubit.dart';
 import 'package:xplore/features/nav/bloc/nav_cubit.dart';
 import 'package:xplore/features/profile/bloc/profile_cubit.dart';
 import 'package:xplore/features/trip/bloc/trip_cubit.dart';
+import 'package:xplore/features/trip/presentation/deep_link_handler.dart';
+import 'package:xplore/features/trip/services/deep_link_service.dart';
 import 'package:xplore/features/trip/services/trip_service.dart';
 import 'package:xplore/firebase_options.dart';
 import 'package:xplore/routes.dart';
@@ -81,6 +83,7 @@ class MyApp extends StatelessWidget {
         RepositoryProvider<AuthService>(create: (_) => AuthService()),
         RepositoryProvider<TripService>(create: (_) => TripService()),
         RepositoryProvider<ItineraryService>(create: (_) => ItineraryService()),
+        RepositoryProvider<DeepLinkService>(create: (_) => DeepLinkService()),
       ],
       child: Builder(
         builder: (context) {
@@ -104,7 +107,7 @@ class MyApp extends StatelessWidget {
             child: MaterialApp(
               debugShowCheckedModeBanner: false,
               theme: getTheme(),
-              home: const AuthGate(),
+              home: const DeepLinkHandler(child: AuthGate()),
               onGenerateRoute: RouteGenerator.generateRoute,
             ),
           );

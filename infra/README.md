@@ -152,6 +152,86 @@ Apple cannot be fully expressed in Terraform. Steps:
 Until `apple_services_id` is set, the Apple IdP resource is skipped (count = 0)
 and the rest of the infra still applies.
 
+## Trip invite deep links (FEAT-003) — manual Mac/Xcode + hosting follow-up
+
+The in-app invite flow (create link, share, preview, accept/join, member-cap
+enforcement, Firestore rules) ships and is exercised headlessly. What is **not**
+wired here — because it needs a Mac/Xcode + a hosted domain and cannot be tested
+in the Linux/CI environment — is the OS-level **universal link** delivery. Until
+the steps below are done, shared links are valid strings but tapping one will
+not open the app.
+
+> **Domain decided:** `xplore.olympuslabs.ai` (subdomain of the owned
+> `olympuslabs.ai`). `InviteLink.base` in
+> `lib/features/trip/services/invite_link.dart` is already set to
+> `https://xplore.olympuslabs.ai/join`, and the iOS Associated Domains
+> entitlement (`applinks:xplore.olympuslabs.ai`) is in
+> `ios/Runner/Runner.entitlements`. Deployable hosting artifacts are staged in
+> `infra/hosting/`. Production enablement (the steps below) is intentionally
+> deferred until launch + >100 users — tracked in **GitHub #99**.
+
+### 1. Apple App Site Association (AASA) file — hosting
+Serve `infra/hosting/apple-app-site-association` at
+**`https://xplore.olympuslabs.ai/.well-known/apple-app-site-association`**
+(`application/json`, **no** `.json` extension, HTTPS, no redirects):
+
+```json
+{
+  "applinks": {
+    "details": [
+      {
+        "appIDs": ["NY5PB8UM8W.com.olympuslabs.xplore"],
+        "components": [{ "/": "/join*", "comment": "Trip invite links" }]
+      }
+    ]
+  }
+}
+```
+
+`NY5PB8UM8W` is the Apple Developer Team ID (same one used for Sign in with Apple
+above); the bundle id is `com.olympuslabs.xplore`. Since `olympuslabs.ai` is on
+Cloudflare and nothing else lives on the subdomain yet, the simplest host is the
+staged **Cloudflare Worker** (`infra/hosting/aasa-worker.js`):
+
+```bash
+cd infra/hosting && npx wrangler deploy aasa-worker.js --name xplore-aasa
+```
+
+Then add a **proxied** `xplore` DNS record (e.g. `AAAA` → `100::`, orange cloud
+ON) and bind the Worker to the route `xplore.olympuslabs.ai/*`. (If a web app
+later lives on this subdomain, drop the Worker and ship the AASA inside the web
+build's `web/.well-known/` instead.)
+
+### 2. Associated Domains entitlement — Xcode
+Already added to `ios/Runner/Runner.entitlements`:
+
+```text
+applinks:xplore.olympuslabs.ai
+```
+
+This still requires the **Associated Domains** capability to be enabled on the
+`com.olympuslabs.xplore` App ID in the Apple Developer portal. (Repeat the
+entitlement on the macOS target if macOS universal links are wanted.)
+
+### 3. App-side delivery
+`app_links` is already wired (`DeepLinkService` + `DeepLinkHandler` in
+`lib/features/trip/`); no extra Flutter code is needed. The handler parses
+`*/join?trip=...&token=...`, waits for auth if needed, then pushes the join
+screen.
+
+### 4. Verify (requires a real device or simulator)
+- `xcrun simctl openurl booted "https://xplore.olympuslabs.ai/join?trip=<id>&token=<tok>"`
+  (or tap a link in Notes/Messages on a device) should foreground the app on
+  the join-confirmation screen.
+- Apple's CDN caches the AASA; use a fresh install / `swcutil` to debug.
+
+### Security follow-up (tracked, not blocking the cut line)
+The join write is gated by the `validTripJoin` Firestore rule (self-add only +
+member cap). Invite **revocation/expiry** is validated client-side against the
+readable invite doc, and the random 20-char trip id + token act as the
+capability. A hardened version (server-side token verification, e.g. a Cloud
+Function or a rule that cross-checks the invite doc) is a future enhancement.
+
 ## State & secrets
 
 - Local state (`infra/terraform.tfstate`) is git-ignored.

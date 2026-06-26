@@ -63,4 +63,4 @@ File new work via Slack `#xplore-requests` (Issue Filer agent) or the GitHub iss
 | Profile | `lib/features/profile/` |
 | Hardcoded trip/user | `lib/constants/constants.dart` |
 
-The README [Roadmap](../README.md#roadmap) lists engineering todos; this folder adds **product context and revenue-aware prioritization** on top of that list.
+[`BACKLOG.md`](./BACKLOG.md) holds the prioritized engineering roadmap; this folder adds **product context and revenue-aware prioritization** on top of it. Engineering setup lives in [`docs/DEVELOPMENT.md`](../docs/DEVELOPMENT.md).

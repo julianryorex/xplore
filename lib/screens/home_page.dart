@@ -1,6 +1,8 @@
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:share_plus/share_plus.dart';
 import 'package:xplore/constants/constants.dart';
 import 'package:xplore/constants/extensions.dart';
 import 'package:xplore/core/ambient_background.dart';
@@ -8,12 +10,15 @@ import 'package:xplore/core/error_state.dart';
 import 'package:xplore/core/glass.dart';
 import 'package:xplore/core/header.dart';
 import 'package:xplore/core/section_header.dart';
+import 'package:xplore/features/auth/services/auth_service.dart';
 import 'package:xplore/features/gallery/bloc/gallery_cubit.dart';
 import 'package:xplore/features/itinerary/bloc/itinerary_cubit.dart';
 import 'package:xplore/features/itinerary/widgets/itinerary_card.dart';
 import 'package:xplore/features/profile/bloc/profile_cubit.dart';
 import 'package:xplore/features/trip/bloc/trip_cubit.dart';
 import 'package:xplore/features/trip/bloc/trip_state.dart';
+import 'package:xplore/features/trip/models/trip_model.dart';
+import 'package:xplore/features/trip/services/trip_service.dart';
 import 'package:xplore/routes.dart';
 
 class HomePage extends StatelessWidget {
@@ -285,9 +290,98 @@ class _TripStatePrompt extends StatelessWidget {
             message: 'Something went wrong while loading your trips. Please try again.',
             onRetry: () => context.read<TripCubit>().retry(),
           ),
+          TripLoaded(:final active) => _InviteTripCard(trip: active),
           _ => const SizedBox.shrink(),
         };
       },
+    );
+  }
+}
+
+/// A liquid-glass prompt to invite friends to the active trip. Tapping "Invite"
+/// mints a fresh invite link via [TripService] and opens the OS share sheet.
+class _InviteTripCard extends StatefulWidget {
+  const _InviteTripCard({required this.trip});
+
+  final TripModel trip;
+
+  @override
+  State<_InviteTripCard> createState() => _InviteTripCardState();
+}
+
+class _InviteTripCardState extends State<_InviteTripCard> {
+  bool _isCreating = false;
+
+  Future<void> _share() async {
+    if (_isCreating) {
+      return;
+    }
+    setState(() => _isCreating = true);
+
+    final messenger = ScaffoldMessenger.of(context);
+    final tripService = context.read<TripService>();
+    final uid = context.read<AuthService>().currentUid;
+
+    if (uid == null) {
+      setState(() => _isCreating = false);
+      return;
+    }
+
+    try {
+      final handle = await tripService.createInvite(widget.trip.id, uid);
+      HapticFeedback.lightImpact();
+      await SharePlus.instance.share(
+        ShareParams(text: 'Join "${widget.trip.title}" on Xplore:\n${handle.link}', subject: 'Join my trip on Xplore'),
+      );
+    } catch (_) {
+      messenger.showSnackBar(const SnackBar(content: Text('Couldn\u2019t create an invite link. Please try again.')));
+    } finally {
+      if (mounted) {
+        setState(() => _isCreating = false);
+      }
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return GlassSurface(
+      child: Row(
+        children: [
+          Container(
+            padding: const EdgeInsets.all(paddingUnit * 0.75),
+            decoration: BoxDecoration(
+              color: XploreColors.alternate.withValues(alpha: 0.18),
+              borderRadius: BorderRadius.circular(radiusSm),
+              border: Border.all(color: XploreColors.alternate.withValues(alpha: 0.32)),
+            ),
+            child: Icon(Icons.group_add_rounded, size: 22, color: XploreColors.alternate),
+          ),
+          const SizedBox(width: paddingUnit),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text('Invite friends', style: context.pText.labelLarge),
+                const SizedBox(height: 2),
+                Text(
+                  'Share a link so they can join ${widget.trip.title}.',
+                  style: context.pText.bodySmall?.copyWith(color: XploreColors.mutedText),
+                  maxLines: 2,
+                  overflow: TextOverflow.ellipsis,
+                ),
+              ],
+            ),
+          ),
+          const SizedBox(width: paddingUnit),
+          FilledButton.icon(
+            onPressed: _isCreating ? null : _share,
+            icon: _isCreating
+                ? const SizedBox(height: 16, width: 16, child: CircularProgressIndicator(strokeWidth: 2))
+                : const Icon(Icons.ios_share_rounded, size: 18),
+            label: const Text('Invite'),
+          ),
+        ],
+      ),
     );
   }
 }
