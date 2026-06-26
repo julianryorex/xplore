@@ -18,7 +18,9 @@ List<NotificationSection> _allRead(List<NotificationSection> sections) => [
 
 void main() {
   testWidgets('NotificationsPage – default feed', (tester) async {
-    await pumpForGolden(tester, const NotificationsPage(), size: _phone);
+    // The runtime default is now an empty feed, so the populated golden has to
+    // pass [sampleNotifications] explicitly.
+    await pumpForGolden(tester, const NotificationsPage(sections: sampleNotifications), size: _phone);
 
     await expectLater(find.byType(NotificationsPage), matchesGoldenFile('goldens/notifications_default.png'));
   });
@@ -27,5 +29,12 @@ void main() {
     await pumpForGolden(tester, NotificationsPage(sections: _allRead(sampleNotifications)), size: _phone);
 
     await expectLater(find.byType(NotificationsPage), matchesGoldenFile('goldens/notifications_all_read.png'));
+  });
+
+  testWidgets('NotificationsPage – empty by default', (tester) async {
+    await pumpForGolden(tester, const NotificationsPage(), size: _phone);
+
+    expect(find.text('You\u2019re all caught up'), findsOneWidget);
+    expect(find.text('New trip activity will show up here.'), findsOneWidget);
   });
 }
