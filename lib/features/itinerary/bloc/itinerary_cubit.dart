@@ -4,6 +4,7 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:freezed_annotation/freezed_annotation.dart';
 import 'package:logger/logger.dart';
 import 'package:xplore/constants/constants.dart';
+import 'package:xplore/features/auth/bloc/auth_cleanup_mixin.dart';
 import 'package:xplore/features/auth/services/auth_service.dart';
 import 'package:xplore/features/itinerary/models/itinerary_models.dart';
 import 'package:xplore/features/itinerary/repository/itinerary_repository.dart';
@@ -25,12 +26,18 @@ part 'itinerary_states.dart';
 /// [ItineraryService] / [AuthService] are optional so the Firebase-free demo
 /// path ([loadDemoItinerary]) used by tests and goldens can construct the cubit
 /// with no arguments.
-class ItineraryCubit extends Cubit<ItineraryStates> with TripStreamMixin {
+class ItineraryCubit extends Cubit<ItineraryStates> with TripStreamMixin, AuthCleanupMixin {
   ItineraryCubit([this._service, this._authService, ItineraryRepository? repository])
     : _repository = repository ?? ItineraryRepository(),
       super(const InitialItineraryState()) {
     _logger = createLogger('Itinerary');
     _tripSubscription = listenToTripState(_onTripStateChanged);
+    // Optional auth service: the demo/golden path constructs the cubit without
+    // one and never needs sign-out cleanup.
+    final authService = _authService;
+    if (authService != null) {
+      bindAuthCleanup(authService);
+    }
   }
 
   ItineraryService? _service;
@@ -131,6 +138,15 @@ class ItineraryCubit extends Cubit<ItineraryStates> with TripStreamMixin {
     unawaited(_itinerarySubscription?.cancel());
     _itinerarySubscription = null;
     _safeEmit(const EmptyItineraryState());
+  }
+
+  /// Sign-out cleanup (via [AuthCleanupMixin]): detach the live listener, reset
+  /// in-memory state, and drop the on-disk itinerary cache (a single box keyed
+  /// by trip) so no trip's cached plan lingers for the next account.
+  @override
+  Future<void> onSignedOut() async {
+    _clear();
+    await _repository.reset();
   }
 
   void _safeEmit(ItineraryStates next) {

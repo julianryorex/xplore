@@ -22,7 +22,7 @@ Future<_ProfileHarness> _pumpProfilePage(WidgetTester tester) async {
     user: MockUser(uid: 'abc123', displayName: 'Ada Lovelace', email: 'ada@example.com'),
   );
   final authCubit = AuthCubit(authService);
-  final profileCubit = ProfileCubit(authService, loadLocalProfile: false);
+  final profileCubit = ProfileCubit(authService, hydrate: false);
 
   addTearDown(authCubit.close);
   addTearDown(profileCubit.close);

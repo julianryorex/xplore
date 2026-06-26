@@ -1,3 +1,4 @@
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:fake_cloud_firestore/fake_cloud_firestore.dart';
 import 'package:firebase_auth_mocks/firebase_auth_mocks.dart';
 import 'package:firebase_auth_platform_interface/firebase_auth_platform_interface.dart';
@@ -110,6 +111,83 @@ void main() {
       final service = _appleAuthService(firestore: firestore, requester: _fakeAppleRequester(identityToken: null));
 
       await expectLater(service.signInWithApple(), throwsA(isA<AuthFailureException>()));
+    });
+  });
+
+  group('AuthService unique handle (FEAT-015)', () {
+    test('seeds a unique handle + usernames registry entry on first sign-in', () async {
+      final firestore = FakeFirebaseFirestore();
+      final service = _appleAuthService(firestore: firestore);
+
+      await service.signInWithApple();
+
+      final doc = await firestore.collection('users').doc('apple-user').get();
+      final username = doc.data()!['username'] as String?;
+      final usernameLower = doc.data()!['usernameLower'] as String?;
+      expect(username, isNotNull);
+      expect(username, startsWith('jane-'), reason: 'handle stems from the first name');
+      expect(usernameLower, username!.toLowerCase());
+
+      final claim = await firestore.collection('usernames').doc(usernameLower!).get();
+      expect(claim.exists, isTrue);
+      expect(claim.data()!['uid'], 'apple-user');
+    });
+
+    test('does not change the handle on a later sign-in', () async {
+      final firestore = FakeFirebaseFirestore();
+      final service = _appleAuthService(firestore: firestore);
+
+      await service.signInWithApple();
+      final first = (await firestore.collection('users').doc('apple-user').get()).data()!['username'];
+
+      await service.signInWithApple();
+      final second = (await firestore.collection('users').doc('apple-user').get()).data()!['username'];
+
+      expect(second, first);
+    });
+
+    test('a later sign-in does not overwrite a user-set photoUrl', () async {
+      final firestore = FakeFirebaseFirestore();
+      final service = _appleAuthService(firestore: firestore);
+
+      // First sign-in creates the profile; then the app's avatar pipeline
+      // (ProfileService.setPhotoUrl) writes the Storage URL.
+      await service.signInWithApple();
+      const avatarUrl = 'https://example.com/avatars/apple-user/avatar?token=abc';
+      await firestore.collection('users').doc('apple-user').set({'photoUrl': avatarUrl}, SetOptions(merge: true));
+
+      // Re-sign-in (Apple => provider photoURL is null). It must NOT clobber the
+      // avatar back to null — the FEAT-015 cross-session regression.
+      await service.signInWithApple();
+
+      final doc = await firestore.collection('users').doc('apple-user').get();
+      expect(doc.data()!['photoUrl'], avatarUrl);
+    });
+
+    test('backfills a handle for a pre-existing profile without one', () async {
+      final firestore = FakeFirebaseFirestore();
+      await firestore.collection('users').doc('apple-user').set({'displayName': 'Jane Doe'});
+      final service = _appleAuthService(firestore: firestore);
+
+      await service.signInWithApple();
+
+      final doc = await firestore.collection('users').doc('apple-user').get();
+      expect(doc.data()!['username'], isNotNull);
+      expect(doc.data()!['username'], startsWith('jane-'));
+    });
+
+    test('falls back to a traveler handle when no name is available', () async {
+      final firestore = FakeFirebaseFirestore();
+      final service = _appleAuthService(
+        firestore: firestore,
+        user: MockUser(uid: 'apple-user', displayName: ''),
+        requester: _fakeAppleRequester(givenName: null, familyName: null),
+      );
+
+      await service.signInWithApple();
+
+      final doc = await firestore.collection('users').doc('apple-user').get();
+      expect(doc.data()!['username'], startsWith('traveler-'));
     });
   });
 

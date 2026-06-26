@@ -17,6 +17,14 @@ service firebase.storage {
       allow write: if isTripMember() && request.auth.uid == uid;
     }
 
+    // Profile avatars (FEAT-015): a user writes only their own avatar. Reads are
+    // owner-only for now; peers fetch the synced copy via the tokenized download
+    // URL stored on the profile (cross-device avatar fetch lands in FEAT-015 PR 2).
+    match /avatars/{uid}/{allPaths=**} {
+      allow read: if request.auth != null && request.auth.uid == uid;
+      allow write: if request.auth != null && request.auth.uid == uid;
+    }
+
     match /{allPaths=**} {
       allow read, write: if false;
     }

@@ -164,6 +164,20 @@ service cloud.firestore {
       allow read, write: if isSignedIn() && request.auth.uid == uid;
     }
 
+    // Unique-handle claim registry (FEAT-015). The handle (lowercased) is the
+    // doc id, so uniqueness == "doc does not exist". A signed-in user may claim a
+    // free handle mapped to their own uid (create only fires when absent) and
+    // release one they own; updates are disallowed so a handle change is always a
+    // delete-old + create-new transaction. No one can steal or squat another
+    // user's handle. Reads are open to signed-in users for availability checks.
+    match /usernames/{handle} {
+      allow read: if isSignedIn();
+      allow create: if isSignedIn()
+        && request.resource.data.keys().hasOnly(['uid'])
+        && request.resource.data.uid == request.auth.uid;
+      allow delete: if isSignedIn() && resource.data.uid == request.auth.uid;
+    }
+
     match /trips/{tripId} {
       allow read: if isSignedIn()
         && request.auth.uid in resource.data.memberIds;
