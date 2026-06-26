@@ -47,12 +47,7 @@ class _MapCanvasState extends State<MapCanvas> {
 
   @override
   Widget build(BuildContext context) {
-    final locations = context
-        .watch<LocationCubit>()
-        .state
-        .locations
-        .values
-        .toList();
+    final locations = context.watch<LocationCubit>().state.locations.values.toList();
     context.read<MapCubit>().updateUserMarkers(locations);
 
     final viewPadding = MediaQuery.viewPaddingOf(context);
@@ -82,37 +77,28 @@ class _MapCanvasState extends State<MapCanvas> {
                       builder: (context, state) {
                         return SizedBox(
                           width: getScreenWidth(context: context),
-                          height: getScreenHeight(
-                            context: context,
-                            percent: 0.9,
-                          ),
+                          height: getScreenHeight(context: context, percent: 0.9),
                           child: Column(
                             mainAxisAlignment: MainAxisAlignment.center,
                             children: [
                               AvatarMapIcon(
                                 size: 100,
-                                image: state.profilePicture != null
-                                    ? Image.memory(state.profilePicture!).image
-                                    : null,
+                                image: state.profilePicture != null ? Image.memory(state.profilePicture!).image : null,
                               ),
                               const Text('Hello'),
                               OutlinedButton(
                                 onPressed: () async {
-                                  await context
-                                      .read<MapCubit>()
-                                      .initialMarkerUpdate()
-                                      .then((value) async {
-                                        final locations = context
-                                            .read<LocationCubit>()
-                                            .state
-                                            .locations
-                                            .values
-                                            .toList();
-                                        await context
-                                            .read<MapCubit>()
-                                            .updateUserMarkers(locations);
-                                      })
-                                      .then((value) => Navigator.pop(context));
+                                  final mapCubit = context.read<MapCubit>();
+                                  final locationCubit = context.read<LocationCubit>();
+                                  final navigator = Navigator.of(context);
+
+                                  await mapCubit.initialMarkerUpdate();
+                                  final locations = locationCubit.state.locations.values.toList();
+                                  await mapCubit.updateUserMarkers(locations);
+
+                                  if (navigator.mounted) {
+                                    navigator.pop();
+                                  }
                                 },
                                 child: const Text('Sounds good!'),
                               ),
@@ -142,10 +128,7 @@ class _MapCanvasState extends State<MapCanvas> {
                   myLocationButtonEnabled: false,
                   // Keep the native Google logo / attribution clear of the
                   // pinned header and the floating glass nav bar.
-                  padding: EdgeInsets.only(
-                    top: headerZone,
-                    bottom: bottomClearance,
-                  ),
+                  padding: EdgeInsets.only(top: headerZone, bottom: bottomClearance),
                   onTap: (_) {},
                   style: context.read<MapCubit>().mapStyle,
                 );
@@ -211,15 +194,11 @@ class _MapCanvasState extends State<MapCanvas> {
   }
 
   Future<void> initialZoomAnimation() async {
-    final currentPosition = await context
-        .read<LocationCubit>()
-        .getCurrentLocation();
+    final currentPosition = await context.read<LocationCubit>().getCurrentLocation();
     if (debounce?.isActive == true) debounce!.cancel();
 
     debounce = Timer(const Duration(milliseconds: 1000), () {
-      final update = CameraUpdate.newCameraPosition(
-        CameraPosition(target: currentPosition, zoom: 16),
-      );
+      final update = CameraUpdate.newCameraPosition(CameraPosition(target: currentPosition, zoom: 16));
       mapController.animateCamera(update);
     });
   }
@@ -227,20 +206,13 @@ class _MapCanvasState extends State<MapCanvas> {
   /// Animates the camera back to the user's current location. Backs the glass
   /// recenter control that replaces the native "my location" button.
   Future<void> recenterToCurrentLocation() async {
-    final currentPosition = await context
-        .read<LocationCubit>()
-        .getCurrentLocation();
-    final update = CameraUpdate.newCameraPosition(
-      CameraPosition(target: currentPosition, zoom: 16),
-    );
+    final currentPosition = await context.read<LocationCubit>().getCurrentLocation();
+    final update = CameraUpdate.newCameraPosition(CameraPosition(target: currentPosition, zoom: 16));
     await mapController.animateCamera(update);
   }
 
   void onCameraMove(CameraPosition position) {
-    final newCenter = LatLng(
-      position.target.latitude,
-      position.target.longitude,
-    );
+    final newCenter = LatLng(position.target.latitude, position.target.longitude);
     context.read<MapCubit>().updateCenter(newCenter);
   }
 }
@@ -255,12 +227,7 @@ class _MapTitle extends StatelessWidget {
       mainAxisAlignment: MainAxisAlignment.center,
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Text(
-          'Live map',
-          style: context.pText.labelSmall?.copyWith(
-            color: XploreColors.subtleText,
-          ),
-        ),
+        Text('Live map', style: context.pText.labelSmall?.copyWith(color: XploreColors.subtleText)),
         Text(
           'Your group, right now',
           style: context.pText.labelLarge?.copyWith(letterSpacing: -0.2),

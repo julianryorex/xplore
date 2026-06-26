@@ -18,8 +18,7 @@ class AuthGate extends StatelessWidget {
     return BlocConsumer<AuthCubit, AuthState>(
       // Only react when the *kind* of auth state changes (e.g. sign-in / out),
       // not on incidental updates to an authenticated user's fields.
-      listenWhen: (previous, current) =>
-          previous.runtimeType != current.runtimeType,
+      listenWhen: (previous, current) => previous.runtimeType != current.runtimeType,
       listener: (context, state) {
         // The onboarding/sign-in screens are pushed on top of this gate. When
         // auth flips, clear those pushed routes so the gate's base view (Home
@@ -48,9 +47,7 @@ class _Splash extends StatelessWidget {
     return Scaffold(
       backgroundColor: XploreColors.primaryBg,
       body: AmbientBackground(
-        child: Center(
-          child: CircularProgressIndicator(color: XploreColors.alternate),
-        ),
+        child: Center(child: CircularProgressIndicator(color: XploreColors.alternate)),
       ),
     );
   }

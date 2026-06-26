@@ -1,6 +1,10 @@
+import 'package:fake_cloud_firestore/fake_cloud_firestore.dart';
 import 'package:firebase_auth_mocks/firebase_auth_mocks.dart';
+import 'package:firebase_auth_platform_interface/firebase_auth_platform_interface.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:sign_in_with_apple/sign_in_with_apple.dart';
 import 'package:xplore/features/auth/bloc/auth_cubit.dart';
+import 'package:xplore/features/auth/services/auth_service.dart';
 
 import '../../helpers/auth_fixtures.dart';
 
@@ -58,6 +62,87 @@ void main() {
       await pumpEventQueue();
 
       expect(cubit.state, isA<AuthUnauthenticated>());
+      await cubit.close();
+    });
+
+    test('signInWithApple drives the stream to authenticated', () async {
+      final service = AuthService(
+        firebaseAuth: MockFirebaseAuth(
+          mockUser: MockUser(uid: 'apple-user', displayName: 'Jane Doe'),
+        ),
+        firestore: FakeFirebaseFirestore(),
+        appleCredentialRequester: ({required scopes, nonce}) async => const AuthorizationCredentialAppleID(
+          userIdentifier: 'apple-user',
+          givenName: 'Jane',
+          familyName: 'Doe',
+          authorizationCode: 'auth-code',
+          email: 'jane@privaterelay.appleid.com',
+          identityToken: 'apple-id-token',
+          state: null,
+        ),
+      );
+      final cubit = AuthCubit(service);
+
+      await pumpEventQueue();
+      expect(cubit.state, isA<AuthUnauthenticated>());
+
+      await cubit.signInWithApple();
+      await pumpEventQueue();
+
+      expect(cubit.state, isA<AuthAuthenticated>());
+      expect((cubit.state as AuthAuthenticated).uid, 'apple-user');
+      await cubit.close();
+    });
+
+    test('deleteAccount forwards to the service and completes', () async {
+      final appleUser = MockUser(
+        uid: 'apple-user',
+        providerData: [
+          UserInfo.fromPigeon(
+            InternalUserInfo(uid: 'apple-user', providerId: 'apple.com', isAnonymous: false, isEmailVerified: true),
+          ),
+        ],
+      );
+      final service = AuthService(
+        firebaseAuth: MockFirebaseAuth(signedIn: true, mockUser: appleUser),
+        firestore: FakeFirebaseFirestore(),
+        appleCredentialRequester: ({required scopes, nonce}) async => const AuthorizationCredentialAppleID(
+          userIdentifier: 'apple-user',
+          givenName: null,
+          familyName: null,
+          authorizationCode: 'auth-code',
+          email: null,
+          identityToken: 'apple-id-token',
+          state: null,
+        ),
+        appleTokenRevoker: (_) async {},
+      );
+      final cubit = AuthCubit(service);
+      await pumpEventQueue();
+
+      await expectLater(cubit.deleteAccount(), completes);
+      await cubit.close();
+    });
+
+    test('deleteAccount rethrows AuthCancelledException when the user backs out', () async {
+      final appleUser = MockUser(
+        uid: 'apple-user',
+        providerData: [
+          UserInfo.fromPigeon(
+            InternalUserInfo(uid: 'apple-user', providerId: 'apple.com', isAnonymous: false, isEmailVerified: true),
+          ),
+        ],
+      );
+      final service = AuthService(
+        firebaseAuth: MockFirebaseAuth(signedIn: true, mockUser: appleUser),
+        firestore: FakeFirebaseFirestore(),
+        appleCredentialRequester: ({required scopes, nonce}) async =>
+            throw const SignInWithAppleAuthorizationException(code: AuthorizationErrorCode.canceled, message: 'no'),
+      );
+      final cubit = AuthCubit(service);
+      await pumpEventQueue();
+
+      await expectLater(cubit.deleteAccount(), throwsA(isA<AuthCancelledException>()));
       await cubit.close();
     });
   });
