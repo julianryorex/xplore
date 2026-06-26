@@ -43,7 +43,7 @@ class ProfilePage extends StatelessWidget {
                       const SizedBox(height: paddingUnit * 2),
                       const _SaveChangesButton(),
                       const SizedBox(height: paddingUnit),
-                      _DeleteAccountButton(onTap: () => _confirmAndSignOut(context)),
+                      _SignOutButton(onTap: () => _confirmAndSignOut(context)),
                       const SizedBox(height: paddingUnit),
                     ],
                   ),
@@ -64,7 +64,7 @@ class ProfilePage extends StatelessWidget {
           builder: (dialogContext) {
             return AlertDialog(
               title: const Text('Sign out?'),
-              content: const Text('You will return to the sign-in screen and can choose another Google account.'),
+              content: const Text('You will return to the sign-in screen and can sign in again with any account.'),
               actions: [
                 TextButton(onPressed: () => Navigator.of(dialogContext).pop(false), child: const Text('Cancel')),
                 TextButton(
@@ -262,12 +262,12 @@ class _SaveChangesButton extends StatelessWidget {
   }
 }
 
-/// Destructive action rendered as a recessed glass slab rather than a loud red
-/// button, keeping the page calm while still reading as a real control.
-class _DeleteAccountButton extends StatelessWidget {
+/// Sign-out rendered as a recessed glass slab rather than a loud button,
+/// keeping the page calm while still reading as a real control.
+class _SignOutButton extends StatelessWidget {
   final VoidCallback onTap;
 
-  const _DeleteAccountButton({required this.onTap});
+  const _SignOutButton({required this.onTap});
 
   @override
   Widget build(BuildContext context) {
@@ -278,7 +278,7 @@ class _DeleteAccountButton extends StatelessWidget {
         padding: const EdgeInsets.symmetric(vertical: paddingUnit * 1.25),
         onTap: onTap,
         child: Center(
-          child: Text('Delete Account', style: context.pText.labelMedium?.copyWith(color: XploreColors.subtleText)),
+          child: Text('Sign out', style: context.pText.labelMedium?.copyWith(color: XploreColors.subtleText)),
         ),
       ),
     );
