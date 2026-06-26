@@ -114,15 +114,11 @@ void main() {
   });
 
   group('AuthService.deleteAccount', () {
-    MockUser appleUser() => MockUser(
-      uid: 'apple-user',
-      displayName: 'Jane Doe',
-      providerData: [
-        UserInfo.fromPigeon(
-          InternalUserInfo(uid: 'apple-user', providerId: 'apple.com', isAnonymous: false, isEmailVerified: true),
-        ),
-      ],
+    UserInfo provider(String providerId) => UserInfo.fromPigeon(
+      InternalUserInfo(uid: 'apple-user', providerId: providerId, isAnonymous: false, isEmailVerified: true),
     );
+
+    MockUser appleUser() => MockUser(uid: 'apple-user', displayName: 'Jane Doe', providerData: [provider('apple.com')]);
 
     test('re-auths, revokes the Apple token, and deletes the users/{uid} profile', () async {
       final firestore = FakeFirebaseFirestore();
@@ -169,6 +165,50 @@ void main() {
       final service = AuthService(firebaseAuth: MockFirebaseAuth(), firestore: firestore);
 
       await expectLater(service.deleteAccount(), throwsA(isA<AuthFailureException>()));
+    });
+
+    test('revokes BOTH providers when Apple and Google are linked', () async {
+      final firestore = FakeFirebaseFirestore();
+      await firestore.collection('users').doc('apple-user').set({'displayName': 'Jane Doe'});
+
+      final linkedUser = MockUser(
+        uid: 'apple-user',
+        displayName: 'Jane Doe',
+        providerData: [provider('apple.com'), provider('google.com')],
+      );
+
+      String? revokedAppleCode;
+      var googleRevoked = false;
+      final service = AuthService(
+        firebaseAuth: MockFirebaseAuth(signedIn: true, mockUser: linkedUser),
+        firestore: firestore,
+        appleCredentialRequester: _fakeAppleRequester(),
+        appleTokenRevoker: (code) async => revokedAppleCode = code,
+        googleAuthorizationRevoker: () async => googleRevoked = true,
+      );
+
+      await service.deleteAccount();
+
+      expect(revokedAppleCode, 'auth-code', reason: 'Apple token should be revoked');
+      expect(googleRevoked, isTrue, reason: 'Google grant should be revoked');
+      final doc = await firestore.collection('users').doc('apple-user').get();
+      expect(doc.exists, isFalse);
+    });
+
+    test('a failed provider revocation does not block deletion', () async {
+      final firestore = FakeFirebaseFirestore();
+      await firestore.collection('users').doc('apple-user').set({'displayName': 'Jane Doe'});
+
+      final service = AuthService(
+        firebaseAuth: MockFirebaseAuth(signedIn: true, mockUser: appleUser()),
+        firestore: firestore,
+        appleCredentialRequester: _fakeAppleRequester(),
+        appleTokenRevoker: (code) async => throw Exception('revoke endpoint down'),
+      );
+
+      await expectLater(service.deleteAccount(), completes);
+      final doc = await firestore.collection('users').doc('apple-user').get();
+      expect(doc.exists, isFalse);
     });
   });
 }
