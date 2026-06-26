@@ -34,9 +34,7 @@ class Navbar extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final reduceMotion = MediaQuery.disableAnimationsOf(context);
-    final pillDuration = reduceMotion
-        ? Duration.zero
-        : const Duration(milliseconds: 280);
+    final pillDuration = reduceMotion ? Duration.zero : const Duration(milliseconds: 280);
     // A floating liquid-glass tab bar: it overlays the content behind it
     // (pair with `Scaffold(extendBody: true)`) so the backdrop blur has real
     // content to refract, giving the footer its glass feel.
@@ -89,15 +87,9 @@ class Navbar extends StatelessWidget {
                             ),
                             child: DecoratedBox(
                               decoration: BoxDecoration(
-                                color: XploreColors.alternate.withValues(
-                                  alpha: 0.16,
-                                ),
+                                color: XploreColors.alternate.withValues(alpha: 0.16),
                                 borderRadius: BorderRadius.circular(radiusMd),
-                                border: Border.all(
-                                  color: XploreColors.alternate.withValues(
-                                    alpha: 0.28,
-                                  ),
-                                ),
+                                border: Border.all(color: XploreColors.alternate.withValues(alpha: 0.28)),
                               ),
                             ),
                           ),
@@ -109,9 +101,7 @@ class Navbar extends StatelessWidget {
                             _NavbarButton(
                               tab: tab,
                               isSelected: state == tab.index,
-                              onPressed: state == tab.index
-                                  ? () {}
-                                  : () => onIconClick(context, tab),
+                              onPressed: state == tab.index ? () {} : () => onIconClick(context, tab),
                             ),
                         ],
                       ),
@@ -132,23 +122,15 @@ class _NavbarButton extends StatelessWidget {
   final bool isSelected;
   final VoidCallback onPressed;
 
-  const _NavbarButton({
-    required this.tab,
-    required this.isSelected,
-    required this.onPressed,
-  });
+  const _NavbarButton({required this.tab, required this.isSelected, required this.onPressed});
 
   @override
   Widget build(BuildContext context) {
     final activeColor = XploreColors.alternate;
     final inactiveColor = XploreColors.white.withValues(alpha: 0.38);
     final reduceMotion = MediaQuery.disableAnimationsOf(context);
-    final scaleDuration = reduceMotion
-        ? Duration.zero
-        : const Duration(milliseconds: 280);
-    final colorDuration = reduceMotion
-        ? Duration.zero
-        : const Duration(milliseconds: 240);
+    final scaleDuration = reduceMotion ? Duration.zero : const Duration(milliseconds: 280);
+    final colorDuration = reduceMotion ? Duration.zero : const Duration(milliseconds: 240);
 
     return Expanded(
       child: InkWell(
@@ -165,11 +147,8 @@ class _NavbarButton extends StatelessWidget {
                 curve: Curves.easeOutCubic,
                 child: TweenAnimationBuilder<Color?>(
                   duration: colorDuration,
-                  tween: ColorTween(
-                    end: isSelected ? activeColor : inactiveColor,
-                  ),
-                  builder: (context, color, _) =>
-                      Icon(tab.icon, color: color, size: 28),
+                  tween: ColorTween(end: isSelected ? activeColor : inactiveColor),
+                  builder: (context, color, _) => Icon(tab.icon, color: color, size: 28),
                 ),
               ),
               const SizedBox(height: 4),

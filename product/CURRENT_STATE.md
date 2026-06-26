@@ -9,11 +9,11 @@ Snapshot of what exists in `lib/` vs. what product assumes. Update this doc when
 | User authentication | ✅ | Google Sign-In + `AuthCubit` hard gate; Apple deferred ([FEAT-001](./requests/done/FEAT-001-user-authentication.md), PR #73) |
 | Trip entity (foundation) | ✅ Partial | `TripCubit`, create-trip sheet, `activeTripId` plumbing ([FEAT-002](./requests/done/FEAT-002-trip-management.md), PR #79); multi-trip switcher UI deferred |
 | Dynamic user/trip IDs | ✅ | Cubits read uid from auth and trip scope from `TripCubit` ([FEAT-004](./requests/done/FEAT-004-remove-hardcoded-ids.md), PR #76) |
-| Itinerary cloud read path | ✅ Partial | `ItineraryCubit.loadForTrip(activeTripId)` listens to Firestore `itineraries/{tripId}`, Hive offline cache, lazy seed on missing doc ([FEAT-006](./requests/FEAT-006-itinerary-firebase-sync.md) read slice, PR #87); editing CRUD UI deferred |
+| Itinerary cloud read path | ✅ Partial | `ItineraryCubit.loadForTrip(activeTripId)` listens to Firestore `itineraries/{tripId}`, Hive CE offline cache, lazy seed on missing doc ([FEAT-006](./requests/FEAT-006-itinerary-firebase-sync.md) read slice, PR #87); editing CRUD UI deferred |
 | Itinerary UI | ✅ | Day carousel, overview, location detail; runtime data from cloud when a trip is active |
 | Google Map + neon style | ✅ | `MapCanvas`, `assets/maps/GoogleMapNeon.json` |
 | Live location sync | ✅ | Firebase RTDB at `locations/{tripId}`; interval configurable via `.env` |
-| Avatar map markers | ✅ | Profile photo → widget → PNG → Hive + Storage |
+| Avatar map markers | ✅ | Profile photo → widget → PNG → Hive CE + Storage |
 | Gallery pick / upload / zoom | ✅ | Optimistic UI; pure-Dart thumbnail compression ([FEAT-043](./requests/done/FEAT-043-image-compression.md)) |
 | Profile photo | ✅ Local | Saved to app documents; liquid-glass Edit Profile UI (PR #88); cloud sync is FEAT-015 |
 | Notifications screen | ✅ UI shell | Home header routes to liquid-glass feed with sample data (PR #86); FCM / push delivery is FEAT-012 |

@@ -14,10 +14,10 @@ A Flutter group-travel companion app featuring shared day-by-day itineraries, re
 Browse day-by-day travel plans with a horizontal card carousel. Drill into a day overview with a visual checklist timeline, then into individual location details. Demo data covers a multi-stop Tokyo itinerary (Tsukiji Market, Senso-ji, Tokyo SkyTree, etc.).
 
 **Real-Time Group Map**
-Every trip member's live GPS position is synced to Firebase Realtime Database and rendered on a neon-dark-styled Google Map. Markers use each member's profile photo (rendered widget → PNG bitmap → cached in Hive & Firebase Storage). Stale locations (>10 min) fade in opacity for visual feedback.
+Every trip member's live GPS position is synced to Firebase Realtime Database and rendered on a neon-dark-styled Google Map. Markers use each member's profile photo (rendered widget → PNG bitmap → cached in Hive CE & Firebase Storage). Stale locations (>10 min) fade in opacity for visual feedback.
 
 **Collaborative Photo Gallery**
-Multi-image picker with on-device compression for fast thumbnails. Metadata and thumbnails are cached locally in Hive while full-resolution images upload to Firebase Storage asynchronously. Optimistic UI shows upload progress states. Full-screen gallery view with pinch-to-zoom via `photo_view`.
+Multi-image picker with on-device compression for fast thumbnails. Metadata and thumbnails are cached locally in Hive CE while full-resolution images upload to Firebase Storage asynchronously. Optimistic UI shows upload progress states. Full-screen gallery view with pinch-to-zoom via `photo_view`.
 
 **AI Itinerary Generation (Experimental)**
 Google Gemini integration that generates structured daily travel plans from a prompt. Output is saved as JSON — groundwork for AI-assisted trip planning in future iterations.
@@ -28,12 +28,12 @@ Google Gemini integration that generates structured daily travel plans from a pr
 
 ```
 lib/
-├── main.dart                  # Firebase/Hive/Gemini init, MultiBlocProvider root
+├── main.dart                  # Firebase/Hive CE/Gemini init, MultiBlocProvider root
 ├── routes.dart                # Named routes with FadePageRoute transitions
 ├── constants/                 # Colors, theme (dark + Poppins), extensions
 ├── core/                      # Shared UI primitives (navbar, header, icon button, avatar marker)
 ├── features/
-│   ├── gallery/               # Cubit, Freezed models, Hive repository, picker/grid/zoom UI
+│   ├── gallery/               # Cubit, Freezed models, Hive CE repository, picker/grid/zoom UI
 │   ├── itinerary/             # Cubit, Freezed models, card & tile widgets
 │   ├── location/              # Cubit + models for GPS sync
 │   ├── map/                   # Cubit + marker rendering service
@@ -47,8 +47,8 @@ lib/
 - **Feature-first modular structure** — each domain owns its bloc, models, and presentation layer
 - **Cubit-based state management** (flutter_bloc) — 6 cubits registered at the app root
 - **Immutable models** via Freezed with json_serializable codegen
-- **Offline-first data layer** — Hive for local caching, Firebase for cloud sync
-- **Repository pattern** for gallery (Hive abstraction); other features interact with Firebase directly from cubits
+- **Offline-first data layer** — Hive CE for local caching, Firebase for cloud sync
+- **Repository pattern** for gallery (Hive CE abstraction); other features interact with Firebase directly from cubits
 - **Cubits never import cubits** — cross-feature state lives in a plain service injected into each cubit (see [`docs/PATTERNS.md`](docs/PATTERNS.md))
 
 ---
@@ -60,7 +60,7 @@ lib/
 | Framework | Flutter 3.44.0 (Dart >=3.12.0) via FVM |
 | State Management | flutter_bloc / Cubit |
 | Data Modeling | Freezed + json_serializable |
-| Local Storage | Hive |
+| Local Storage | Hive CE (`hive_ce`) |
 | Backend | Firebase (Realtime Database, Storage) |
 | Maps | Google Maps Flutter + Geolocator |
 | AI | Google Gemini (flutter_gemini) |
@@ -97,7 +97,7 @@ make get
 cp assets/.env.example assets/.env
 # Fill in GEMINI_API_KEY, DISABLE_REALTIME_LOCATIONS, etc.
 
-# Generate Freezed/Hive/JSON code
+# Generate Freezed/JSON code
 make gen
 
 # Run on iOS simulator
@@ -123,7 +123,7 @@ CI workflow only; a separate macOS app workflow has not been added yet.
 | Command | Description |
 |---------|-------------|
 | `make get` | Install Flutter dependencies with FVM |
-| `make gen` | Run build_runner with FVM Dart (Freezed, json_serializable, Hive adapters) |
+| `make gen` | Run build_runner with FVM Dart (Freezed, json_serializable). Hive CE `TypeAdapter`s are hand-written, not generated |
 | `make format` | Apply Dart fixes and format app/test Dart code with FVM Dart (120 char line width) |
 | `make check-format` | CI-style format check for app/test Dart code with FVM Dart |
 | `make build-ios` | Build iOS release with FVM Flutter |

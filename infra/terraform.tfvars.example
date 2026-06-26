@@ -20,7 +20,10 @@ app_firestore_location    = "us-east1"
 # google_oauth_client_id     = "1234567890-xxxxxxxxxxxxxxxx.apps.googleusercontent.com"
 # google_oauth_client_secret = "GOCSPX-xxxxxxxxxxxxxxxxxxxx"
 
-# Apple Sign-In (leave empty until ready; then re-apply to enable Apple).
+# Apple Sign-In. The Services ID below matches the Apple Developer portal identifier. 
+# Leave empty until the Key (.p8) exists. NOTE: if Apple was already enabled in the Firebase console, 
+# you must `terraform import` the apple IdP resource before setting these and applying,
+# or apply fails with "already exists" (see "Apple sign-in" in README.md).
 # apple_services_id = "com.olympuslabs.xplore.signin"
 # apple_team_id     = "XXXXXXXXXX"
 # apple_key_id      = "XXXXXXXXXX"
