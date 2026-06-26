@@ -1,5 +1,9 @@
+import 'package:animations/animations.dart';
 import 'package:flutter/material.dart';
 import 'package:logger/logger.dart';
+import 'package:xplore/constants/constants.dart';
+import 'package:xplore/core/app_tab.dart';
+import 'package:xplore/core/root_shell.dart';
 import 'package:xplore/features/auth/presentation/onboarding_page.dart';
 import 'package:xplore/features/auth/presentation/sign_in_page.dart';
 import 'package:xplore/features/gallery/presentation/gallery_focus_view.dart';
@@ -7,10 +11,8 @@ import 'package:xplore/features/itinerary/models/itinerary_models.dart';
 import 'package:xplore/features/notifications/presentation/notifications_page.dart';
 import 'package:xplore/screens/gallery_page.dart';
 import 'package:xplore/screens/generic_error_page.dart';
-import 'package:xplore/screens/home_page.dart';
 import 'package:xplore/screens/itinerary_focus_page.dart';
 import 'package:xplore/screens/itinerary_overview_page.dart';
-import 'package:xplore/screens/map_canvas.dart';
 import 'package:xplore/screens/profile_page.dart';
 import 'package:xplore/utilities/utilities.dart';
 
@@ -38,11 +40,21 @@ class RouteGenerator {
 
     switch (settings.name) {
       case Paths.home:
-        return FadePageRoute(page: const HomePage());
       case Paths.map:
-        return FadePageRoute(page: const MapCanvas());
+        // Home/Map are top-level siblings in RootShell's tab stack. Legacy
+        // route entries still resolve to the shell, with `/map` selecting the
+        // Map tab for deep links and old callers.
+        return MaterialPageRoute(
+          builder: (_) => RootShell(
+            initialTab: settings.name == Paths.map ? AppTab.map : AppTab.home,
+          ),
+          settings: settings,
+        );
       case Paths.profile:
-        return FadePageRoute(page: const ProfilePage());
+        return MaterialPageRoute(
+          builder: (_) => const ProfilePage(),
+          settings: settings,
+        );
       case Paths.notifications:
         return MaterialPageRoute(builder: (_) => const NotificationsPage());
       case Paths.onboarding:
@@ -52,10 +64,18 @@ class RouteGenerator {
       case Paths.gallery:
         return MaterialPageRoute(builder: (_) => const GalleryPage());
       case Paths.galleryFocusView:
-        return MaterialPageRoute(
+        // A photo viewer reads as "opening media", so it fades through rather
+        // than sliding in sideways like the hierarchical drill-down screens.
+        return FadeThroughPageRoute(
+          settings: settings,
           builder: (_) {
-            if (args is Map<String, dynamic> && args.containsKey('gallery') && args.containsKey('initialIndex')) {
-              return GalleryFocusView(images: args['gallery'], initialIndex: args['initialIndex']);
+            if (args is Map<String, dynamic> &&
+                args.containsKey('gallery') &&
+                args.containsKey('initialIndex')) {
+              return GalleryFocusView(
+                images: args['gallery'],
+                initialIndex: args['initialIndex'],
+              );
             }
 
             _logger.e('argument is not of type "ImageModel"');
@@ -95,17 +115,27 @@ class RouteGenerator {
 //! Custom Routes
 //! ---------------------------------------------------------------------------
 
-class FadePageRoute extends PageRouteBuilder {
-  final Widget page;
-
-  FadePageRoute({required this.page})
+/// A route that uses Material's "fade through" motion — the outgoing screen
+/// fades out while the incoming one fades and scales up. Best for destinations
+/// without a clear spatial/back relationship (e.g. opening a media viewer).
+///
+/// Hierarchical drill-down pushes don't need a custom route: they go through
+/// [MaterialPageRoute] and inherit the app-wide shared-axis transition
+/// configured in `pageTransitionsTheme` (see `constants/theme.dart`).
+class FadeThroughPageRoute<T> extends PageRouteBuilder<T> {
+  FadeThroughPageRoute({required WidgetBuilder builder, super.settings})
     : super(
-        pageBuilder: (BuildContext context, Animation<double> animation, Animation<double> secondaryAnimation) {
-          return page;
+        transitionDuration: const Duration(milliseconds: 300),
+        reverseTransitionDuration: const Duration(milliseconds: 250),
+        pageBuilder: (context, animation, secondaryAnimation) =>
+            builder(context),
+        transitionsBuilder: (context, animation, secondaryAnimation, child) {
+          return FadeThroughTransition(
+            animation: animation,
+            secondaryAnimation: secondaryAnimation,
+            fillColor: XploreColors.primaryBg,
+            child: child,
+          );
         },
-        transitionsBuilder:
-            (BuildContext context, Animation<double> animation, Animation<double> secondaryAnimation, Widget child) {
-              return FadeTransition(opacity: animation, child: child);
-            },
       );
 }
