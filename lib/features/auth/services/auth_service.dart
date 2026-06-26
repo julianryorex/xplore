@@ -49,10 +49,13 @@ class AuthService {
     FirebaseFirestore? firestore,
     GoogleSignIn? googleSignIn,
     AppleCredentialRequester? appleCredentialRequester,
+    Future<void> Function(String authorizationCode)? appleTokenRevoker,
   }) : _auth = firebaseAuth ?? FirebaseAuth.instance,
        _firestore = firestore ?? FirebaseFirestore.instanceFor(app: Firebase.app(), databaseId: appDatabaseId),
        _google = googleSignIn ?? GoogleSignIn.instance,
-       _requestAppleCredential = appleCredentialRequester ?? SignInWithApple.getAppleIDCredential;
+       _requestAppleCredential = appleCredentialRequester ?? SignInWithApple.getAppleIDCredential,
+       // Field is private; the public-facing param name can't be an initializing formal.
+       _appleTokenRevoker = appleTokenRevoker; // ignore: prefer_initializing_formals
 
   /// Named Firestore Native database created by the Terraform infra (Phase 1).
   /// The project's default database is Datastore-mode and unusable by the SDKs.
@@ -62,6 +65,11 @@ class AuthService {
   final FirebaseFirestore _firestore;
   final GoogleSignIn _google;
   final AppleCredentialRequester _requestAppleCredential;
+
+  /// Apple token revocation seam. Defaults to [FirebaseAuth.revokeTokenWithAuthorizationCode]
+  /// at call time; overridable in tests (the mock doesn't implement it).
+  final Future<void> Function(String authorizationCode)? _appleTokenRevoker;
+
   final Logger _logger = createLogger('AuthService');
 
   bool _googleInitialized = false;
@@ -187,6 +195,112 @@ class AuthService {
       // Best-effort: Firebase sign-out below is the source of truth.
     }
     await _auth.signOut();
+  }
+
+  /// Permanently deletes the signed-in account.
+  ///
+  /// Re-authenticates with the user's provider (deletion is a privileged op that
+  /// requires a recent login), revokes the Apple token (App Store guideline
+  /// 5.1.1(v)), removes the Firestore `users/{uid}` profile, then deletes the
+  /// Firebase user. The `authStateChanges` stream then emits null, routing the
+  /// app back to onboarding.
+  ///
+  /// Throws [AuthCancelledException] if the user backs out of the re-auth sheet,
+  /// or [AuthFailureException] on any other error.
+  ///
+  /// NOTE (Tier 1): trip memberships, gallery objects and RTDB location nodes
+  /// are NOT cascaded here — that requires a privileged backend (Tier 2).
+  Future<void> deleteAccount() async {
+    final user = _auth.currentUser;
+    if (user == null) {
+      throw const AuthFailureException('No signed-in user to delete.');
+    }
+
+    final providerIds = user.providerData.map((info) => info.providerId).toSet();
+
+    try {
+      if (providerIds.contains('apple.com')) {
+        await _reauthAndDeleteApple(user);
+      } else if (providerIds.contains('google.com')) {
+        await _reauthAndDeleteGoogle(user);
+      } else {
+        // No known interactive provider; attempt a direct delete. May throw
+        // requires-recent-login, which surfaces as a failure for the user.
+        await _deleteUserData(user.uid);
+        await user.delete();
+      }
+    } on FirebaseAuthException catch (e) {
+      throw AuthFailureException(e.message ?? 'Account deletion failed.');
+    }
+  }
+
+  Future<void> _reauthAndDeleteApple(User user) async {
+    final rawNonce = _generateNonce();
+    final hashedNonce = _sha256OfString(rawNonce);
+
+    final AuthorizationCredentialAppleID appleCredential;
+    try {
+      appleCredential = await _requestAppleCredential(
+        scopes: const [AppleIDAuthorizationScopes.email, AppleIDAuthorizationScopes.fullName],
+        nonce: hashedNonce,
+      );
+    } on SignInWithAppleAuthorizationException catch (e) {
+      if (e.code == AuthorizationErrorCode.canceled) {
+        throw const AuthCancelledException();
+      }
+      throw AuthFailureException(e.message);
+    }
+
+    final idToken = appleCredential.identityToken;
+    if (idToken == null) {
+      throw const AuthFailureException('Apple did not return an identity token.');
+    }
+
+    final credential = OAuthProvider(
+      'apple.com',
+    ).credential(idToken: idToken, rawNonce: rawNonce, accessToken: appleCredential.authorizationCode);
+
+    await user.reauthenticateWithCredential(credential);
+    // Purge app data while still authenticated (rules require request.auth).
+    await _deleteUserData(user.uid);
+    // Revoke the Apple token so the app disappears from the user's Apple ID
+    // settings and refresh tokens are invalidated (App Store requirement).
+    await (_appleTokenRevoker ?? _auth.revokeTokenWithAuthorizationCode)(appleCredential.authorizationCode);
+    await user.delete();
+  }
+
+  Future<void> _reauthAndDeleteGoogle(User user) async {
+    try {
+      await _ensureGoogleInitialized();
+      final account = await _google.authenticate(scopeHint: const ['email']);
+      final idToken = account.authentication.idToken;
+      if (idToken == null) {
+        throw const AuthFailureException('Google did not return an ID token.');
+      }
+
+      final credential = GoogleAuthProvider.credential(idToken: idToken);
+      await user.reauthenticateWithCredential(credential);
+      await _deleteUserData(user.uid);
+      await user.delete();
+
+      try {
+        await _google.signOut();
+      } catch (_) {
+        // Best-effort: the Firebase user is already gone.
+      }
+    } on GoogleSignInException catch (e) {
+      if (e.code == GoogleSignInExceptionCode.canceled) {
+        throw const AuthCancelledException();
+      }
+      throw AuthFailureException(e.description ?? 'Google re-authentication failed.');
+    }
+  }
+
+  /// Deletes the Firestore `users/{uid}` profile. Tier 1 scope: other
+  /// uid-keyed data (trips / gallery / locations) is left for a Tier 2
+  /// privileged cascade.
+  Future<void> _deleteUserData(String uid) async {
+    await _firestore.collection('users').doc(uid).delete();
   }
 
   /// Creates or refreshes `users/{uid}`. `createdAt` is written once;

@@ -69,6 +69,23 @@ class AuthCubit extends Cubit<AuthState> {
     analytics.signOut();
   }
 
+  /// Permanently deletes the account via [AuthService]. On success the
+  /// `authStateChanges` stream emits null and the gate returns to onboarding.
+  /// Rethrows so the UI can surface errors / ignore cancellations.
+  Future<void> deleteAccount() async {
+    analytics.accountDeletionStarted();
+    try {
+      await _authService.deleteAccount();
+      analytics.accountDeleted();
+    } on AuthCancelledException {
+      analytics.accountDeletionFailed(reason: 'cancelled');
+      rethrow;
+    } on AuthFailureException catch (e) {
+      analytics.accountDeletionFailed(reason: e.message);
+      rethrow;
+    }
+  }
+
   @override
   Future<void> close() {
     _subscription?.cancel();

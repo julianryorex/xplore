@@ -7,6 +7,7 @@ import 'package:xplore/core/glass.dart';
 import 'package:xplore/core/header.dart';
 import 'package:xplore/core/layout_padding.dart';
 import 'package:xplore/features/auth/bloc/auth_cubit.dart';
+import 'package:xplore/features/auth/services/auth_service.dart';
 import 'package:xplore/features/profile/bloc/profile_cubit.dart';
 
 class ProfilePage extends StatelessWidget {
@@ -44,6 +45,8 @@ class ProfilePage extends StatelessWidget {
                       const _SaveChangesButton(),
                       const SizedBox(height: paddingUnit),
                       _SignOutButton(onTap: () => _confirmAndSignOut(context)),
+                      const SizedBox(height: paddingUnit * 0.5),
+                      _DeleteAccountButton(onTap: () => _confirmAndDeleteAccount(context)),
                       const SizedBox(height: paddingUnit),
                     ],
                   ),
@@ -79,6 +82,43 @@ class ProfilePage extends StatelessWidget {
 
     if (shouldSignOut) {
       await authCubit.signOut();
+    }
+  }
+
+  Future<void> _confirmAndDeleteAccount(BuildContext context) async {
+    final authCubit = context.read<AuthCubit>();
+    final messenger = ScaffoldMessenger.of(context);
+    final shouldDelete =
+        await showDialog<bool>(
+          context: context,
+          builder: (dialogContext) {
+            return AlertDialog(
+              title: const Text('Delete account?'),
+              content: const Text(
+                'This permanently deletes your account and profile. This cannot be undone. '
+                "You'll be asked to confirm with your sign-in provider to continue.",
+              ),
+              actions: [
+                TextButton(onPressed: () => Navigator.of(dialogContext).pop(false), child: const Text('Cancel')),
+                TextButton(
+                  onPressed: () => Navigator.of(dialogContext).pop(true),
+                  child: Text('Delete', style: TextStyle(color: XploreColors.error)),
+                ),
+              ],
+            );
+          },
+        ) ??
+        false;
+
+    if (!shouldDelete) return;
+
+    try {
+      await authCubit.deleteAccount();
+      // On success the AuthGate swaps to onboarding; nothing else to do here.
+    } on AuthCancelledException {
+      // User backed out of the re-authentication sheet — non-blocking.
+    } on AuthFailureException catch (e) {
+      messenger.showSnackBar(SnackBar(content: Text(e.message)));
     }
   }
 }
@@ -281,6 +321,22 @@ class _SignOutButton extends StatelessWidget {
           child: Text('Sign out', style: context.pText.labelMedium?.copyWith(color: XploreColors.subtleText)),
         ),
       ),
+    );
+  }
+}
+
+/// Destructive account deletion, rendered as a quiet text affordance below the
+/// sign-out slab so it stays discoverable without competing for attention.
+class _DeleteAccountButton extends StatelessWidget {
+  final VoidCallback onTap;
+
+  const _DeleteAccountButton({required this.onTap});
+
+  @override
+  Widget build(BuildContext context) {
+    return TextButton(
+      onPressed: onTap,
+      child: Text('Delete Account', style: context.pText.labelMedium?.copyWith(color: XploreColors.error)),
     );
   }
 }

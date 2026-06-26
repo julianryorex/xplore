@@ -16,6 +16,12 @@ class AuthAnalytics {
 
   void signOut() => _log('auth_sign_out', const {});
 
+  void accountDeletionStarted() => _log('auth_account_deletion_started', const {});
+
+  void accountDeleted() => _log('auth_account_deleted', const {});
+
+  void accountDeletionFailed({required String reason}) => _log('auth_account_deletion_failed', {'reason': reason});
+
   void _log(String event, Map<String, Object?> params) {
     wlog.d('[analytics] $event ${params.isEmpty ? '' : params}');
   }
