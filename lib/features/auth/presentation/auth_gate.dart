@@ -5,6 +5,7 @@ import 'package:xplore/core/ambient_background.dart';
 import 'package:xplore/core/root_shell.dart';
 import 'package:xplore/features/auth/bloc/auth_cubit.dart';
 import 'package:xplore/features/auth/presentation/onboarding_page.dart';
+import 'package:xplore/features/nav/bloc/nav_cubit.dart';
 
 /// Chooses the app root based on [AuthState] (FEAT-001 hard gate):
 /// `unknown` -> splash, `unauthenticated` -> onboarding/sign-in,
@@ -24,6 +25,7 @@ class AuthGate extends StatelessWidget {
         // auth flips, clear those pushed routes so the gate's base view (Home
         // when authenticated, Onboarding when not) is what's actually shown.
         if (state is AuthAuthenticated || state is AuthUnauthenticated) {
+          context.read<NavbarCubit>().reset();
           Navigator.of(context).popUntil((route) => route.isFirst);
         }
       },

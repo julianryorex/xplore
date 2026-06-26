@@ -2,6 +2,7 @@ import 'package:animations/animations.dart';
 import 'package:flutter/material.dart';
 import 'package:logger/logger.dart';
 import 'package:xplore/constants/constants.dart';
+import 'package:xplore/core/app_tab.dart';
 import 'package:xplore/core/root_shell.dart';
 import 'package:xplore/features/auth/presentation/onboarding_page.dart';
 import 'package:xplore/features/auth/presentation/sign_in_page.dart';
@@ -38,13 +39,15 @@ class RouteGenerator {
     final args = settings.arguments;
 
     switch (settings.name) {
-      // Home/Map are no longer standalone routes — they live as siblings in
-      // RootShell's tab stack. The `/` route returns the shell for safety
-      // (deep links, popUntil-to-first), but tab switching never pushes routes.
       case Paths.home:
       case Paths.map:
+        // Home/Map are top-level siblings in RootShell's tab stack. Legacy
+        // route entries still resolve to the shell, with `/map` selecting the
+        // Map tab for deep links and old callers.
         return MaterialPageRoute(
-          builder: (_) => const RootShell(),
+          builder: (_) => RootShell(
+            initialTab: settings.name == Paths.map ? AppTab.map : AppTab.home,
+          ),
           settings: settings,
         );
       case Paths.profile:

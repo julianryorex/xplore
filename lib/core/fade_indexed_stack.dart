@@ -56,7 +56,11 @@ class _FadeIndexedStackState extends State<FadeIndexedStack>
       _activated[widget.index] = true;
       // Fade the newly revealed tab in from transparent. Because the stack only
       // paints the selected child, this reads as a soft fade-through.
-      _controller.forward(from: 0);
+      if (MediaQuery.disableAnimationsOf(context)) {
+        _controller.value = 1;
+      } else {
+        _controller.forward(from: 0);
+      }
     }
   }
 
@@ -68,8 +72,12 @@ class _FadeIndexedStackState extends State<FadeIndexedStack>
 
   @override
   Widget build(BuildContext context) {
+    final opacity = MediaQuery.disableAnimationsOf(context)
+        ? const AlwaysStoppedAnimation<double>(1)
+        : _controller.drive(CurveTween(curve: widget.curve));
+
     return FadeTransition(
-      opacity: _controller.drive(CurveTween(curve: widget.curve)),
+      opacity: opacity,
       child: IndexedStack(
         index: widget.index,
         sizing: StackFit.expand,

@@ -1,23 +1,10 @@
-import 'package:collection/collection.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:xplore/constants/constants.dart';
+import 'package:xplore/core/app_tab.dart';
 import 'package:xplore/core/glass.dart';
 import 'package:xplore/features/nav/bloc/nav_cubit.dart';
-
-class _NavBarItem {
-  final String label;
-  final IconData icon;
-
-  const _NavBarItem({required this.label, required this.icon});
-}
-
-/// Order must stay in sync with `RootShell`'s destination list.
-const List<_NavBarItem> _navBarItems = [
-  _NavBarItem(label: 'Home', icon: Icons.home_outlined),
-  _NavBarItem(label: 'Map', icon: Icons.map_rounded),
-];
 
 class Navbar extends StatelessWidget {
   const Navbar({super.key});
@@ -25,27 +12,31 @@ class Navbar extends StatelessWidget {
   // The tabs are top-level *siblings* living in `RootShell`'s IndexedStack, so
   // selecting one only flips the NavbarCubit index — no route is pushed. That's
   // what keeps tab switches from animating like forward/back navigation.
-  void onIconClick(BuildContext ctx, int selectedIndex) {
+  void onIconClick(BuildContext ctx, AppTab selectedTab) {
     final currentIndex = ctx.read<NavbarCubit>().state;
-    if (selectedIndex == currentIndex) return;
+    if (selectedTab.index == currentIndex) return;
 
-    if (selectedIndex == 0) {
+    if (selectedTab == AppTab.home) {
       HapticFeedback.heavyImpact();
     } else {
       HapticFeedback.lightImpact();
     }
 
-    ctx.read<NavbarCubit>().setNavIndex(selectedIndex);
+    ctx.read<NavbarCubit>().setTab(selectedTab);
   }
 
   /// Horizontal alignment for the selection pill behind item [index].
   Alignment _pillAlignment(int index) {
-    if (_navBarItems.length < 2) return Alignment.center;
-    return Alignment(-1 + 2 * index / (_navBarItems.length - 1), 0);
+    if (AppTab.values.length < 2) return Alignment.center;
+    return Alignment(-1 + 2 * index / (AppTab.values.length - 1), 0);
   }
 
   @override
   Widget build(BuildContext context) {
+    final reduceMotion = MediaQuery.disableAnimationsOf(context);
+    final pillDuration = reduceMotion
+        ? Duration.zero
+        : const Duration(milliseconds: 280);
     // A floating liquid-glass tab bar: it overlays the content behind it
     // (pair with `Scaffold(extendBody: true)`) so the backdrop blur has real
     // content to refract, giving the footer its glass feel.
@@ -85,11 +76,11 @@ class Navbar extends StatelessWidget {
                       // it cues the change without the screens themselves
                       // having to slide.
                       AnimatedAlign(
-                        duration: const Duration(milliseconds: 280),
+                        duration: pillDuration,
                         curve: Curves.easeOutCubic,
                         alignment: _pillAlignment(state),
                         child: FractionallySizedBox(
-                          widthFactor: 1 / _navBarItems.length,
+                          widthFactor: 1 / AppTab.values.length,
                           heightFactor: 1,
                           child: Padding(
                             padding: const EdgeInsets.symmetric(
@@ -113,17 +104,16 @@ class Navbar extends StatelessWidget {
                         ),
                       ),
                       Row(
-                        children: _navBarItems
-                            .mapIndexed(
-                              (index, item) => _NavbarButton(
-                                item: item,
-                                isSelected: state == index,
-                                onPressed: state == index
-                                    ? () {}
-                                    : () => onIconClick(context, index),
-                              ),
-                            )
-                            .toList(),
+                        children: [
+                          for (final tab in AppTab.values)
+                            _NavbarButton(
+                              tab: tab,
+                              isSelected: state == tab.index,
+                              onPressed: state == tab.index
+                                  ? () {}
+                                  : () => onIconClick(context, tab),
+                            ),
+                        ],
                       ),
                     ],
                   );
@@ -138,12 +128,12 @@ class Navbar extends StatelessWidget {
 }
 
 class _NavbarButton extends StatelessWidget {
-  final _NavBarItem item;
+  final AppTab tab;
   final bool isSelected;
   final VoidCallback onPressed;
 
   const _NavbarButton({
-    required this.item,
+    required this.tab,
     required this.isSelected,
     required this.onPressed,
   });
@@ -152,6 +142,13 @@ class _NavbarButton extends StatelessWidget {
   Widget build(BuildContext context) {
     final activeColor = XploreColors.alternate;
     final inactiveColor = XploreColors.white.withValues(alpha: 0.38);
+    final reduceMotion = MediaQuery.disableAnimationsOf(context);
+    final scaleDuration = reduceMotion
+        ? Duration.zero
+        : const Duration(milliseconds: 280);
+    final colorDuration = reduceMotion
+        ? Duration.zero
+        : const Duration(milliseconds: 240);
 
     return Expanded(
       child: InkWell(
@@ -164,20 +161,20 @@ class _NavbarButton extends StatelessWidget {
             children: [
               AnimatedScale(
                 scale: isSelected ? 1.0 : 0.9,
-                duration: const Duration(milliseconds: 280),
+                duration: scaleDuration,
                 curve: Curves.easeOutCubic,
                 child: TweenAnimationBuilder<Color?>(
-                  duration: const Duration(milliseconds: 240),
+                  duration: colorDuration,
                   tween: ColorTween(
                     end: isSelected ? activeColor : inactiveColor,
                   ),
                   builder: (context, color, _) =>
-                      Icon(item.icon, color: color, size: 28),
+                      Icon(tab.icon, color: color, size: 28),
                 ),
               ),
               const SizedBox(height: 4),
               Text(
-                item.label,
+                tab.label,
                 style: Theme.of(context).textTheme.labelSmall?.copyWith(
                   color: isSelected ? activeColor : inactiveColor,
                   fontWeight: isSelected ? FontWeight.w600 : FontWeight.w500,
