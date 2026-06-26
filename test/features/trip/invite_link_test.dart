@@ -7,7 +7,7 @@ void main() {
       final link = InviteLink.build(tripId: 'trip-1', token: 'tok-abc');
 
       final uri = Uri.parse(link);
-      expect(uri.host, 'xplore.app');
+      expect(uri.host, 'xplore.olympuslabs.ai');
       expect(uri.path, '/join');
       expect(uri.queryParameters['trip'], 'trip-1');
       expect(uri.queryParameters['token'], 'tok-abc');

@@ -4,15 +4,16 @@
 
 Xplore is a Flutter group-travel app (state via flutter_bloc/Cubit, Freezed +
 json_serializable models, Hive CE (`hive_ce`) local cache, Firebase backend, Google Maps,
-Gemini). See `README.md` and the `Makefile` for the canonical commands
-(`make get`, `make gen`, `make format`, `make check-format`).
+Gemini). See `docs/DEVELOPMENT.md` and the `Makefile` for the canonical commands
+(`make get`, `make gen`, `make format`, `make check-format`); `README.md` is the
+trimmed, recruiter-facing overview.
 
 **Product backlog:** Before starting net-new features, read `product/BACKLOG.md`
 (prioritized P0–P4 requests with acceptance criteria and code pointers). Add new
 requests via `product/requests/_TEMPLATE.md`.
 
 **GitHub issues:** Issues are the execution queue; `product/requests/` stays the
-spec source of truth. Do **not** create GitHub issues directly — emit an
+spec source of truth. Do **not** create GitHub issues directly unless explicitly instructed to do so — emit an
 `issue-proposal` block (see `.github/ISSUE_FILING.md`) and let the Issue Filer
 agent file it. Exception: the Issue Filer automation itself.
 

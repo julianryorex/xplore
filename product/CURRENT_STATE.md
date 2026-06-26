@@ -1,4 +1,4 @@
-# Current State (as of 2026-06-24, EOD)
+# Current State (as of 2026-06-26, EOD)
 
 Snapshot of what exists in `lib/` vs. what product assumes. Update this doc when major foundations land.
 
@@ -9,6 +9,7 @@ Snapshot of what exists in `lib/` vs. what product assumes. Update this doc when
 | User authentication | ✅ | Google Sign-In + `AuthCubit` hard gate; Apple deferred ([FEAT-001](./requests/done/FEAT-001-user-authentication.md), PR #73) |
 | Trip entity (foundation) | ✅ Partial | `TripCubit`, create-trip sheet, `activeTripId` plumbing ([FEAT-002](./requests/done/FEAT-002-trip-management.md), PR #79); multi-trip switcher UI deferred |
 | Dynamic user/trip IDs | ✅ | Cubits read uid from auth and trip scope from `TripCubit` ([FEAT-004](./requests/done/FEAT-004-remove-hardcoded-ids.md), PR #76) |
+| Trip invites & join flow | ✅ Partial | Link generation, deep-link routing through auth, join screen, invalid/expired/revoked handling, member-cap rule ([FEAT-003](./requests/done/FEAT-003-trip-invites.md), PR #96); universal-link **production delivery** on `xplore.olympuslabs.ai` deferred → GitHub #99 |
 | Itinerary cloud read path | ✅ Partial | `ItineraryCubit.loadForTrip(activeTripId)` listens to Firestore `itineraries/{tripId}`, Hive CE offline cache, lazy seed on missing doc ([FEAT-006](./requests/FEAT-006-itinerary-firebase-sync.md) read slice, PR #87); editing CRUD UI deferred |
 | Itinerary UI | ✅ | Day carousel, overview, location detail; runtime data from cloud when a trip is active |
 | Google Map + neon style | ✅ | `MapCanvas`, `assets/maps/GoogleMapNeon.json` |
@@ -43,7 +44,7 @@ Also outstanding:
 - New trips seed an **empty** cloud itinerary (`daily_plans: []`); Tokyo demo content not copied on create → FEAT-006 follow-up
 - Itinerary **editing CRUD** not built; gated on FEAT-024 organizer roles → FEAT-006 follow-up
 - Mock onboarding placeholder only → **FEAT-005**
-- No trip invites / deep links → **FEAT-003**
+- Trip invites / join flow shipped (FEAT-003, PR #96); only universal-link **production delivery** (AASA hosting + iOS Associated Domains on `xplore.olympuslabs.ai`) remains, deferred to launch + >100 users → GitHub #99
 - Gallery Storage rules updated to gate `gallery/{tripId}/**` by trip membership (FEAT-014); rules **deploy** (terraform/console) still pending
 - Profile name / avatar not synced to cloud → **FEAT-015**
 - Push notifications not wired (screen exists; no FCM) → **FEAT-012**

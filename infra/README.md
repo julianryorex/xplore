@@ -161,22 +161,26 @@ in the Linux/CI environment — is the OS-level **universal link** delivery. Unt
 the steps below are done, shared links are valid strings but tapping one will
 not open the app.
 
-> **Placeholder domain.** The invite base lives in a single constant,
-> `InviteLink.base` in `lib/features/trip/services/invite_link.dart`
-> (currently `https://xplore.app/join`). The production domain is an open
-> product question — replace this constant once decided, and use the same host
-> in every step below.
+> **Domain decided:** `xplore.olympuslabs.ai` (subdomain of the owned
+> `olympuslabs.ai`). `InviteLink.base` in
+> `lib/features/trip/services/invite_link.dart` is already set to
+> `https://xplore.olympuslabs.ai/join`, and the iOS Associated Domains
+> entitlement (`applinks:xplore.olympuslabs.ai`) is in
+> `ios/Runner/Runner.entitlements`. Deployable hosting artifacts are staged in
+> `infra/hosting/`. Production enablement (the steps below) is intentionally
+> deferred until launch + >100 users — tracked in **GitHub #99**.
 
 ### 1. Apple App Site Association (AASA) file — hosting
-Host a file at **`https://<domain>/.well-known/apple-app-site-association`**
-(served as `application/json`, **no** `.json` extension, HTTPS, no redirects):
+Serve `infra/hosting/apple-app-site-association` at
+**`https://xplore.olympuslabs.ai/.well-known/apple-app-site-association`**
+(`application/json`, **no** `.json` extension, HTTPS, no redirects):
 
 ```json
 {
   "applinks": {
     "details": [
       {
-        "appIDs": ["<TEAM_ID>.com.olympuslabs.xplore"],
+        "appIDs": ["NY5PB8UM8W.com.olympuslabs.xplore"],
         "components": [{ "/": "/join*", "comment": "Trip invite links" }]
       }
     ]
@@ -184,20 +188,30 @@ Host a file at **`https://<domain>/.well-known/apple-app-site-association`**
 }
 ```
 
-`TEAM_ID` is the Apple Developer Team ID (same one used for Sign in with Apple
-above). The bundle id is `com.olympuslabs.xplore`.
+`NY5PB8UM8W` is the Apple Developer Team ID (same one used for Sign in with Apple
+above); the bundle id is `com.olympuslabs.xplore`. Since `olympuslabs.ai` is on
+Cloudflare and nothing else lives on the subdomain yet, the simplest host is the
+staged **Cloudflare Worker** (`infra/hosting/aasa-worker.js`):
 
-### 2. Associated Domains entitlement — Xcode
-In **Xcode → Runner target → Signing & Capabilities** add the **Associated
-Domains** capability with:
-
-```text
-applinks:<domain>
+```bash
+cd infra/hosting && npx wrangler deploy aasa-worker.js --name xplore-aasa
 ```
 
-This updates `ios/Runner/Runner.entitlements` and requires the Associated
-Domains capability to be enabled on the App ID in the Apple Developer portal.
-(Repeat for the macOS target if macOS universal links are wanted.)
+Then add a **proxied** `xplore` DNS record (e.g. `AAAA` → `100::`, orange cloud
+ON) and bind the Worker to the route `xplore.olympuslabs.ai/*`. (If a web app
+later lives on this subdomain, drop the Worker and ship the AASA inside the web
+build's `web/.well-known/` instead.)
+
+### 2. Associated Domains entitlement — Xcode
+Already added to `ios/Runner/Runner.entitlements`:
+
+```text
+applinks:xplore.olympuslabs.ai
+```
+
+This still requires the **Associated Domains** capability to be enabled on the
+`com.olympuslabs.xplore` App ID in the Apple Developer portal. (Repeat the
+entitlement on the macOS target if macOS universal links are wanted.)
 
 ### 3. App-side delivery
 `app_links` is already wired (`DeepLinkService` + `DeepLinkHandler` in
@@ -206,7 +220,7 @@ Domains capability to be enabled on the App ID in the Apple Developer portal.
 screen.
 
 ### 4. Verify (requires a real device or simulator)
-- `xcrun simctl openurl booted "https://<domain>/join?trip=<id>&token=<tok>"`
+- `xcrun simctl openurl booted "https://xplore.olympuslabs.ai/join?trip=<id>&token=<tok>"`
   (or tap a link in Notes/Messages on a device) should foreground the app on
   the join-confirmation screen.
 - Apple's CDN caches the AASA; use a fresh install / `swcutil` to debug.

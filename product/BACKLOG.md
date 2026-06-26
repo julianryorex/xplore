@@ -14,7 +14,6 @@ Cannot onboard real groups or operate as a product without these.
 
 | ID | Feature | Revenue | Effort | Status | Request |
 |----|---------|---------|--------|--------|---------|
-| FEAT-003 | Trip invites & join flow | blocker | L | backlog | [→](./requests/FEAT-003-trip-invites.md) |
 | FEAT-005 | Onboarding flow | blocker | M | backlog | [→](./requests/FEAT-005-onboarding.md) |
 | FEAT-006 | Production itinerary data layer | blocker | L | backlog | [→](./requests/FEAT-006-itinerary-firebase-sync.md) |
 
@@ -91,6 +90,7 @@ Shipped features live in [`requests/done/`](./requests/done/). Move a spec here 
 | ID | Feature | Shipped | Request |
 |----|---------|---------|---------|
 | FEAT-001 | User authentication (Firebase Auth) | PR #73 | [→](./requests/done/FEAT-001-user-authentication.md) |
+| FEAT-003 | Trip invites & join flow (universal-link prod delivery → #99) | PR #96 | [→](./requests/done/FEAT-003-trip-invites.md) |
 | FEAT-002 | Trip entity & multi-trip management (foundation) | PR #79 | [→](./requests/done/FEAT-002-trip-management.md) |
 | FEAT-004 | Replace hardcoded trip/user IDs | PR #76 | [→](./requests/done/FEAT-004-remove-hardcoded-ids.md) |
 | FEAT-043 | Re-enable image compression (iOS 26) | PR #71 | [→](./requests/done/FEAT-043-image-compression.md) |
@@ -101,7 +101,7 @@ Shipped features live in [`requests/done/`](./requests/done/). Move a spec here 
 
 1. ~~**FEAT-001** Auth → **FEAT-004** Remove hardcoded IDs~~ ✅
 2. ~~**FEAT-002** Trips~~ ✅ → **FEAT-006** Itinerary Firebase sync
-3. **FEAT-003** Invites → **FEAT-005** Onboarding
+3. ~~**FEAT-003** Invites~~ ✅ → **FEAT-005** Onboarding
 4. **FEAT-014** Trip-scoped gallery → **FEAT-011** Gallery cloud fetch
 5. **FEAT-025** Analytics → **FEAT-010** AI itinerary UI
 6. **FEAT-024** Organizer roles → **FEAT-020** Subscription paywall

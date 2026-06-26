@@ -1,16 +1,16 @@
 /// Universal-link helpers for trip invites.
 ///
-/// The production domain is **not finalised** yet (FEAT-003 open question), so
-/// the base lives in a single constant. Swap [InviteLink.base] for the real
-/// `applinks:` domain once it is decided and the Associated Domains entitlement
-/// + `apple-app-site-association` file are hosted (see `infra/README.md`).
+/// Links resolve via the Associated-Domains-verified host below. Deep linking
+/// requires the iOS Associated Domains entitlement (`applinks:`) plus the
+/// hosted `apple-app-site-association` file on the same host (see
+/// `infra/README.md` and `infra/hosting/`).
 class InviteLink {
   const InviteLink._();
 
-  /// Placeholder universal-link base. MUST be replaced with the real,
-  /// Associated-Domains-verified domain before invite links resolve in
-  /// production. Until then links are shareable but will not deep-link.
-  static const base = 'https://xplore.app/join';
+  /// Universal-link host for invites. Kept in sync with the
+  /// `applinks:xplore.olympuslabs.ai` entitlement (`ios/Runner/Runner.entitlements`)
+  /// and the AASA file at `https://xplore.olympuslabs.ai/.well-known/apple-app-site-association`.
+  static const base = 'https://xplore.olympuslabs.ai/join';
 
   static const _tripParam = 'trip';
   static const _tokenParam = 'token';
