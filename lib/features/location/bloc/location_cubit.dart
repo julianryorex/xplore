@@ -63,8 +63,6 @@ class LocationCubit extends Cubit<LocationState> with TripStreamMixin {
   /// The active Firebase UID, or null when unauthenticated.
   String? get _uid => _authService.currentUid;
 
-  String get _tripScopeId => _activeTripId ?? itineraryId;
-
   //! -------------------------------------------------------------------------
   //! Public Methods
   //! -------------------------------------------------------------------------
@@ -88,7 +86,15 @@ class LocationCubit extends Cubit<LocationState> with TripStreamMixin {
       return;
     }
 
-    DatabaseReference locationRef = FirebaseDatabase.instance.ref('locations/$_tripScopeId');
+    // Without an active trip there is no scope to write into. No-op rather than
+    // falling back to a shared/demo node.
+    final tripId = _activeTripId;
+    if (tripId == null) {
+      _logger.d('Skipping location update: no active trip');
+      return;
+    }
+
+    DatabaseReference locationRef = FirebaseDatabase.instance.ref('locations/$tripId');
 
     final myCoords = await getCurrentLocation();
     final myLocation = LocationModel(
@@ -106,7 +112,15 @@ class LocationCubit extends Cubit<LocationState> with TripStreamMixin {
   Future<void> timerCallback(Timer timer) async {
     // every 5 minutes, I will update my location and fetch all locations within the itinerary
 
-    DatabaseReference locationRef = FirebaseDatabase.instance.ref('locations/$_tripScopeId');
+    // Without an active trip there is no scope to read from. No-op rather than
+    // falling back to a shared/demo node.
+    final tripId = _activeTripId;
+    if (tripId == null) {
+      _logger.d('Skipping location fetch: no active trip');
+      return;
+    }
+
+    DatabaseReference locationRef = FirebaseDatabase.instance.ref('locations/$tripId');
 
     await updateMyLocation();
 

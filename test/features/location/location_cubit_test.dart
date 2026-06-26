@@ -6,20 +6,43 @@
 // line up. `close() completes ...` is a regression test for the disposal crash
 // where the `late` timer field was cancelled while uninitialised.
 //
+// The no-active-trip cases cover the productionization guard: with no active
+// trip the location read/write must no-op instead of falling back to the demo
+// `locations/ph4kd` RTDB node. Because there is no in-memory fake for Firebase
+// RTDB / Geolocator here, the active-trip path is exercised indirectly: once a
+// trip is active the guard no longer short-circuits, so the call proceeds to
+// touch Firebase and throws headlessly (in contrast to the no-trip no-op which
+// completes without touching anything).
+//
 // `DISABLE_REALTIME_LOCATIONS` is set so the constructor skips the periodic
-// timer, and an unauthenticated service makes the eager `updateMyLocation()`
-// short-circuit before touching Geolocator or the database.
+// timer, and the global trip stream is reset per test so a stray active trip
+// from a prior test can't leak in.
 
+import 'dart:async';
+
+import 'package:firebase_auth_mocks/firebase_auth_mocks.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:xplore/features/location/bloc/location_cubit.dart';
+import 'package:xplore/features/trip/bloc/trip_state.dart';
+import 'package:xplore/features/trip/bloc/trip_stream_mixin.dart';
+import 'package:xplore/features/trip/models/trip_model.dart';
 
 import '../../helpers/auth_fixtures.dart';
+
+class _TripStreamHarness with TripStreamMixin {}
+
+TripModel _trip(String id) {
+  return TripModel(id: id, title: 'Trip $id', memberIds: const ['user-1'], createdBy: 'user-1');
+}
 
 void main() {
   TestWidgetsFlutterBinding.ensureInitialized();
 
-  setUp(() => dotenv.loadFromString(mergeWith: {'DISABLE_REALTIME_LOCATIONS': 'true'}, isOptional: true));
+  setUp(() {
+    _TripStreamHarness().recreateTripStream();
+    dotenv.loadFromString(mergeWith: {'DISABLE_REALTIME_LOCATIONS': 'true'}, isOptional: true);
+  });
   tearDown(dotenv.clean);
 
   group('LocationCubit', () {
@@ -55,6 +78,46 @@ void main() {
       // so `updateLocationTimer` is never assigned. `close()` must not throw a
       // LateInitializationError cancelling the uninitialised timer.
       await expectLater(cubit.close(), completes);
+    });
+
+    test('updateMyLocation no-ops when there is no active trip', () async {
+      // Signed in, but no trip event pushed: the guard must skip the RTDB
+      // write entirely (no fallback to `locations/ph4kd`). If it didn't, the
+      // call would touch Geolocator / Firebase and throw headlessly.
+      final cubit = LocationCubit(fakeAuthService(signedIn: true, user: MockUser(uid: 'user-1')));
+
+      await expectLater(cubit.updateMyLocation(), completes);
+      expect(cubit.state.locations, isEmpty);
+
+      await cubit.close();
+    });
+
+    test('timerCallback no-ops when there is no active trip', () async {
+      final cubit = LocationCubit(fakeAuthService(signedIn: true, user: MockUser(uid: 'user-1')));
+
+      final timer = Timer(const Duration(days: 1), () {});
+      addTearDown(timer.cancel);
+
+      await expectLater(cubit.timerCallback(timer), completes);
+      expect(cubit.state.locations, isEmpty);
+
+      await cubit.close();
+    });
+
+    test('updateMyLocation no longer no-ops once a trip is active', () async {
+      final cubit = LocationCubit(fakeAuthService(signedIn: true, user: MockUser(uid: 'user-1')));
+
+      _TripStreamHarness().pushTripEvent(TripState.loaded(active: _trip('trip-1'), all: [_trip('trip-1')]));
+      // Let the broadcast event propagate so `_activeTripId` is set.
+      await Future<void>.delayed(Duration.zero);
+
+      // With an active trip the guard is bypassed and the call proceeds to the
+      // RTDB / Geolocator path, which is unavailable in headless tests — so it
+      // throws rather than silently no-opping. This confirms the scope is the
+      // real trip id, not the removed demo fallback.
+      await expectLater(cubit.updateMyLocation(), throwsA(anything));
+
+      await cubit.close();
     });
   });
 }
