@@ -52,9 +52,10 @@ void main() {
     expect(find.text('Email'), findsOneWidget);
     expect(find.text('ada@example.com'), findsOneWidget);
     expect(find.text('Save Changes'), findsOneWidget);
+    expect(find.text('Sign out'), findsOneWidget);
     expect(find.text('Delete Account'), findsOneWidget);
 
-    await tester.tap(find.text('Delete Account'));
+    await tester.tap(find.text('Sign out'));
     await tester.pumpAndSettle();
 
     expect(find.text('Sign out?'), findsOneWidget);
@@ -64,6 +65,24 @@ void main() {
     await tester.pumpAndSettle();
 
     expect(harness.authCubit.state, isA<AuthUnauthenticated>());
+  });
+
+  testWidgets('ProfilePage Delete Account opens a destructive confirmation', (tester) async {
+    final harness = await _pumpProfilePage(tester);
+
+    await tester.ensureVisible(find.text('Delete Account'));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Delete Account'));
+    await tester.pumpAndSettle();
+
+    expect(find.text('Delete account?'), findsOneWidget);
+    expect(harness.authCubit.state, isA<AuthAuthenticated>());
+
+    await tester.tap(find.descendant(of: find.byType(AlertDialog), matching: find.text('Cancel')));
+    await tester.pumpAndSettle();
+
+    expect(find.text('Delete account?'), findsNothing);
+    expect(harness.authCubit.state, isA<AuthAuthenticated>());
   });
 
   testWidgets('ProfilePage signed-in actions match golden', (tester) async {

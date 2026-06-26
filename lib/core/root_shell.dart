@@ -66,10 +66,7 @@ class _RootShellState extends State<RootShell> {
       bottomNavigationBar: const Navbar(),
       body: BlocBuilder<NavbarCubit, int>(
         builder: (context, index) {
-          return FadeIndexedStack(
-            index: index,
-            children: [for (final tab in AppTab.values) _destinationFor(tab)],
-          );
+          return FadeIndexedStack(index: index, children: [for (final tab in AppTab.values) _destinationFor(tab)]);
         },
       ),
     );
