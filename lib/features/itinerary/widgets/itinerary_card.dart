@@ -10,10 +10,14 @@ import 'package:xplore/routes.dart';
 class ItineraryCard extends StatelessWidget {
   final DailyPlanModel dailyPlan;
 
+  /// Position of this day within `itinerary.dailyPlans`; passed to the overview
+  /// route so edits (e.g. checking off a stop) can target the right day.
+  final int dayIndex;
+
   static const width = 230.0;
   static const height = 300.0;
 
-  const ItineraryCard({required this.dailyPlan, super.key});
+  const ItineraryCard({required this.dailyPlan, required this.dayIndex, super.key});
 
   @override
   Widget build(BuildContext context) {
@@ -52,7 +56,7 @@ class ItineraryCard extends StatelessWidget {
         child: InkWell(
           onTap: () {
             HapticFeedback.mediumImpact();
-            Navigator.pushNamed(context, Paths.itineraryOverview, arguments: dailyPlan);
+            Navigator.pushNamed(context, Paths.itineraryOverview, arguments: dayIndex);
           },
           child: Stack(
             children: [

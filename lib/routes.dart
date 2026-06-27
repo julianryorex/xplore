@@ -133,11 +133,11 @@ class RouteGenerator {
       case Paths.itineraryOverview:
         return MaterialPageRoute(
           builder: (_) {
-            if (args is DailyPlanModel) {
-              return ItineraryOverviewPage(dailyPlan: args);
+            if (args is int) {
+              return ItineraryOverviewPage(dayIndex: args);
             }
 
-            _logger.e('argument is not of type "DailyPlanModel"');
+            _logger.e('argument is not of type "int" (itinerary day index)');
             return const ErrorScreen();
           },
         );
