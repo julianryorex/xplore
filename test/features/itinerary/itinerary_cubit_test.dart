@@ -29,17 +29,22 @@ TripModel _trip(String id, {List<String> memberIds = const ['user-1']}) {
   return TripModel(id: id, title: 'Trip $id', memberIds: memberIds, createdBy: memberIds.first);
 }
 
-Map<String, dynamic> _dayPlan({required String title}) {
+Map<String, dynamic> _dayPlan({required String title, bool completed = true}) {
   return {
     'title': title,
     'location': 'Tokyo',
     'plan': {
       'favorited': <String>[],
       'locations': [
-        {'name': 'Tsukiji Fish Market', 'completed': true, 'place_id': 'place-1', 'description': 'Sushi.'},
+        {'name': 'Tsukiji Fish Market', 'completed': completed, 'place_id': 'place-1', 'description': 'Sushi.'},
       ],
     },
   };
+}
+
+bool _firstStopCompleted(DocumentSnapshot<Map<String, dynamic>> snap) {
+  final locations = ((snap.data()!['daily_plans'] as List).first as Map)['plan']['locations'] as List;
+  return (locations.first as Map)['completed'] as bool;
 }
 
 Future<T> _waitFor<T extends ItineraryStates>(ItineraryCubit cubit, {bool Function(T state)? where}) {
@@ -181,6 +186,74 @@ void main() {
       final loaded = await ItineraryRepository().loadFromCache('trip-3');
       expect(loaded?.id, 'trip-3');
       expect(loaded?.invitees, ['user-1']);
+    });
+  });
+
+  group('ItineraryCubit editing (owner-only)', () {
+    Future<DocumentReference<Map<String, dynamic>>> seedIncompleteTrip() async {
+      final doc = firestore.collection('itineraries').doc('trip-1');
+      await doc.set({
+        'invitees': ['user-1'],
+        'daily_plans': [_dayPlan(title: 'SkyTree Day', completed: false)],
+        'pins': <dynamic>[],
+        'last_updated': Timestamp.fromDate(DateTime.utc(2023, 6, 15, 8, 30)),
+      });
+      return doc;
+    }
+
+    test('the trip owner can toggle a stop; it persists and echoes back', () async {
+      final doc = await seedIncompleteTrip();
+
+      final cubit = buildCubit(user: MockUser(uid: 'user-1'));
+      final loaded = _waitFor<LoadedItineraryState>(cubit);
+      // _trip()'s createdBy defaults to memberIds.first ('user-1') — the owner.
+      _TripStreamHarness().pushTripEvent(TripState.loaded(active: _trip('trip-1'), all: [_trip('trip-1')]));
+      final loadedState = await loaded;
+
+      expect(loadedState.canEdit, isTrue);
+      expect(loadedState.itinerary.dailyPlans.first.plan.locations.first.completed, isFalse);
+
+      final toggled = _waitFor<LoadedItineraryState>(
+        cubit,
+        where: (s) => s.itinerary.dailyPlans.first.plan.locations.first.completed,
+      );
+      await cubit.toggleLocationCompleted(0, 0);
+      await toggled;
+
+      expect(_firstStopCompleted(await doc.get()), isTrue);
+    });
+
+    test('a non-owner member cannot edit: canEdit is false and toggle is a no-op', () async {
+      final doc = await seedIncompleteTrip();
+
+      final cubit = buildCubit(user: MockUser(uid: 'user-1'));
+      final loaded = _waitFor<LoadedItineraryState>(cubit);
+      // Trip owned by user-2; user-1 is a member but not the owner.
+      final trip = _trip('trip-1', memberIds: ['user-2', 'user-1']);
+      _TripStreamHarness().pushTripEvent(TripState.loaded(active: trip, all: [trip]));
+      final loadedState = await loaded;
+
+      expect(loadedState.canEdit, isFalse);
+
+      await cubit.toggleLocationCompleted(0, 0);
+      await Future<void>.delayed(const Duration(milliseconds: 50));
+
+      expect(_firstStopCompleted(await doc.get()), isFalse);
+    });
+
+    test('toggle is a no-op for an out-of-range index', () async {
+      final doc = await seedIncompleteTrip();
+
+      final cubit = buildCubit(user: MockUser(uid: 'user-1'));
+      final loaded = _waitFor<LoadedItineraryState>(cubit);
+      _TripStreamHarness().pushTripEvent(TripState.loaded(active: _trip('trip-1'), all: [_trip('trip-1')]));
+      await loaded;
+
+      await cubit.toggleLocationCompleted(5, 0);
+      await cubit.toggleLocationCompleted(0, 9);
+      await Future<void>.delayed(const Duration(milliseconds: 50));
+
+      expect(_firstStopCompleted(await doc.get()), isFalse);
     });
   });
 }
