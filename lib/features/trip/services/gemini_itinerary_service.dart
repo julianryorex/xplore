@@ -27,6 +27,12 @@ class GeminiItineraryService implements ItineraryGenerator {
   final ItineraryGenerator _fallback;
   final Logger _logger;
 
+  /// Upper bound on a single Gemini call. A stalled request (no response, no
+  /// error) would otherwise hang the create flow indefinitely — and because the
+  /// flow blocks dismissal while generating, the user would be trapped. On
+  /// timeout we throw, get caught below, and fall back to the skeleton.
+  static const _requestTimeout = Duration(seconds: 25);
+
   static bool _initialised = false;
 
   /// Reads the key lazily so tests / unconfigured environments don't crash.
@@ -52,10 +58,12 @@ class GeminiItineraryService implements ItineraryGenerator {
     }
 
     try {
-      final response = await Gemini.instance.prompt(
-        parts: [Part.text(_buildPrompt(draft))],
-        generationConfig: GenerationConfig(temperature: 0.8, maxOutputTokens: 2048),
-      );
+      final response = await Gemini.instance
+          .prompt(
+            parts: [Part.text(_buildPrompt(draft))],
+            generationConfig: GenerationConfig(temperature: 0.8, maxOutputTokens: 2048),
+          )
+          .timeout(_requestTimeout);
       final output = response?.output;
       final plans = _parse(output, draft);
       if (plans.isEmpty) {

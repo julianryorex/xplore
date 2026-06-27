@@ -1,4 +1,5 @@
 import 'package:animations/animations.dart';
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:logger/logger.dart';
@@ -73,6 +74,11 @@ class RouteGenerator {
       case Paths.profile:
         return MaterialPageRoute(builder: (_) => const ProfilePage(), settings: settings);
       case Paths.dev:
+        // Defense-in-depth: the only entry point is kDebugMode-gated, but a
+        // deep link could still target /dev — never expose it in release.
+        if (!kDebugMode) {
+          return MaterialPageRoute(builder: (_) => const ErrorScreen(), settings: settings);
+        }
         return MaterialPageRoute(builder: (_) => const DevToolsPage(), settings: settings);
       case Paths.notifications:
         return MaterialPageRoute(builder: (_) => const NotificationsPage());
