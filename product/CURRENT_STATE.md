@@ -7,7 +7,9 @@ Snapshot of what exists in `lib/` vs. what product assumes. Update this doc when
 | Capability | Status | Notes |
 |------------|--------|-------|
 | User authentication | ✅ | Google Sign-In + `AuthCubit` hard gate; Apple deferred ([FEAT-001](./requests/done/FEAT-001-user-authentication.md), PR #73) |
-| Trip entity (foundation) | ✅ Partial | `TripCubit`, create-trip sheet, `activeTripId` plumbing ([FEAT-002](./requests/done/FEAT-002-trip-management.md), PR #79); multi-trip switcher UI deferred |
+| Trip entity (foundation) | ✅ Partial | `TripCubit`, `activeTripId` plumbing ([FEAT-002](./requests/done/FEAT-002-trip-management.md), PR #79); multi-trip switcher UI deferred |
+| Generative trip creation | ✅ Partial | Multi-step create flow → generated itinerary skeleton; Gemini engine behind it with deterministic fallback ([FEAT-007](./requests/FEAT-007-generative-trip-creation.md)); real `place_id` enrichment + editable review deferred |
+| Developer tools page | ✅ | Debug controls moved off Home into a `kDebugMode`-gated Profile entry ([FEAT-008](./requests/FEAT-008-dev-tools-page.md)) |
 | Dynamic user/trip IDs | ✅ | Cubits read uid from auth and trip scope from `TripCubit` ([FEAT-004](./requests/done/FEAT-004-remove-hardcoded-ids.md), PR #76) |
 | Trip invites & join flow | ✅ Partial | Link generation, deep-link routing through auth, join screen, invalid/expired/revoked handling, member-cap rule ([FEAT-003](./requests/done/FEAT-003-trip-invites.md), PR #96); universal-link **production delivery** on `xplore.olympuslabs.ai` deferred → GitHub #99 |
 | Itinerary cloud read path | ✅ Partial | `ItineraryCubit.loadForTrip(activeTripId)` listens to Firestore `itineraries/{tripId}`, Hive CE offline cache, lazy seed on missing doc ([FEAT-006](./requests/FEAT-006-itinerary-firebase-sync.md) read slice, PR #87); editing CRUD UI deferred |
@@ -41,8 +43,9 @@ Itinerary production reads no longer depend on demo JSON at runtime —
 
 Also outstanding:
 
-- New trips seed an **empty** cloud itinerary (`daily_plans: []`); Tokyo demo content not copied on create → FEAT-006 follow-up
-- Itinerary **editing CRUD** not built; gated on FEAT-024 organizer roles → FEAT-006 follow-up
+- ~~New trips seed an **empty** cloud itinerary~~ → resolved by FEAT-007: the create flow's "Generate" step seeds a day skeleton (deterministic, or Gemini when a key is set). The Tokyo demo is intentionally **not** copied into real trips.
+- Itinerary **editing CRUD** not built; gated on FEAT-024 organizer roles → FEAT-006 follow-up. FEAT-007 phase-1 review is read-only as a result.
+- Generated stops carry an **empty `place_id`** (Gemini can't mint valid Google ids); real Places enrichment is a FEAT-007 follow-up.
 - Mock onboarding placeholder only → **FEAT-005**
 - Trip invites / join flow shipped (FEAT-003, PR #96); only universal-link **production delivery** (AASA hosting + iOS Associated Domains on `xplore.olympuslabs.ai`) remains, deferred to launch + >100 users → GitHub #99
 - Gallery Storage rules updated to gate `gallery/{tripId}/**` by trip membership (FEAT-014); rules **deploy** (terraform/console) still pending
@@ -56,7 +59,7 @@ Also outstanding:
 |------|----------|
 | Itinerary editing CRUD | Read path only; organizer UI deferred (FEAT-006 / FEAT-024) |
 | Multi-trip switcher | Create-trip works; list/switch UI deferred (FEAT-002 gap) |
-| Gemini AI in UI | Dependency in `pubspec.yaml`; no cubit/screen integration |
+| Gemini AI in UI | ✅ Wired behind the create flow's Generate step (`GeminiItineraryService`, FEAT-007 phase 2); falls back to a deterministic skeleton with no key. Regeneration/credits gating (FEAT-021) and `place_id` enrichment still pending |
 | Gallery cloud fetch | `GalleryRepository` TODO: GCP fetch; cache-only on new device |
 | Push notifications (FCM) | `NotificationsPage` uses local sample data; no backend |
 | Background location | TODOs in `LocationCubit` |

@@ -28,11 +28,18 @@ class ItineraryService {
     });
   }
 
-  /// Writes a minimal starter itinerary for [tripId] when none exists yet.
+  /// Writes a starter itinerary for [tripId] when none exists yet, optionally
+  /// pre-populated with a generated [dailyPlans] skeleton (see
+  /// [ItineraryGenerator]). When [dailyPlans] is empty this is the original
+  /// empty seed.
   ///
   /// Idempotent: returns early if the document is already present so a
   /// create-time seed and a lazy read-time seed never clobber real data.
-  Future<void> seedItinerary(String tripId, List<String> memberIds) async {
+  Future<void> seedItinerary(
+    String tripId,
+    List<String> memberIds, {
+    List<DailyPlanModel> dailyPlans = const <DailyPlanModel>[],
+  }) async {
     final doc = _itineraries.doc(tripId);
     final snapshot = await doc.get();
     if (snapshot.exists) {
@@ -41,7 +48,7 @@ class ItineraryService {
 
     await doc.set(<String, dynamic>{
       'invitees': memberIds,
-      'daily_plans': <dynamic>[],
+      'daily_plans': dailyPlans.map((plan) => plan.toJson()).toList(),
       'pins': <dynamic>[],
       'last_updated': FieldValue.serverTimestamp(),
     });

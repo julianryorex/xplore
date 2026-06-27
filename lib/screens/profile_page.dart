@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:xplore/constants/constants.dart';
@@ -9,6 +10,7 @@ import 'package:xplore/core/layout_padding.dart';
 import 'package:xplore/features/auth/bloc/auth_cubit.dart';
 import 'package:xplore/features/auth/services/auth_service.dart';
 import 'package:xplore/features/profile/bloc/profile_cubit.dart';
+import 'package:xplore/routes.dart';
 
 class ProfilePage extends StatelessWidget {
   const ProfilePage({super.key});
@@ -43,6 +45,10 @@ class ProfilePage extends StatelessWidget {
                       const SizedBox(height: paddingUnit * 2),
                       const _SaveChangesButton(),
                       const SizedBox(height: paddingUnit),
+                      if (kDebugMode) ...[
+                        _DeveloperButton(onTap: () => context.push(Paths.dev)),
+                        const SizedBox(height: paddingUnit),
+                      ],
                       _SignOutButton(onTap: () => _confirmAndSignOut(context)),
                       const SizedBox(height: paddingUnit * 0.5),
                       _DeleteAccountButton(onTap: () => _confirmAndDeleteAccount(context)),
@@ -313,6 +319,34 @@ class _SaveChangesButton extends StatelessWidget {
           shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(radiusMd)),
         ),
         child: Text('Save Changes', style: context.pText.labelLarge?.copyWith(color: XploreColors.primaryBg)),
+      ),
+    );
+  }
+}
+
+/// Debug-only entry to the developer tools page (FEAT-008), rendered as a
+/// glass slab so it reads as a real, but understated, control.
+class _DeveloperButton extends StatelessWidget {
+  final VoidCallback onTap;
+
+  const _DeveloperButton({required this.onTap});
+
+  @override
+  Widget build(BuildContext context) {
+    return SizedBox(
+      width: double.infinity,
+      child: GlassSurface(
+        borderRadius: radiusMd,
+        padding: const EdgeInsets.symmetric(vertical: paddingUnit * 1.25),
+        onTap: onTap,
+        child: Row(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Icon(Icons.terminal_rounded, size: 18, color: XploreColors.subtleText),
+            const SizedBox(width: paddingUnit * 0.5),
+            Text('Developer', style: context.pText.labelMedium?.copyWith(color: XploreColors.subtleText)),
+          ],
+        ),
       ),
     );
   }

@@ -36,33 +36,37 @@ addresses an issue, use `Related: #N` instead — never `Closes`. When starting
 from a FEAT spec, run `gh issue list --state open --limit 100` and link the
 matching epic or sub-issue before `gh pr create`.
 
+Every PR body must also include a **step-by-step verification workflow** under the
+template's "Step-by-step verification workflow" heading: numbered, reproducible
+steps a reviewer can follow to confirm the feature actually works (happy path plus
+the key edge cases this PR touches), noting the device/target used and the expected
+result at each step. A green `make verify` is necessary but not sufficient — the
+workflow proves the behavior, not just that the tests pass.
+
 ### Toolchain / setup notes (non-obvious)
 - Use **FVM-pinned Flutter 3.44.0 (Dart 3.12)**. This matches `.fvmrc`,
   `pubspec.yaml`, and `pubspec.lock` (`flutter >=3.44.0`, `dart >=3.12.0`).
-  The revision in `.metadata` (3.13.9 / Dart 3.1.5) is **stale** and won't
-  resolve deps. Run `fvm install` and `fvm use 3.44.0 --skip-pub-get` once,
+  Run `fvm install` and `fvm use 3.44.0 --skip-pub-get` once,
   then use `make` targets or `fvm flutter` / `fvm dart` for ad hoc commands.
+  First-time repo setup: `make init` (clean, get, gen, `.env` stub, `flutter doctor`).
 - `lib/generated/` (Freezed/json codegen) is **git-ignored and required**.
-  Run `make gen` / `fvm dart run build_runner build` before
-  `fvm flutter analyze`, `fvm flutter test`, or any build, or you'll get missing
-  `part` file errors. The
-  startup update script handles this automatically. Note: local storage uses
+  Run `make gen` before `make analyze`, `make test`, or any build, or you'll get missing
+  `part` file errors. Note: local storage uses
   **Hive CE (`hive_ce` / `hive_ce_flutter`)**, the maintained community fork of
   the now-discontinued `hive`; the on-disk format and `TypeAdapter` API are
   compatible. `hive_generator` was never adopted — Hive CE `TypeAdapter`s are
   hand-written in
-  `lib/features/gallery/models/image_models_adapters.dart`. Also, build_runner
-  ≥2.15 ignores the old `--delete-conflicting-outputs` flag (harmless no-op).
-- `assets/.env` is **git-ignored and required** by `fvm flutter run` /
+  `lib/features/gallery/models/image_models_adapters.dart`.
+- `assets/.env` is **git-ignored and required** for `fvm flutter run` /
   `fvm flutter build`
-  (it's a declared asset in `pubspec.yaml`). The update script creates a stub
-  with empty API keys and `DISABLE_REALTIME_LOCATIONS=true`. Fill in real
-  `GEMINI_API_KEY` / Firebase / Maps keys for full functionality.
+  (it's a declared asset in `pubspec.yaml`). Run `make init` or
+  `cp assets/.env.example assets/.env`. Fill in real
+  `GEMINI_API_KEY` / Firebase keys for full functionality. The Google Maps key is
+  supplied separately at build time — see `docs/DEVELOPMENT.md`.
 
 ### Running the app — important limitation
 - The app **targets iOS/macOS** and **cannot run as a GUI on this Linux VM**.
-  The web target now *compiles* (`fvm flutter build web` succeeds after the
-  Firebase v4/v13 upgrade), but it **crashes at runtime**:
+  The web target compiles (`fvm flutter build web` succeeds), but it **crashes at runtime**:
   `lib/firebase_options.dart` only configures iOS and macOS, and on web/Linux
   `defaultTargetPlatform` resolves to `linux`, so
   `DefaultFirebaseOptions.currentPlatform` throws `UnsupportedError` and
@@ -71,10 +75,10 @@ matching epic or sub-issue before `gh pr create`.
   throw blocks linux/windows/Android.
 - To run the real app, use a **Mac with Xcode + iOS simulator** (see README)
   with valid Firebase/Maps/Gemini keys in `assets/.env`. Note `flutter_image_compress`
- was removed (the iOS 26 SDK dropped the AssetsLibrary framework it relied on);
- gallery **thumbnails** are now compressed with the pure-Dart `image` package
- (`lib/features/gallery/services/image_compressor.dart`), while the
- **full-resolution original is still uploaded** to Storage for full-detail viewing.
+  was removed (the iOS 26 SDK dropped the AssetsLibrary framework it relied on);
+  gallery **thumbnails** are now compressed with the pure-Dart `image` package
+  (`lib/features/gallery/services/image_compressor.dart`), while the
+  **full-resolution original is still uploaded** to Storage for full-detail viewing.
 - On Linux the practical dev loop is `make verify` (or `make gen` →
   `make analyze` → `make test`). Core, Firebase-free logic
   can be exercised headlessly — e.g. `ItineraryCubit.loadDemoItinerary()` loads
@@ -82,11 +86,3 @@ matching epic or sub-issue before `gh pr create`.
   `test/features/itinerary/itinerary_demo_smoke_test.dart` and
   `test/features/itinerary/itinerary_card_golden_test.dart`
   (the latter renders real UI widgets to a PNG via `--update-goldens`).
-
-### Pre-existing issues (not environment problems)
-- `test/widget_test.dart` is the default Flutter **counter** template test and
-  **fails** — the app has no counter. The README roadmap lists "Test suite" as a
-  TODO.
-- `pubspec.yaml` declares `assets/icons/` which doesn't exist; this prints a
-  non-fatal `unable to find directory entry` message during test/run/build and
-  an analyze warning.
