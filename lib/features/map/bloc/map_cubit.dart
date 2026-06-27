@@ -13,7 +13,7 @@ part '../../../generated/features/map/bloc/map_cubit.freezed.dart';
 part 'map_states.dart';
 
 // TODO: Transit
-// TODO: Add neighborhood polylines (watch dog like)
+// TODO: Add neighborhood polylines (Watch Dogs-like)
 // TODO: InfoWindow with last updated
 
 class MapCubit extends Cubit<MapStates> {
