@@ -58,7 +58,7 @@ class GalleryRepository {
     }
   }
 
-  /// Caches the actual non-compresed image in hive
+  /// Caches the actual non-compressed image in hive
   Future<void> cacheHighResImage(String id, File file) async {
     final boxName = _highResBoxName;
     if (boxName == null) return;
