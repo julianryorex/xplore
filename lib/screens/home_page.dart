@@ -77,13 +77,13 @@ class HomePage extends StatelessWidget {
                         scrollDirection: Axis.horizontal,
                         child: Row(
                           children: [
-                            ...itinerary.dailyPlans.map(
-                              (dailyPlan) => Padding(
+                            ...itinerary.dailyPlans.indexed.map(
+                              (entry) => Padding(
                                 padding: const EdgeInsets.only(right: 10),
                                 child: SizedBox(
                                   width: ItineraryCard.width,
                                   height: ItineraryCard.height,
-                                  child: ItineraryCard(dailyPlan: dailyPlan),
+                                  child: ItineraryCard(dailyPlan: entry.$2, dayIndex: entry.$1),
                                 ),
                               ),
                             ),

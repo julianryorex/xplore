@@ -95,6 +95,13 @@ service cloud.firestore {
         && request.auth.uid in get(/databases/$(database)/documents/trips/$(tripId)).data.memberIds;
     }
 
+    // Itinerary editing is owner-only this pass (FEAT-006); co-editor/organizer
+    // roles arrive with FEAT-024. Reads stay member-wide (see the read rule).
+    function isTripOwner(tripId) {
+      return isSignedIn()
+        && get(/databases/$(database)/documents/trips/$(tripId)).data.createdBy == request.auth.uid;
+    }
+
     function itineraryFields() {
       return ['invitees', 'daily_plans', 'pins', 'last_updated'];
     }
@@ -106,6 +113,18 @@ service cloud.firestore {
         && data.daily_plans is list
         && data.pins is list
         && data.last_updated == request.time;
+    }
+
+    // Owner-only itinerary edit (FEAT-006): the trip creator may rewrite the
+    // plan body, but `invitees` is immutable here (membership changes go through
+    // the trip doc) and `last_updated` must be the server time.
+    function validItineraryUpdate(tripId) {
+      return isTripOwner(tripId)
+        && request.resource.data.keys().hasOnly(itineraryFields())
+        && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['daily_plans', 'pins', 'last_updated'])
+        && request.resource.data.daily_plans is list
+        && request.resource.data.pins is list
+        && request.resource.data.last_updated == request.time;
     }
 
     function validTripUpdate() {
@@ -229,13 +248,16 @@ service cloud.firestore {
     }
 
     // One itinerary document per trip. Trip members read; members may seed a
-    // starter document (create-time or lazy on first load). Editing CRUD is
-    // deferred (FEAT-006 follow-up / FEAT-024), so updates stay denied for now.
+    // starter document (create-time or lazy on first load). Editing is
+    // owner-only for now (FEAT-006; co-editor roles → FEAT-024). Whole-itinerary
+    // delete isn't a user action — days/stops are edited via array updates.
     match /itineraries/{tripId} {
       allow read: if isTripMember(tripId);
 
       allow create: if isTripMember(tripId)
         && validItinerarySeed(request.resource.data);
+
+      allow update: if validItineraryUpdate(tripId);
     }
 
     match /{document=**} {
