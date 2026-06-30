@@ -40,11 +40,11 @@ class LocationCubit extends Cubit<LocationState> with TripStreamMixin {
     updateMyLocation();
 
     if (dotenv.env['DISABLE_REALTIME_LOCATIONS'].toBool()) {
-      _logger.i('Disabled realtime location update');
+      _logger.i('Disabled real-time location updates');
       return;
     }
 
-    _logger.i('Enabled realtime location update');
+    _logger.i('Enabled real-time location updates');
     startTimer();
   }
 
