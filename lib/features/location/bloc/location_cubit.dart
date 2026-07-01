@@ -27,7 +27,7 @@ class LocationCubit extends Cubit<LocationState> with TripStreamMixin {
   StreamSubscription<TripState>? _tripSubscription;
   String? _activeTripId;
 
-  /// Timer where every min user location is updated & fetched to/from the cloud
+  /// Timer that periodically updates and fetches user locations from the cloud.
   Timer? updateLocationTimer;
 
   StreamSubscription<DatabaseEvent>? locationSubscription;
@@ -104,7 +104,7 @@ class LocationCubit extends Cubit<LocationState> with TripStreamMixin {
 
   @visibleForTesting
   Future<void> timerCallback(Timer timer) async {
-    // every 5 minutes, I will update my location and fetch all locations within the itinerary
+    // Refresh my location, then fetch all locations for the active trip.
 
     DatabaseReference locationRef = FirebaseDatabase.instance.ref('locations/$_tripScopeId');
 
