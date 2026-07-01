@@ -6,8 +6,8 @@ import 'package:logger/logger.dart';
 import 'package:xplore/features/gallery/models/image_models.dart';
 import 'package:xplore/utilities/utilities.dart';
 
-/// Fetches images from either cache or GCP
-/// TODO: add GCP Storage fetch
+/// Reads and writes cached gallery images for the active trip.
+/// Cloud uploads/downloads are coordinated by [GalleryCubit].
 class GalleryRepository {
   late final HiveInterface _hive;
   late final Logger _logger;
