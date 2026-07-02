@@ -22,7 +22,7 @@ part 'gallery_states.dart';
 
 // TODOs:
 // - Support selection & compression w/ video
-// - Implement GCP fetches/downloads after fetching cache
+// - Implement Firebase Storage fetches/downloads after fetching cache
 class GalleryCubit extends Cubit<GalleryState> with TripStreamMixin {
   late final Logger _logger;
   late final GalleryRepository repository;
@@ -55,7 +55,7 @@ class GalleryCubit extends Cubit<GalleryState> with TripStreamMixin {
   //! Public Methods
   //! -------------------------------------------------------------------------
 
-  /// Uploads user selected photo gallery images to GCP.
+  /// Uploads user selected photo gallery images to Firebase Storage.
   /// Each image goes through the following process:
   /// 1. Convert Xfile (image) to file,
   /// 2. Generate a downscaled/compressed thumbnail (`lowResImage`) for fast
@@ -64,7 +64,7 @@ class GalleryCubit extends Cubit<GalleryState> with TripStreamMixin {
   /// 4. Save to state
   /// 5. Cache in Hive
   /// 6. Cache high-res image in Hive
-  /// 7. Upload high-res image to GCP
+  /// 7. Upload high-res image to Firebase Storage
   Future<void> uploadToGallery() async {
     final picker = ImagePicker();
     final pickedImagesFuture = picker.pickMultiImage();
