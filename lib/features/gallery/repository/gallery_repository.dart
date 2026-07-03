@@ -6,8 +6,8 @@ import 'package:logger/logger.dart';
 import 'package:xplore/features/gallery/models/image_models.dart';
 import 'package:xplore/utilities/utilities.dart';
 
-/// Fetches images from either cache or GCP
-/// TODO: add GCP Storage fetch
+/// Fetches images from either cache or Firebase Storage
+/// TODO: add Firebase Storage fetch
 class GalleryRepository {
   late final HiveInterface _hive;
   late final Logger _logger;
