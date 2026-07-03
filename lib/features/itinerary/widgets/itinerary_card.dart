@@ -1,5 +1,3 @@
-import 'dart:developer';
-
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:xplore/constants/constants.dart';
@@ -167,10 +165,7 @@ class _SaveButton extends StatelessWidget {
       borderRadius: BorderRadius.circular(radiusSm),
       clipBehavior: Clip.hardEdge,
       child: InkWell(
-        onTap: () {
-          HapticFeedback.lightImpact();
-          log('liked!');
-        },
+        onTap: HapticFeedback.lightImpact,
         child: Padding(
           padding: const EdgeInsets.symmetric(horizontal: paddingUnit * 0.75, vertical: paddingUnit / 2),
           child: Row(
