@@ -57,7 +57,7 @@ class GalleryCubit extends Cubit<GalleryState> with TripStreamMixin {
 
   /// Uploads user selected photo gallery images to Firebase Storage.
   /// Each image goes through the following process:
-  /// 1. Convert Xfile (image) to file,
+  /// 1. Convert XFile (image) to file,
   /// 2. Generate a downscaled/compressed thumbnail (`lowResImage`) for fast
   ///    local display — the full-resolution original is left untouched.
   /// 3. Convert file to `ImageModel` (w/ thumbnail)
