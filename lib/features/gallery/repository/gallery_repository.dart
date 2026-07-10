@@ -6,7 +6,7 @@ import 'package:logger/logger.dart';
 import 'package:xplore/features/gallery/models/image_models.dart';
 import 'package:xplore/utilities/utilities.dart';
 
-/// Fetches images from either cache or Firebase Storage
+/// Manages cached gallery images for the active trip.
 /// TODO: add Firebase Storage fetch
 class GalleryRepository {
   late final HiveInterface _hive;
