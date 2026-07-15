@@ -4,7 +4,7 @@
 // real `loadDemoLocations()` which loads `assets/demo/locations.json` and parses
 // each entry via `LocationModel.fromJson`, confirming codegen + the asset shape
 // line up. `close() completes ...` is a regression test for the disposal crash
-// where the `late` timer field was cancelled while uninitialised.
+// where the `late` timer field was cancelled while uninitialized.
 //
 // `DISABLE_REALTIME_LOCATIONS` is set so the constructor skips the periodic
 // timer, and an unauthenticated service makes the eager `updateMyLocation()`
@@ -53,7 +53,7 @@ void main() {
 
       // With realtime disabled the constructor returns before `startTimer()`,
       // so `updateLocationTimer` is never assigned. `close()` must not throw a
-      // LateInitializationError cancelling the uninitialised timer.
+      // LateInitializationError cancelling the uninitialized timer.
       await expectLater(cubit.close(), completes);
     });
   });
