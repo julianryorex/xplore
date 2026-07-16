@@ -73,9 +73,6 @@ class GalleryCubit extends Cubit<GalleryState> with TripStreamMixin {
     emit(state.copyWith(status: EBlocStatus.loading));
     final pickedImages = await pickedImagesFuture;
 
-    // TODO: support compression w/ video
-    // final pickedImages = await picker.pickMultipleMedia();
-
     if (pickedImages.isEmpty) {
       emit(state.copyWith(status: EBlocStatus.loaded));
       return;
