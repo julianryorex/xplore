@@ -77,7 +77,7 @@ class MarkerService {
       TaskSnapshot taskSnapshot = await uploadTask;
       String downloadURL = await taskSnapshot.ref.getDownloadURL();
 
-      _logger.d('Updated marker icon in GCP');
+      _logger.d('Updated marker icon in Firebase Storage');
       return downloadURL;
     } catch (e) {
       return Future.error(e);
