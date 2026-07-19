@@ -11,7 +11,7 @@ import 'package:logger/logger.dart';
 
 /// gets the screen width of the current device
 ///
-/// (optional) `percent` : percent of the height
+/// (optional) `percent` : percent of the width
 ///
 /// (ex: `percent: 0.3` is 30%)
 double getScreenWidth({required BuildContext context, double? percent}) {
