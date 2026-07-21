@@ -92,7 +92,7 @@ class _BeforeGenerate extends StatelessWidget {
                 value: '${draft.durationDays} ${draft.durationDays == 1 ? 'day' : 'days'}',
               ),
               const _SummaryDivider(),
-              _SummaryRow(icon: Icons.groups_rounded, label: 'Travelling', value: draft.groupKind.label),
+              _SummaryRow(icon: Icons.groups_rounded, label: 'Traveling', value: draft.groupKind.label),
               const _SummaryDivider(),
               _SummaryRow(icon: Icons.interests_rounded, label: 'Vibe', value: interests),
               const _SummaryDivider(),
@@ -417,7 +417,7 @@ class _InviteStepState extends State<InviteStep> {
         const SizedBox(height: paddingUnit * 0.5),
         Text(
           solo
-              ? 'All set. Travelling with others later? You can invite them anytime from the trip.'
+              ? 'All set. Traveling with others later? You can invite them anytime from the trip.'
               : 'Share a link so your crew can join. No rush — you can invite anytime later too.',
           style: context.pText.bodyMedium?.copyWith(color: XploreColors.mutedText),
         ),
