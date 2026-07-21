@@ -21,7 +21,7 @@ part '../../../generated/features/gallery/bloc/gallery_cubit.freezed.dart';
 part 'gallery_states.dart';
 
 // TODOs:
-// - Support selection & compression w/ video
+// - Support selection & compression with video
 // - Implement Firebase Storage fetches/downloads after fetching cache
 class GalleryCubit extends Cubit<GalleryState> with TripStreamMixin {
   late final Logger _logger;
@@ -60,7 +60,7 @@ class GalleryCubit extends Cubit<GalleryState> with TripStreamMixin {
   /// 1. Convert XFile (image) to file,
   /// 2. Generate a downscaled/compressed thumbnail (`lowResImage`) for fast
   ///    local display — the full-resolution original is left untouched.
-  /// 3. Convert file to `ImageModel` (w/ thumbnail)
+  /// 3. Convert file to `ImageModel` (with thumbnail)
   /// 4. Save to state
   /// 5. Cache in Hive
   /// 6. Cache high-res image in Hive
