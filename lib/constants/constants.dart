@@ -50,6 +50,7 @@ const navBarHeight = 84.0;
 // Default backdrop blur strength for glass surfaces (logical px).
 const glassBlur = 18.0;
 
-// Demo fallback for cubits that have not yet received a TripStreamMixin event
-// and for static demo itinerary/location data.
+// Identifier for the static demo itinerary/location fixtures. Used ONLY by the
+// test-only `@visibleForTesting` demo loaders (`LocationCubit.loadDemoLocations`
+// and `ItineraryCubit.loadDemoItinerary`) — no runtime path falls back to this.
 const itineraryId = 'ph4kd';
