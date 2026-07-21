@@ -35,13 +35,13 @@ void main() {
             child: Row(
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
-                for (final plan in dailyPlans)
+                for (final (index, plan) in dailyPlans.indexed)
                   Padding(
                     padding: const EdgeInsets.all(paddingUnit),
                     child: SizedBox(
                       width: ItineraryCard.width,
                       height: ItineraryCard.height,
-                      child: ItineraryCard(dailyPlan: plan),
+                      child: ItineraryCard(dailyPlan: plan, dayIndex: index),
                     ),
                   ),
               ],

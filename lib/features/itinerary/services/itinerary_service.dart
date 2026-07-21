@@ -53,4 +53,19 @@ class ItineraryService {
       'last_updated': FieldValue.serverTimestamp(),
     });
   }
+
+  /// Overwrites the embedded `daily_plans` array for [tripId] and bumps
+  /// `last_updated`. Every itinerary edit (toggle completion, add/edit/remove a
+  /// day or stop) funnels through here as a whole-array write — the doc is small
+  /// and low-contention, so last-write-wins is acceptable (see FEAT-006 plan).
+  ///
+  /// Uses `update` (not `set`), so a missing document throws rather than being
+  /// silently re-created without its `invitees`/`pins`; the seed path is the
+  /// only creator.
+  Future<void> writeDailyPlans(String tripId, List<DailyPlanModel> dailyPlans) async {
+    await _itineraries.doc(tripId).update(<String, dynamic>{
+      'daily_plans': dailyPlans.map((plan) => plan.toJson()).toList(),
+      'last_updated': FieldValue.serverTimestamp(),
+    });
+  }
 }

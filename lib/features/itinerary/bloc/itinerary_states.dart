@@ -30,5 +30,9 @@ class ErrorItineraryState extends ItineraryStates {
 abstract class LoadedItineraryState extends ItineraryStates with _$LoadedItineraryState {
   const LoadedItineraryState._();
 
-  const factory LoadedItineraryState({required ItineraryModel itinerary}) = _LoadedItineraryState;
+  /// [canEdit] is true only for the trip owner (`trips/{tripId}.createdBy`).
+  /// Editing is owner-only this pass (co-editor roles → FEAT-024); the UI hides
+  /// all edit affordances when false and the cubit's mutators no-op.
+  const factory LoadedItineraryState({required ItineraryModel itinerary, @Default(false) bool canEdit}) =
+      _LoadedItineraryState;
 }

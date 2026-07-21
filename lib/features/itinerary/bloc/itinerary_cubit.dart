@@ -48,6 +48,15 @@ class ItineraryCubit extends Cubit<ItineraryStates> with TripStreamMixin, AuthCl
   StreamSubscription<TripState>? _tripSubscription;
   StreamSubscription<ItineraryModel?>? _itinerarySubscription;
   String? _activeTripId;
+  String? _activeTripCreatedBy;
+
+  /// Editing is owner-only this pass: only the active trip's creator may write.
+  /// Guards both the in-app UI affordances ([LoadedItineraryState.canEdit]) and
+  /// the mutators below, on top of the authoritative Firestore rule.
+  bool get _canEdit {
+    final uid = _authService?.currentUid;
+    return uid != null && uid == _activeTripCreatedBy;
+  }
 
   /// Lazily created so the demo/test path never touches Firebase.
   ItineraryService get _itineraryService => _service ??= ItineraryService();
@@ -66,7 +75,7 @@ class ItineraryCubit extends Cubit<ItineraryStates> with TripStreamMixin, AuthCl
 
     final cached = await _repository.loadFromCache(tripId);
     if (cached != null && _activeTripId == tripId && state is! LoadedItineraryState) {
-      _safeEmit(LoadedItineraryState(itinerary: cached));
+      _safeEmit(LoadedItineraryState(itinerary: cached, canEdit: _canEdit));
     }
 
     _itinerarySubscription = _itineraryService
@@ -105,8 +114,47 @@ class ItineraryCubit extends Cubit<ItineraryStates> with TripStreamMixin, AuthCl
       return;
     }
 
-    _safeEmit(LoadedItineraryState(itinerary: itinerary));
+    _safeEmit(LoadedItineraryState(itinerary: itinerary, canEdit: _canEdit));
     await _repository.cacheItinerary(tripId, itinerary);
+  }
+
+  /// Toggles the `completed` flag on the stop at [locationIndex] within the day
+  /// at [dayIndex]. Owner-only: no-ops for non-owners and when no itinerary is
+  /// loaded. Writes the whole `daily_plans` array to Firestore only — the
+  /// snapshot listener echoes the committed value back into state + cache (the
+  /// cubit never writes Hive directly; see the FEAT-006 sync contract).
+  Future<void> toggleLocationCompleted(int dayIndex, int locationIndex) async {
+    final current = state;
+    final tripId = _activeTripId;
+    if (current is! LoadedItineraryState || tripId == null) {
+      return;
+    }
+    if (!_canEdit) {
+      _logger.w('Ignoring itinerary edit: not the trip owner');
+      return;
+    }
+
+    final plans = current.itinerary.dailyPlans;
+    if (dayIndex < 0 || dayIndex >= plans.length) {
+      return;
+    }
+    final day = plans[dayIndex];
+    final locations = day.plan.locations;
+    if (locationIndex < 0 || locationIndex >= locations.length) {
+      return;
+    }
+
+    final location = locations[locationIndex];
+    final updatedLocations = [...locations]..[locationIndex] = location.copyWith(completed: !location.completed);
+    final updatedPlans = [...plans]..[dayIndex] = day.copyWith(plan: day.plan.copyWith(locations: updatedLocations));
+
+    try {
+      await _itineraryService.writeDailyPlans(tripId, updatedPlans);
+    } catch (err) {
+      // Firestore offline persistence queues the write, so a hard failure here
+      // is rare; the listener re-emits the server truth either way.
+      _logger.w('Failed to toggle stop completion for $tripId: $err');
+    }
   }
 
   /// Best-effort lazy seed; the listener re-fires with the written doc.
@@ -125,6 +173,7 @@ class ItineraryCubit extends Cubit<ItineraryStates> with TripStreamMixin, AuthCl
   void _onTripStateChanged(TripState tripState) {
     switch (tripState) {
       case TripLoaded(:final active):
+        _activeTripCreatedBy = active.createdBy;
         unawaited(loadForTrip(active.id));
       case TripEmpty() || TripError():
         _clear();
@@ -135,6 +184,7 @@ class ItineraryCubit extends Cubit<ItineraryStates> with TripStreamMixin, AuthCl
 
   void _clear() {
     _activeTripId = null;
+    _activeTripCreatedBy = null;
     unawaited(_itinerarySubscription?.cancel());
     _itinerarySubscription = null;
     _safeEmit(const EmptyItineraryState());
