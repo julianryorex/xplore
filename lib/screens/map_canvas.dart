@@ -85,7 +85,7 @@ class _MapCanvasState extends State<MapCanvas> {
                                 size: 100,
                                 image: state.profilePicture != null ? Image.memory(state.profilePicture!).image : null,
                               ),
-                              const Text('Hello'),
+                              const Text('Set up your map marker'),
                               OutlinedButton(
                                 onPressed: () async {
                                   final mapCubit = context.read<MapCubit>();
@@ -100,7 +100,7 @@ class _MapCanvasState extends State<MapCanvas> {
                                     navigator.pop();
                                   }
                                 },
-                                child: const Text('Sounds good!'),
+                                child: const Text('Use my profile photo'),
                               ),
                             ],
                           ),
