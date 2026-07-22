@@ -45,7 +45,7 @@ class GalleryRepository {
     return imgMap;
   }
 
-  /// Caches `ImageModel` to Hive (w/ compressed image)
+  /// Caches `ImageModel` metadata and thumbnail bytes to Hive.
   Future<void> cacheMetadata(ImageModel imageModel) async {
     final boxName = _metadataBoxName;
     if (boxName == null) return;
