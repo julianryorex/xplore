@@ -53,7 +53,7 @@ class GalleryRepository {
       final box = await _hive.openBox(boxName);
       await box.put(imageModel.id, imageModel);
     } catch (err) {
-      Future.error(err);
+      rethrow;
     }
   }
 
@@ -67,7 +67,7 @@ class GalleryRepository {
       await box.put(id, highResImage);
       _logger.d('Cached high resolution image $id');
     } catch (err) {
-      Future.error(err);
+      rethrow;
     }
   }
 
@@ -91,7 +91,7 @@ class GalleryRepository {
       await box2.deleteFromDisk();
       _logger.d('Deleted boxes in Hive');
     } catch (err) {
-      Future.error(err);
+      rethrow;
     }
   }
 }
