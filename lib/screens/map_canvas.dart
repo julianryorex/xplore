@@ -60,7 +60,7 @@ class _MapCanvasState extends State<MapCanvas> {
     final headerZone = topInset + headerTopGap + Header.padding;
 
     // Pure content for the RootShell's IndexedStack: the surrounding Scaffold,
-    // background colour and floating glass nav bar live in RootShell. The map
+    // background color and floating glass nav bar live in RootShell. The map
     // runs full-bleed so the glass nav bar has live content to refract.
     return Stack(
       children: [
@@ -147,7 +147,7 @@ class _MapCanvasState extends State<MapCanvas> {
             onTap: recenterToCurrentLocation,
           ),
         ),
-        // Top scrim: blends the status-bar area into the base colour and keeps
+        // Top scrim: blends the status-bar area into the base color and keeps
         // the header legible over the bright, busy map underneath.
         Positioned(
           top: 0,
