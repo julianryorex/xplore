@@ -138,7 +138,7 @@ class AuthService {
     }
   }
 
-  /// Interactive Sign in with Apple -> Firebase credential -> `users/{uid}`
+  /// Interactive Sign in with Apple flow -> Firebase credential -> `users/{uid}`
   /// upsert. The primary provider (App Store policy mandates Apple when offering
   /// third-party sign-in on iOS).
   ///
