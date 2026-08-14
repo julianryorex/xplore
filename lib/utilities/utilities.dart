@@ -70,7 +70,7 @@ Future<ByteData> loadAssetAsBytes(String pathToAsset) async {
   }
 }
 
-/// Logs are always enabled unless it's in release mode - then only info/warning/error logs are captured
+/// Logs are always enabled unless the app is in release mode; then only info/warning/error logs are captured.
 Logger createLogger(String pref) {
   final prefix = '[$pref]';
   return Logger(
