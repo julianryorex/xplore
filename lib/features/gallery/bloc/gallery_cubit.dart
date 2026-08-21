@@ -206,7 +206,7 @@ class GalleryCubit extends Cubit<GalleryState> with TripStreamMixin {
     }
   }
 
-  /// Deletes all gallery metadata & high resolution images
+  /// Deletes all gallery metadata & high-resolution images
   ///
   /// Only use for testing
   Future<void> deleteAll() async {
