@@ -107,7 +107,7 @@ class GalleryCubit extends Cubit<GalleryState> with TripStreamMixin {
       await repository.cacheMetadata(imageModel); // cache imageModel meta + lowres in Hive
       repository.cacheHighResImage(imageModel.id, file); // cache imageModel high res in Hive
 
-      // Upload image to google cloud and update image loading status for the UI
+      // Upload image to Google Cloud and update image loading status for the UI
       uploadImage(file, imageModel.id)
           .then((downloadUrl) {
             _logger.d('Image Uploaded');
