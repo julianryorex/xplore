@@ -4,7 +4,7 @@ import 'package:xplore/constants/constants.dart';
 
 /// Round Button that is used on the Map Canvas
 ///
-/// `icon`: Icon of the button type [IonData]
+/// `icon`: Icon of the button type [Icon]
 ///
 /// `onTapCallback`: Callback of the Map Button
 ///
