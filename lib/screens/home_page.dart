@@ -66,7 +66,7 @@ class HomePage extends StatelessWidget {
                       ),
                       ErrorItineraryState() => ErrorState(
                         title: 'Unable to load itinerary',
-                        message: 'Something went wrong. Please try again later',
+                        message: 'Something went wrong. Please try again later.',
                         onRetry: () => context.read<ItineraryCubit>().retry(),
                       ),
                       LoadedItineraryState(:final itinerary) when itinerary.dailyPlans.isEmpty =>
