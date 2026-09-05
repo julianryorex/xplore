@@ -33,26 +33,26 @@ class GeminiItineraryService implements ItineraryGenerator {
   /// timeout we throw, get caught below, and fall back to the skeleton.
   static const _requestTimeout = Duration(seconds: 25);
 
-  static bool _initialised = false;
+  static bool _initialized = false;
 
   /// Reads the key lazily so tests / unconfigured environments don't crash.
   String get _apiKey => dotenv.maybeGet('GEMINI_API_KEY')?.trim() ?? '';
 
-  bool _ensureInitialised() {
+  bool _ensureInitialized() {
     final key = _apiKey;
     if (key.isEmpty) {
       return false;
     }
-    if (!_initialised) {
+    if (!_initialized) {
       Gemini.init(apiKey: key);
-      _initialised = true;
+      _initialized = true;
     }
     return true;
   }
 
   @override
   Future<List<DailyPlanModel>> generate(TripDraft draft) async {
-    if (!_ensureInitialised()) {
+    if (!_ensureInitialized()) {
       _logger.d('No GEMINI_API_KEY configured; using deterministic skeleton.');
       return _fallback.generate(draft);
     }
