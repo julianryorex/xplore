@@ -386,7 +386,7 @@ class _DeleteAccountButton extends StatelessWidget {
   Widget build(BuildContext context) {
     return TextButton(
       onPressed: onTap,
-      child: Text('Delete Account', style: context.pText.labelMedium?.copyWith(color: XploreColors.error)),
+      child: Text('Delete account', style: context.pText.labelMedium?.copyWith(color: XploreColors.error)),
     );
   }
 }
