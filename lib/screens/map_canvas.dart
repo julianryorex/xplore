@@ -21,7 +21,7 @@ class MapCanvas extends StatefulWidget {
 }
 
 class _MapCanvasState extends State<MapCanvas> {
-  /// Key that checks whether a rerender is necessary
+  /// Key that checks whether a re-render is necessary.
   late Object redrawKey;
 
   /// Controller for [GoogleMap]
