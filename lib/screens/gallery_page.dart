@@ -275,7 +275,7 @@ class _GalleryEmptyState extends StatelessWidget {
             Icon(Icons.photo_library_outlined, size: 40, color: XploreColors.subtleText),
             const SizedBox(height: paddingUnit),
             Text(
-              'Start uploading pictures to share with others!',
+              'Start uploading photos to share with others!',
               textAlign: TextAlign.center,
               style: context.pText.bodyMedium?.copyWith(color: XploreColors.mutedText),
             ),
