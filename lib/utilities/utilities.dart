@@ -45,7 +45,7 @@ Future<BitmapDescriptor> getMarkerIconFromBytes(Uint8List iconBytes) async {
 
 void unfocusKeyboard() => WidgetsBinding.instance.focusManager.primaryFocus?.unfocus();
 
-Future<void> wait(int milliseconds) async => await Future.delayed(Duration(milliseconds: milliseconds));
+Future<void> wait(int milliseconds) => Future.delayed(Duration(milliseconds: milliseconds));
 
 Future<T> loadJsonAsset<T>(String pathToAsset) async {
   try {
