@@ -9,7 +9,7 @@ import 'package:xplore/constants/constants.dart';
 /// Renders a translucent, backdrop-blurred surface with a hairline rim border
 /// and a soft specular highlight along the top edge — the same recipe Apple's
 /// Liquid Glass uses for the floating control layer. Whatever sits *behind* the
-/// surface is blurred and tinted, so place these above colourful content
+/// surface is blurred and tinted, so place these above colorful content
 /// (see [AmbientBackground]) for the effect to read.
 ///
 /// Keep glass for controls / floating chrome; content (lists, hero cards)

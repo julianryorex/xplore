@@ -1,9 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:xplore/constants/constants.dart';
 
-/// Paints the app's base colour plus a few soft, brand-tinted radial glows.
+/// Paints the app's base color plus a few soft, brand-tinted radial glows.
 ///
-/// This gives the [GlassSurface] layer something colourful to refract and blur,
+/// This gives the [GlassSurface] layer something colorful to refract and blur,
 /// which is what makes the liquid-glass material read as glass rather than a
 /// flat translucent panel. Purely decorative and non-interactive.
 class AmbientBackground extends StatelessWidget {

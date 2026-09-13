@@ -6,7 +6,7 @@ import 'package:xplore/constants/theme.dart';
 
 /// Shared widget-test harness, the xplore analogue of the reference repo's
 /// `base_widget_mock`. Wraps [child] in a themed [MaterialApp] (the real
-/// `getTheme()`) so widgets render against production colours/typography
+/// `getTheme()`) so widgets render against production colors/typography
 /// without booting Firebase.
 ///
 /// Pass [providers] to inject already-built cubits via `BlocProvider.value`;
