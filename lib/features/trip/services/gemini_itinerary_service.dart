@@ -81,11 +81,11 @@ class GeminiItineraryService implements ItineraryGenerator {
     final interests = draft.interests.isEmpty
         ? 'a balanced mix'
         : draft.interests.map((i) => i.label.toLowerCase()).join(', ');
-    final notes = draft.notes.trim().isEmpty ? '' : '\nTraveller notes: "${draft.notes.trim()}"';
+    final notes = draft.notes.trim().isEmpty ? '' : '\nTraveler notes: "${draft.notes.trim()}"';
 
     return '''
 You are a travel-planning assistant. Plan a ${draft.durationDays}-day trip to ${draft.destination}.
-Travellers: ${draft.groupKind.label.toLowerCase()} (${draft.groupSize}). Pace: ${draft.pace.label.toLowerCase()}. Budget: ${draft.budget.description.toLowerCase()}.
+Travelers: ${draft.groupKind.label.toLowerCase()} (${draft.groupSize}). Pace: ${draft.pace.label.toLowerCase()}. Budget: ${draft.budget.description.toLowerCase()}.
 Interests: $interests.$notes
 
 Return ONLY a JSON array (no markdown, no prose) with exactly ${draft.durationDays} objects, one per day, in this shape:
