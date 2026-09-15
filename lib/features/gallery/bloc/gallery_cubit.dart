@@ -104,7 +104,7 @@ class GalleryCubit extends Cubit<GalleryState> with TripStreamMixin {
       );
 
       _addMapItemToState(imageModel); // save to state
-      await repository.cacheMetadata(imageModel); // cache imageModel meta + lowres in Hive
+      await repository.cacheMetadata(imageModel); // cache imageModel meta + low-res in Hive
       repository.cacheHighResImage(imageModel.id, file); // cache imageModel high res in Hive
 
       // Upload image to Firebase Storage and update image loading status for the UI
