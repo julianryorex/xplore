@@ -40,7 +40,7 @@ class JoinTripCubit extends Cubit<JoinTripState> {
   }
 
   /// Accepts the invite for the signed-in user. Emits [JoinTripJoined] on
-  /// success so the screen can activate the trip and navigate Home.
+  /// success so the screen can activate the trip and navigate home.
   Future<void> join() async {
     final current = state;
     if (current is! JoinTripReady) {
