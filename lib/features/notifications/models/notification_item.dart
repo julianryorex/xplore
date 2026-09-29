@@ -113,7 +113,7 @@ const List<NotificationSection> sampleNotifications = [
       NotificationItem(
         id: 'n3',
         kind: NotificationKind.gallery,
-        title: '12 new photos in Shared gallery',
+        title: '12 new photos in the shared gallery',
         body: 'Lena and 2 others added shots from the old town.',
         timeLabel: '1h',
         isRead: true,
