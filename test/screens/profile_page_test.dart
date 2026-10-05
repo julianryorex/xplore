@@ -53,7 +53,7 @@ void main() {
     expect(find.text('ada@example.com'), findsOneWidget);
     expect(find.text('Save Changes'), findsOneWidget);
     expect(find.text('Sign out'), findsOneWidget);
-    expect(find.text('Delete Account'), findsOneWidget);
+    expect(find.text('Delete account'), findsOneWidget);
 
     await tester.tap(find.text('Sign out'));
     await tester.pumpAndSettle();
@@ -70,9 +70,9 @@ void main() {
   testWidgets('ProfilePage Delete Account opens a destructive confirmation', (tester) async {
     final harness = await _pumpProfilePage(tester);
 
-    await tester.ensureVisible(find.text('Delete Account'));
+    await tester.ensureVisible(find.text('Delete account'));
     await tester.pumpAndSettle();
-    await tester.tap(find.text('Delete Account'));
+    await tester.tap(find.text('Delete account'));
     await tester.pumpAndSettle();
 
     expect(find.text('Delete account?'), findsOneWidget);
