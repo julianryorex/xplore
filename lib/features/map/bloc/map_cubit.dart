@@ -93,7 +93,7 @@ class MapCubit extends Cubit<MapStates> {
         anchor: userMarker != null ? const Offset(0.5, 0.5) : const Offset(0.5, 1.0),
         alpha: DateTime.now().difference(el.lastUpdated) > const Duration(minutes: 10) ? 0.5 : 1,
         icon: markerIcon,
-        infoWindow: const InfoWindow(title: 'Julian', anchor: Offset(-0.5, 0.0)),
+        infoWindow: const InfoWindow(title: 'Traveler', anchor: Offset(-0.5, 0.0)),
       );
 
       markers.add(marker);
