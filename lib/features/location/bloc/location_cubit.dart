@@ -28,7 +28,7 @@ class LocationCubit extends Cubit<LocationState> with TripStreamMixin {
   String? _activeTripId;
 
   /// Timer that periodically updates and fetches user locations from the cloud.
-  Timer? updateLocationTimer;
+  Timer? _updateLocationTimer;
 
   StreamSubscription<DatabaseEvent>? locationSubscription;
 
@@ -55,10 +55,10 @@ class LocationCubit extends Cubit<LocationState> with TripStreamMixin {
       _logger.d('Custom time interval started for location updates');
     }
 
-    updateLocationTimer = Timer.periodic(Duration(seconds: updateInterval), timerCallback);
+    _updateLocationTimer = Timer.periodic(Duration(seconds: updateInterval), timerCallback);
   }
 
-  void endTimer() => updateLocationTimer?.cancel();
+  void endTimer() => _updateLocationTimer?.cancel();
 
   /// The active Firebase UID, or null when unauthenticated.
   String? get _uid => _authService.currentUid;
@@ -178,7 +178,7 @@ class LocationCubit extends Cubit<LocationState> with TripStreamMixin {
   @override
   Future<void> close() async {
     _logger.d('Disposing');
-    updateLocationTimer?.cancel();
+    _updateLocationTimer?.cancel();
     await locationSubscription?.cancel();
     await _tripSubscription?.cancel();
     return super.close();
