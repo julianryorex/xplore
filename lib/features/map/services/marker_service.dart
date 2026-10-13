@@ -69,18 +69,14 @@ class MarkerService {
     await file.writeAsBytes(markerAsBytes);
 
     // upload to cloud
-    try {
-      FirebaseStorage storage = FirebaseStorage.instance;
-      Reference ref = storage.ref().child('markers/$id/marker');
+    FirebaseStorage storage = FirebaseStorage.instance;
+    Reference ref = storage.ref().child('markers/$id/marker');
 
-      UploadTask uploadTask = ref.putFile(file);
-      TaskSnapshot taskSnapshot = await uploadTask;
-      String downloadURL = await taskSnapshot.ref.getDownloadURL();
+    UploadTask uploadTask = ref.putFile(file);
+    TaskSnapshot taskSnapshot = await uploadTask;
+    String downloadURL = await taskSnapshot.ref.getDownloadURL();
 
-      _logger.d('Updated marker icon in Firebase Storage');
-      return downloadURL;
-    } catch (e) {
-      return Future.error(e);
-    }
+    _logger.d('Updated marker icon in Firebase Storage');
+    return downloadURL;
   }
 }
