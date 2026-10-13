@@ -26,7 +26,7 @@ class ProfilePage extends StatelessWidget {
             header: Header(
               leadingWidget: GlassIconButton(icon: Icons.arrow_back, onTap: () => Navigator.pop(context)),
               titleWidget: Text('Edit Profile', textAlign: TextAlign.center, style: context.pText.headlineSmall),
-              // Balances the leading glass button so the title stays centred.
+              // Balances the leading glass button so the title stays centered.
               trailingWidget: const SizedBox(width: headerIconButtonSize),
             ),
             child: BlocBuilder<ProfileCubit, ProfileState>(
