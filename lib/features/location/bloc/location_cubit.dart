@@ -30,8 +30,6 @@ class LocationCubit extends Cubit<LocationState> with TripStreamMixin {
   /// Timer that periodically updates and fetches user locations from the cloud.
   Timer? _updateLocationTimer;
 
-  StreamSubscription<DatabaseEvent>? locationSubscription;
-
   static const locationUpdateInterval = 10;
 
   LocationCubit(this._authService) : super(const LocationState(locations: {})) {
@@ -179,7 +177,6 @@ class LocationCubit extends Cubit<LocationState> with TripStreamMixin {
   Future<void> close() async {
     _logger.d('Disposing');
     _updateLocationTimer?.cancel();
-    await locationSubscription?.cancel();
     await _tripSubscription?.cancel();
     return super.close();
   }
