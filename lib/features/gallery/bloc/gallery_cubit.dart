@@ -173,13 +173,7 @@ class GalleryCubit extends Cubit<GalleryState> with TripStreamMixin {
 
   /// Converts image file to more generic file
   File? _xFileToFile(XFile xFile) {
-    try {
-      File file = File(xFile.path);
-      return file;
-    } catch (e) {
-      _logger.d('Error converting XFile to File: $e');
-      return null;
-    }
+    return File(xFile.path);
   }
 
   @visibleForTesting
