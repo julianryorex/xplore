@@ -56,8 +56,6 @@ class LocationCubit extends Cubit<LocationState> with TripStreamMixin {
     _updateLocationTimer = Timer.periodic(Duration(seconds: updateInterval), timerCallback);
   }
 
-  void endTimer() => _updateLocationTimer?.cancel();
-
   /// The active Firebase UID, or null when unauthenticated.
   String? get _uid => _authService.currentUid;
 
