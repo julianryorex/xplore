@@ -104,7 +104,7 @@ class GalleryCubit extends Cubit<GalleryState> with TripStreamMixin {
       );
 
       _addMapItemToState(imageModel); // save to state
-      await repository.cacheMetadata(imageModel); // cache imageModel meta + lowres in Hive
+      await repository.cacheMetadata(imageModel); // cache imageModel meta + low-res in Hive
       repository.cacheHighResImage(imageModel.id, file); // cache imageModel high res in Hive
 
       // Upload image to Firebase Storage and update image loading status for the UI
@@ -173,13 +173,7 @@ class GalleryCubit extends Cubit<GalleryState> with TripStreamMixin {
 
   /// Converts image file to more generic file
   File? _xFileToFile(XFile xFile) {
-    try {
-      File file = File(xFile.path);
-      return file;
-    } catch (e) {
-      _logger.d('Error converting XFile to File: $e');
-      return null;
-    }
+    return File(xFile.path);
   }
 
   @visibleForTesting
