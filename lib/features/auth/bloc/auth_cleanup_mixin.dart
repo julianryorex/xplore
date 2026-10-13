@@ -20,7 +20,7 @@ import 'package:xplore/features/auth/services/auth_service.dart';
 ///
 /// Only edges fire, so boot-time emissions, token refreshes, and repeated
 /// authenticated events never trigger a wipe. Call [bindAuthCleanup] once from
-/// the constructor; the subscription is cancelled automatically on [close]
+/// the constructor; the subscription is canceled automatically on [close]
 /// (provided the cubit's own `close` override chains to `super.close()`).
 mixin AuthCleanupMixin<S> on Cubit<S> {
   StreamSubscription<User?>? _authCleanupSubscription;
