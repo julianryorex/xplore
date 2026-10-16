@@ -318,7 +318,7 @@ class _SaveChangesButton extends StatelessWidget {
           minimumSize: const Size.fromHeight(54),
           shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(radiusMd)),
         ),
-        child: Text('Save Changes', style: context.pText.labelLarge?.copyWith(color: XploreColors.primaryBg)),
+        child: Text('Save changes', style: context.pText.labelLarge?.copyWith(color: XploreColors.primaryBg)),
       ),
     );
   }
