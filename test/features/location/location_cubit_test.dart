@@ -75,8 +75,7 @@ void main() {
       final cubit = LocationCubit(fakeAuthService(signedIn: false));
 
       // With realtime disabled the constructor returns before `startTimer()`,
-      // so `_updateLocationTimer` is never assigned. `close()` must not throw a
-      // LateInitializationError cancelling the uninitialized timer.
+      // so `_updateLocationTimer` remains null. `close()` must still complete.
       await expectLater(cubit.close(), completes);
     });
 
