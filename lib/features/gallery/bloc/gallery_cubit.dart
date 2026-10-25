@@ -110,7 +110,7 @@ class GalleryCubit extends Cubit<GalleryState> with TripStreamMixin {
       // Upload image to Firebase Storage and update image loading status for the UI
       uploadImage(file, imageModel.id)
           .then((downloadUrl) {
-            _logger.d('Image Uploaded');
+            _logger.d('Image uploaded');
             final newMapItem = state.imageMap[imageModel.id]!.copyWith(
               isUploading: EUploadStatus.complete, // set upload as finished
               downloadUrl: downloadUrl,
