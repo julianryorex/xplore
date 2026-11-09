@@ -51,7 +51,7 @@ void main() {
     expect(find.text('Full name'), findsOneWidget);
     expect(find.text('Email'), findsOneWidget);
     expect(find.text('ada@example.com'), findsOneWidget);
-    expect(find.text('Save Changes'), findsOneWidget);
+    expect(find.text('Save changes'), findsOneWidget);
     expect(find.text('Sign out'), findsOneWidget);
     expect(find.text('Delete account'), findsOneWidget);
 
