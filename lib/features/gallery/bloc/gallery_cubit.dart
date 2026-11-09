@@ -188,16 +188,12 @@ class GalleryCubit extends Cubit<GalleryState> with TripStreamMixin {
       return Future.error(StateError('Cannot upload to gallery without an active trip.'));
     }
 
-    try {
-      FirebaseStorage storage = FirebaseStorage.instance;
-      Reference ref = storage.ref().child('gallery/$tripId/$uid/$imageName');
-      UploadTask uploadTask = ref.putFile(imageFile);
-      TaskSnapshot taskSnapshot = await uploadTask;
-      String downloadURL = await taskSnapshot.ref.getDownloadURL();
-      return downloadURL;
-    } catch (e) {
-      return Future.error(e);
-    }
+    FirebaseStorage storage = FirebaseStorage.instance;
+    Reference ref = storage.ref().child('gallery/$tripId/$uid/$imageName');
+    UploadTask uploadTask = ref.putFile(imageFile);
+    TaskSnapshot taskSnapshot = await uploadTask;
+    String downloadURL = await taskSnapshot.ref.getDownloadURL();
+    return downloadURL;
   }
 
   /// Deletes all gallery metadata & high-resolution images
