@@ -85,8 +85,8 @@ class MyApp extends StatelessWidget {
         RepositoryProvider<AuthService>(create: (_) => AuthService()),
         RepositoryProvider<TripService>(create: (_) => TripService()),
         RepositoryProvider<ItineraryService>(create: (_) => ItineraryService()),
-        // Itinerary generation behind the create-trip "Generate" step. Gemini
-        // when a key is configured, deterministic skeleton otherwise / on
+        // Itinerary generation behind the create-trip "Generate" step. Uses Gemini
+        // when a key is configured, deterministic skeleton otherwise or on
         // failure (FEAT-007).
         RepositoryProvider<ItineraryGenerator>(create: (_) => GeminiItineraryService()),
         RepositoryProvider<DeepLinkService>(create: (_) => DeepLinkService()),

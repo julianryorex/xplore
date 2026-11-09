@@ -43,7 +43,7 @@ class Paths {
   static const notifications = '/notifications';
 
   /// Developer tools page (FEAT-008), gated behind `kDebugMode` at its
-  /// entry-points.
+  /// entry points.
   static const dev = '/dev';
 
   /// Multi-step generative trip-creation flow (FEAT-007).

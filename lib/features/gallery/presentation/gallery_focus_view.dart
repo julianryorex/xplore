@@ -24,18 +24,18 @@ class GalleryFocusView extends StatefulWidget {
 class _GalleryFocusViewState extends State<GalleryFocusView> {
   late final PageController controller;
   late Map<int, Uint8List?> highResImagesCache;
-  late int curentIndex;
+  late int currentIndex;
   late bool displayNav;
 
   @override
   void initState() {
     super.initState();
-    curentIndex = widget.initialIndex;
-    controller = PageController(initialPage: curentIndex);
+    currentIndex = widget.initialIndex;
+    controller = PageController(initialPage: currentIndex);
     highResImagesCache = {};
     displayNav = true;
 
-    fetchHighResAsset(curentIndex);
+    fetchHighResAsset(currentIndex);
   }
 
   @override
@@ -44,9 +44,9 @@ class _GalleryFocusViewState extends State<GalleryFocusView> {
     super.dispose();
   }
 
-  void onPageChanged(int nextIndx) {
-    curentIndex = nextIndx;
-    fetchHighResAsset(nextIndx);
+  void onPageChanged(int nextIndex) {
+    currentIndex = nextIndex;
+    fetchHighResAsset(nextIndex);
   }
 
   void fetchHighResAsset(int index) {
@@ -87,7 +87,7 @@ class _GalleryFocusViewState extends State<GalleryFocusView> {
                   },
                   itemCount: widget.images.length,
                   loadingBuilder: (context, event) =>
-                      Center(child: Image.memory(widget.images[curentIndex].lowResImage)),
+                      Center(child: Image.memory(widget.images[currentIndex].lowResImage)),
                   backgroundDecoration: BoxDecoration(color: XploreColors.black),
                   pageController: controller,
                   onPageChanged: onPageChanged,
@@ -137,7 +137,7 @@ class _GalleryFocusViewState extends State<GalleryFocusView> {
                           tooltip: 'Close',
                           onTap: () => Navigator.pop(context),
                         ),
-                        trailingWidget: _PhotoCounter(index: curentIndex, total: widget.images.length),
+                        trailingWidget: _PhotoCounter(index: currentIndex, total: widget.images.length),
                       ),
                     ),
                   ],

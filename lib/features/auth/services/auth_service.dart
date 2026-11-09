@@ -139,7 +139,7 @@ class AuthService {
   }
 
   /// Interactive Sign in with Apple -> Firebase credential -> `users/{uid}`
-  /// upsert. The primary provider (App Store policy mandates Apple when offering
+  /// upsert. Apple is the primary provider (App Store policy mandates Apple when offering
   /// third-party sign-in on iOS).
   ///
   /// Throws [AuthCancelledException] if the user backs out, or

@@ -21,7 +21,7 @@ class MapCanvas extends StatefulWidget {
 }
 
 class _MapCanvasState extends State<MapCanvas> {
-  /// Key that checks whether a rerender is necessary
+  /// Key that checks whether a re-render is necessary.
   late Object redrawKey;
 
   /// Controller for [GoogleMap]
@@ -42,7 +42,7 @@ class _MapCanvasState extends State<MapCanvas> {
   }
 
   //! -------------------------------------------------------------------------
-  //! Widgets Methods
+  //! Widget Methods
   //! -------------------------------------------------------------------------
 
   @override
@@ -60,7 +60,7 @@ class _MapCanvasState extends State<MapCanvas> {
     final headerZone = topInset + headerTopGap + Header.padding;
 
     // Pure content for the RootShell's IndexedStack: the surrounding Scaffold,
-    // background colour and floating glass nav bar live in RootShell. The map
+    // background color and floating glass nav bar live in RootShell. The map
     // runs full-bleed so the glass nav bar has live content to refract.
     return Stack(
       children: [
@@ -85,7 +85,7 @@ class _MapCanvasState extends State<MapCanvas> {
                                 size: 100,
                                 image: state.profilePicture != null ? Image.memory(state.profilePicture!).image : null,
                               ),
-                              const Text('Hello'),
+                              const Text('Set up your map marker'),
                               OutlinedButton(
                                 onPressed: () async {
                                   final mapCubit = context.read<MapCubit>();
@@ -100,7 +100,7 @@ class _MapCanvasState extends State<MapCanvas> {
                                     navigator.pop();
                                   }
                                 },
-                                child: const Text('Sounds good!'),
+                                child: const Text('Use my profile photo'),
                               ),
                             ],
                           ),
@@ -147,7 +147,7 @@ class _MapCanvasState extends State<MapCanvas> {
             onTap: recenterToCurrentLocation,
           ),
         ),
-        // Top scrim: blends the status-bar area into the base colour and keeps
+        // Top scrim: blends the status-bar area into the base color and keeps
         // the header legible over the bright, busy map underneath.
         Positioned(
           top: 0,

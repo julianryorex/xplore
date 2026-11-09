@@ -11,7 +11,7 @@ import 'package:logger/logger.dart';
 
 /// gets the screen width of the current device
 ///
-/// (optional) `percent` : percent of the height
+/// (optional) `percent` : percent of the width
 ///
 /// (ex: `percent: 0.3` is 30%)
 double getScreenWidth({required BuildContext context, double? percent}) {
@@ -45,7 +45,7 @@ Future<BitmapDescriptor> getMarkerIconFromBytes(Uint8List iconBytes) async {
 
 void unfocusKeyboard() => WidgetsBinding.instance.focusManager.primaryFocus?.unfocus();
 
-Future<void> wait(int milliseconds) async => await Future.delayed(Duration(milliseconds: milliseconds));
+Future<void> wait(int milliseconds) => Future.delayed(Duration(milliseconds: milliseconds));
 
 Future<T> loadJsonAsset<T>(String pathToAsset) async {
   try {
@@ -70,7 +70,7 @@ Future<ByteData> loadAssetAsBytes(String pathToAsset) async {
   }
 }
 
-/// Logs are always enabled unless it's in release mode - then only info/warning/error logs are captured
+/// Logs are always enabled unless the app is in release mode; then only info/warning/error logs are captured.
 Logger createLogger(String pref) {
   final prefix = '[$pref]';
   return Logger(

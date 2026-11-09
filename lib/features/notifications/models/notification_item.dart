@@ -31,7 +31,7 @@ enum NotificationKind {
 }
 
 /// A single, immutable notification row. Deliberately plain (no Freezed/codegen)
-/// so the exploration screens compile without a build_runner pass.
+/// so the notification screens compile without a build_runner pass.
 @immutable
 class NotificationItem {
   final String id;

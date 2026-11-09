@@ -4,7 +4,7 @@
 // marker id. These tests guard the Hive -> hive_ce migration for that byte-box
 // path. We seed the box directly rather than via `updateMarkerIcon` because that
 // writer also fires an un-awaited Firebase Storage upload (path_provider +
-// FirebaseStorage), which isn't available headlessly; the hive_ce behaviour the
+// FirebaseStorage), which isn't available headlessly; the hive_ce behavior the
 // migration touches is the box read/delete, which is what we assert here.
 
 import 'dart:io';

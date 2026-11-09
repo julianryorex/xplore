@@ -60,7 +60,7 @@ Also outstanding:
 | Itinerary editing CRUD | Read path only; organizer UI deferred (FEAT-006 / FEAT-024) |
 | Multi-trip switcher | Create-trip works; list/switch UI deferred (FEAT-002 gap) |
 | Gemini AI in UI | ✅ Wired behind the create flow's Generate step (`GeminiItineraryService`, FEAT-007 phase 2); falls back to a deterministic skeleton with no key. Regeneration/credits gating (FEAT-021) and `place_id` enrichment still pending |
-| Gallery cloud fetch | `GalleryRepository` TODO: GCP fetch; cache-only on new device |
+| Gallery cloud fetch | `GalleryRepository` TODO: Firebase Storage fetch; cache-only on new device |
 | Push notifications (FCM) | `NotificationsPage` uses local sample data; no backend |
 | Background location | TODOs in `LocationCubit` |
 | Android / web runtime | iOS/macOS Firebase config only |

@@ -13,7 +13,7 @@ part '../../../generated/features/map/bloc/map_cubit.freezed.dart';
 part 'map_states.dart';
 
 // TODO: Transit
-// TODO: Add neighborhood polylines (watch dog like)
+// TODO: Add neighborhood polylines (Watch Dogs-like)
 // TODO: InfoWindow with last updated
 
 class MapCubit extends Cubit<MapStates> {
@@ -81,7 +81,7 @@ class MapCubit extends Cubit<MapStates> {
   Future<void> updateUserMarkers(List<LocationModel> locations) async {
     if (state is! LoadedMapState) return;
 
-    List<Marker> markersV2 = [];
+    List<Marker> markers = [];
 
     for (var el in locations) {
       final userMarker = await markerService.fetchMarkerIcon(el.id);
@@ -96,10 +96,10 @@ class MapCubit extends Cubit<MapStates> {
         infoWindow: const InfoWindow(title: 'Julian', anchor: Offset(-0.5, 0.0)),
       );
 
-      markersV2.add(marker);
+      markers.add(marker);
     }
 
-    emit((state as LoadedMapState).copyWith(markers: markersV2.toSet()));
+    emit((state as LoadedMapState).copyWith(markers: markers.toSet()));
     _logger.d('Location markers updated');
   }
 

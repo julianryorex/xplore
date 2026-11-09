@@ -1,7 +1,7 @@
 // Pure-Dart unit tests for the string extensions in `constants/extensions.dart`.
 //
 // `toColor()` underpins the entire `XploreColors` palette, so a regression here
-// silently recolours the whole app — cheap to guard, high blast radius.
+// silently recolors the whole app — cheap to guard, high blast radius.
 
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -9,7 +9,7 @@ import 'package:xplore/constants/extensions.dart';
 
 void main() {
   group('HexConversion.toColor', () {
-    test('parses a 6-digit hex string as an opaque colour', () {
+    test('parses a 6-digit hex string as an opaque color', () {
       final color = '1F8565'.toColor();
       expect(color, const Color(0xFF1F8565));
       expect(color.a, 1.0);

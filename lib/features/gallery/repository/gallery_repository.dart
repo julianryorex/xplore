@@ -6,8 +6,7 @@ import 'package:logger/logger.dart';
 import 'package:xplore/features/gallery/models/image_models.dart';
 import 'package:xplore/utilities/utilities.dart';
 
-/// Fetches images from either cache or GCP
-/// TODO: add GCP Storage fetch
+/// Manages the local Hive cache for gallery metadata and high-res originals.
 class GalleryRepository {
   late final HiveInterface _hive;
   late final Logger _logger;
@@ -46,30 +45,22 @@ class GalleryRepository {
     return imgMap;
   }
 
-  /// Caches `ImageModel` to Hive (w/ compressed image)
+  /// Caches `ImageModel` metadata and thumbnail bytes to Hive.
   Future<void> cacheMetadata(ImageModel imageModel) async {
     final boxName = _metadataBoxName;
     if (boxName == null) return;
-    try {
-      final box = await _hive.openBox(boxName);
-      await box.put(imageModel.id, imageModel);
-    } catch (err) {
-      Future.error(err);
-    }
+    final box = await _hive.openBox(boxName);
+    await box.put(imageModel.id, imageModel);
   }
 
-  /// Caches the actual non-compresed image in hive
+  /// Caches the actual uncompressed image in Hive
   Future<void> cacheHighResImage(String id, File file) async {
     final boxName = _highResBoxName;
     if (boxName == null) return;
-    try {
-      final highResImage = await file.readAsBytes();
-      final box = await _hive.openBox(boxName);
-      await box.put(id, highResImage);
-      _logger.d('Cached high resolution image $id');
-    } catch (err) {
-      Future.error(err);
-    }
+    final highResImage = await file.readAsBytes();
+    final box = await _hive.openBox(boxName);
+    await box.put(id, highResImage);
+    _logger.d('Cached high resolution image $id');
   }
 
   /// Loads a cached high-resolution image for the active trip, or `null` when
@@ -85,14 +76,10 @@ class GalleryRepository {
     final metadataBoxName = _metadataBoxName;
     final highResBoxName = _highResBoxName;
     if (metadataBoxName == null || highResBoxName == null) return;
-    try {
-      final box1 = await _hive.openBox(metadataBoxName);
-      final box2 = await _hive.openBox(highResBoxName);
-      await box1.deleteFromDisk();
-      await box2.deleteFromDisk();
-      _logger.d('Deleted boxes in Hive');
-    } catch (err) {
-      Future.error(err);
-    }
+    final box1 = await _hive.openBox(metadataBoxName);
+    final box2 = await _hive.openBox(highResBoxName);
+    await box1.deleteFromDisk();
+    await box2.deleteFromDisk();
+    _logger.d('Deleted boxes in Hive');
   }
 }

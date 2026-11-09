@@ -14,7 +14,7 @@ import 'package:xplore/features/trip/services/invite_results.dart';
 /// The join-confirmation screen reached via an invite deep link.
 ///
 /// Liquid-glass styled to match the rest of the app: an [AmbientBackground]
-/// with a centred glass "trip card" (name + member avatars + CTA). It handles
+/// with a centered glass "trip card" (name + member avatars + CTA). It handles
 /// the loading, ready, joining, joined and invalid states; on success it makes
 /// the joined trip active via [TripCubit] and returns to Home.
 class JoinTripPage extends StatefulWidget {

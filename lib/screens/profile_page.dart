@@ -26,7 +26,7 @@ class ProfilePage extends StatelessWidget {
             header: Header(
               leadingWidget: GlassIconButton(icon: Icons.arrow_back, onTap: () => Navigator.pop(context)),
               titleWidget: Text('Edit Profile', textAlign: TextAlign.center, style: context.pText.headlineSmall),
-              // Balances the leading glass button so the title stays centred.
+              // Balances the leading glass button so the title stays centered.
               trailingWidget: const SizedBox(width: headerIconButtonSize),
             ),
             child: BlocBuilder<ProfileCubit, ProfileState>(
@@ -386,7 +386,7 @@ class _DeleteAccountButton extends StatelessWidget {
   Widget build(BuildContext context) {
     return TextButton(
       onPressed: onTap,
-      child: Text('Delete Account', style: context.pText.labelMedium?.copyWith(color: XploreColors.error)),
+      child: Text('Delete account', style: context.pText.labelMedium?.copyWith(color: XploreColors.error)),
     );
   }
 }

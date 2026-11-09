@@ -27,10 +27,8 @@ class LocationCubit extends Cubit<LocationState> with TripStreamMixin {
   StreamSubscription<TripState>? _tripSubscription;
   String? _activeTripId;
 
-  /// Timer where every min user location is updated & fetched to/from the cloud
-  Timer? updateLocationTimer;
-
-  StreamSubscription<DatabaseEvent>? locationSubscription;
+  /// Timer that periodically updates and fetches user locations from the cloud.
+  Timer? _updateLocationTimer;
 
   static const locationUpdateInterval = 10;
 
@@ -40,11 +38,11 @@ class LocationCubit extends Cubit<LocationState> with TripStreamMixin {
     updateMyLocation();
 
     if (dotenv.env['DISABLE_REALTIME_LOCATIONS'].toBool()) {
-      _logger.i('Disabled realtime location update');
+      _logger.i('Disabled real-time location updates');
       return;
     }
 
-    _logger.i('Enabled realtime location update');
+    _logger.i('Enabled real-time location updates');
     startTimer();
   }
 
@@ -55,15 +53,11 @@ class LocationCubit extends Cubit<LocationState> with TripStreamMixin {
       _logger.d('Custom time interval started for location updates');
     }
 
-    updateLocationTimer = Timer.periodic(Duration(seconds: updateInterval), timerCallback);
+    _updateLocationTimer = Timer.periodic(Duration(seconds: updateInterval), timerCallback);
   }
-
-  void endTimer() => updateLocationTimer?.cancel();
 
   /// The active Firebase UID, or null when unauthenticated.
   String? get _uid => _authService.currentUid;
-
-  String get _tripScopeId => _activeTripId ?? itineraryId;
 
   //! -------------------------------------------------------------------------
   //! Public Methods
@@ -88,7 +82,15 @@ class LocationCubit extends Cubit<LocationState> with TripStreamMixin {
       return;
     }
 
-    DatabaseReference locationRef = FirebaseDatabase.instance.ref('locations/$_tripScopeId');
+    // Without an active trip there is no scope to write into. No-op rather than
+    // falling back to a shared/demo node.
+    final tripId = _activeTripId;
+    if (tripId == null) {
+      _logger.d('Skipping location update: no active trip');
+      return;
+    }
+
+    DatabaseReference locationRef = FirebaseDatabase.instance.ref('locations/$tripId');
 
     final myCoords = await getCurrentLocation();
     final myLocation = LocationModel(
@@ -104,9 +106,17 @@ class LocationCubit extends Cubit<LocationState> with TripStreamMixin {
 
   @visibleForTesting
   Future<void> timerCallback(Timer timer) async {
-    // every 5 minutes, I will update my location and fetch all locations within the itinerary
+    // Refresh my location, then fetch all locations for the active trip.
 
-    DatabaseReference locationRef = FirebaseDatabase.instance.ref('locations/$_tripScopeId');
+    // Without an active trip there is no scope to read from. No-op rather than
+    // falling back to a shared/demo node.
+    final tripId = _activeTripId;
+    if (tripId == null) {
+      _logger.d('Skipping location fetch: no active trip');
+      return;
+    }
+
+    DatabaseReference locationRef = FirebaseDatabase.instance.ref('locations/$tripId');
 
     await updateMyLocation();
 
@@ -164,8 +174,7 @@ class LocationCubit extends Cubit<LocationState> with TripStreamMixin {
   @override
   Future<void> close() async {
     _logger.d('Disposing');
-    updateLocationTimer?.cancel();
-    await locationSubscription?.cancel();
+    _updateLocationTimer?.cancel();
     await _tripSubscription?.cancel();
     return super.close();
   }

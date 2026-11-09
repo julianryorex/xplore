@@ -21,8 +21,8 @@ part '../../../generated/features/gallery/bloc/gallery_cubit.freezed.dart';
 part 'gallery_states.dart';
 
 // TODOs:
-// - Support selection & compression w/ video
-// - Implement GCP fetches/downloads after fetching cache
+// - Support selection & compression with video
+// - Implement Firebase Storage fetches/downloads after fetching cache
 class GalleryCubit extends Cubit<GalleryState> with TripStreamMixin {
   late final Logger _logger;
   late final GalleryRepository repository;
@@ -55,16 +55,16 @@ class GalleryCubit extends Cubit<GalleryState> with TripStreamMixin {
   //! Public Methods
   //! -------------------------------------------------------------------------
 
-  /// Uploads user selected photo gallery images to GCP.
+  /// Uploads user-selected photo gallery images to Firebase Storage.
   /// Each image goes through the following process:
-  /// 1. Convert Xfile (image) to file,
+  /// 1. Convert XFile (image) to file,
   /// 2. Generate a downscaled/compressed thumbnail (`lowResImage`) for fast
   ///    local display — the full-resolution original is left untouched.
-  /// 3. Convert file to `ImageModel` (w/ thumbnail)
+  /// 3. Convert file to `ImageModel` (with thumbnail)
   /// 4. Save to state
   /// 5. Cache in Hive
   /// 6. Cache high-res image in Hive
-  /// 7. Upload high-res image to GCP
+  /// 7. Upload high-res image to Firebase Storage
   Future<void> uploadToGallery() async {
     final picker = ImagePicker();
     final pickedImagesFuture = picker.pickMultiImage();
@@ -72,9 +72,6 @@ class GalleryCubit extends Cubit<GalleryState> with TripStreamMixin {
 
     emit(state.copyWith(status: EBlocStatus.loading));
     final pickedImages = await pickedImagesFuture;
-
-    // TODO: support compression w/ video
-    // final pickedImages = await picker.pickMultipleMedia();
 
     if (pickedImages.isEmpty) {
       emit(state.copyWith(status: EBlocStatus.loaded));
@@ -107,10 +104,10 @@ class GalleryCubit extends Cubit<GalleryState> with TripStreamMixin {
       );
 
       _addMapItemToState(imageModel); // save to state
-      await repository.cacheMetadata(imageModel); // cache imageModel meta + lowres in Hive
+      await repository.cacheMetadata(imageModel); // cache imageModel meta + low-res in Hive
       repository.cacheHighResImage(imageModel.id, file); // cache imageModel high res in Hive
 
-      // Upload image to google cloud and update image loading status for the UI
+      // Upload image to Firebase Storage and update image loading status for the UI
       uploadImage(file, imageModel.id)
           .then((downloadUrl) {
             _logger.d('Image Uploaded');
@@ -176,13 +173,7 @@ class GalleryCubit extends Cubit<GalleryState> with TripStreamMixin {
 
   /// Converts image file to more generic file
   File? _xFileToFile(XFile xFile) {
-    try {
-      File file = File(xFile.path);
-      return file;
-    } catch (e) {
-      _logger.d('Error converting XFile to File: $e');
-      return null;
-    }
+    return File(xFile.path);
   }
 
   @visibleForTesting
@@ -209,7 +200,7 @@ class GalleryCubit extends Cubit<GalleryState> with TripStreamMixin {
     }
   }
 
-  /// Deletes all gallery metadata & high resolution images
+  /// Deletes all gallery metadata & high-resolution images
   ///
   /// Only use for testing
   Future<void> deleteAll() async {
