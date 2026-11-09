@@ -5,9 +5,9 @@ the high-level "what" and a minimal run; this file covers the details.
 
 ## Toolchain
 
-- **FVM-pinned Flutter `3.44.0` (Dart `3.12.x`)** — matches `.fvmrc`, `pubspec.yaml`,
+- **FVM-pinned Flutter `3.47.9` (Dart `3.13.x`)** — matches `.fvmrc`, `pubspec.yaml`,
   and `pubspec.lock`. Install once with `fvm install` then
-  `fvm use 3.44.0 --skip-pub-get`. Use `fvm flutter ...` / `fvm dart ...` for ad
+  `fvm use 3.47.9 --skip-pub-get`. Use `fvm flutter ...` / `fvm dart ...` for ad
   hoc commands, or the Makefile targets below.
 - **Code generation is required.** `lib/generated/` (Freezed / json_serializable)
   is git-ignored. Run `make gen` before `analyze`, `test`, or any build, or you'll

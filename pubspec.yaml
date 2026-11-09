@@ -5,21 +5,21 @@ publish_to: "none" # Remove this line if you wish to publish to pub.dev
 version: 1.0.0+1
 
 environment:
-  sdk: ">=3.12.0 <4.0.0"
-  flutter: ">=3.44.0"
+  sdk: ">=3.13.0 <4.0.0"
+  flutter: ">=3.47.0"
 
 dependencies:
   flutter:
     sdk: flutter
-  cloud_firestore: ^6.6.0
+  cloud_firestore: ^7.1.0
   collection: ^1.17.2
   crypto: ^3.0.3
-  cupertino_icons: ^1.0.2
+  cupertino_icons: ^2.0.0
   dotted_border: ^3.1.0
-  firebase_auth: ^6.5.4
-  firebase_core: ^4.11.0
-  firebase_database: ^12.4.3
-  firebase_storage: ^13.4.3
+  firebase_auth: ^7.0.1
+  firebase_core: ^5.1.0
+  firebase_database: ^13.0.1
+  firebase_storage: ^14.0.1
   flutter_bloc: ^9.1.1
   flutter_dotenv: ^6.0.1
   flutter_gemini: ^3.0.0
@@ -37,9 +37,9 @@ dependencies:
   logger: ^2.2.0
   path_provider: ^2.1.2
   photo_view: ^0.15.0
-  sign_in_with_apple: ^7.0.1
+  sign_in_with_apple: ^8.2.0
   uuid: ^4.3.3
-  animations: ^2.2.0
+  animations: ^3.0.0
   share_plus: ^13.2.0
   app_links: ^7.2.0
 
@@ -47,10 +47,10 @@ dev_dependencies:
   flutter_test:
     sdk: flutter
   flutter_lints: ^6.0.0
-  freezed: ^3.2.5
+  freezed: ^4.0.3
   build_runner: ^2.15.0
   json_serializable: ^6.14.0
-  firebase_auth_mocks: ^0.15.2
+  firebase_auth_mocks: ^0.16.0
   firebase_auth_platform_interface: ^9.0.3
   fake_cloud_firestore: ^4.1.1
   flutter_launcher_icons: ^0.14.4
