@@ -109,14 +109,12 @@ cov:
 
 prep-ipad:
 	@make clean
-	@cd ios && rm -rf Podfile.lock Pods && pod repo update
 	@make get
 	@make gen
 	@make build-ios
 
 prep-mac:
 	@make clean
-	@cd macos && rm -rf Podfile.lock Pods && pod repo update
 	@make get
 	@make gen
 	@make build-mac

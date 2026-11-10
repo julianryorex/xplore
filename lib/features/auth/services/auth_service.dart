@@ -14,8 +14,10 @@ import 'package:xplore/utilities/utilities.dart';
 /// Requests an Apple ID credential. Defaults to the real
 /// [SignInWithApple.getAppleIDCredential]; overridable in tests so the native
 /// authorization sheet doesn't have to run.
-typedef AppleCredentialRequester =
-    Future<AuthorizationCredentialAppleID> Function({required List<AppleIDAuthorizationScopes> scopes, String? nonce});
+typedef AppleCredentialRequester = Future<AuthorizationCredentialAppleID> Function({
+  required List<AppleIDAuthorizationScopes> scopes,
+  String? nonce,
+});
 
 /// Thrown when the user cancels an interactive sign-in. Non-blocking: the UI
 /// should simply return to the idle sign-in state.
@@ -161,9 +163,8 @@ class AuthService {
         throw const AuthFailureException('Apple did not return an identity token.');
       }
 
-      final credential = OAuthProvider(
-        'apple.com',
-      ).credential(idToken: idToken, rawNonce: rawNonce, accessToken: appleCredential.authorizationCode);
+      final credential = OAuthProvider('apple.com')
+          .credential(idToken: idToken, rawNonce: rawNonce, accessToken: appleCredential.authorizationCode);
       final userCredential = await _auth.signInWithCredential(credential);
 
       final user = userCredential.user;
@@ -292,9 +293,8 @@ class AuthService {
       throw const AuthFailureException('Apple did not return an identity token.');
     }
 
-    final credential = OAuthProvider(
-      'apple.com',
-    ).credential(idToken: idToken, rawNonce: rawNonce, accessToken: appleCredential.authorizationCode);
+    final credential = OAuthProvider('apple.com')
+        .credential(idToken: idToken, rawNonce: rawNonce, accessToken: appleCredential.authorizationCode);
     await user.reauthenticateWithCredential(credential);
     return appleCredential;
   }

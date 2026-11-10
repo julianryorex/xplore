@@ -44,9 +44,9 @@ result at each step. A green `make verify` is necessary but not sufficient — t
 workflow proves the behavior, not just that the tests pass.
 
 ### Toolchain / setup notes (non-obvious)
-- Use **FVM-pinned Flutter 3.44.0 (Dart 3.12)**. This matches `.fvmrc`,
-  `pubspec.yaml`, and `pubspec.lock` (`flutter >=3.44.0`, `dart >=3.12.0`).
-  Run `fvm install` and `fvm use 3.44.0 --skip-pub-get` once,
+- Use **FVM-pinned Flutter 3.47.9 (Dart 3.13)**. This matches `.fvmrc`,
+  `pubspec.yaml`, and `pubspec.lock` (`flutter >=3.47.0`, `dart >=3.13.0`).
+  Run `fvm install` and `fvm use 3.47.9 --skip-pub-get` once,
   then use `make` targets or `fvm flutter` / `fvm dart` for ad hoc commands.
   First-time repo setup: `make init` (clean, get, gen, `.env` stub, `flutter doctor`).
 - `lib/generated/` (Freezed/json codegen) is **git-ignored and required**.

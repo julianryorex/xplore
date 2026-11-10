@@ -8,7 +8,7 @@
     "amplify/backend/amplify-meta.json": true,
     "amplify/backend/awscloudformation": true
   },
-  "dart.flutterSdkPath": ".fvm/versions/3.44.0",
+  "dart.flutterSdkPath": ".fvm/versions/3.47.9",
   "dart.lineLength": 120,
   "files.watcherExclude": {
     "**/.fvm/**": true

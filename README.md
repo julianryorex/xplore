@@ -27,7 +27,7 @@ Google Gemini integration for AI-generated itineraries.
 
 | Layer | Technology |
 |-------|------------|
-| Framework | Flutter 3.44 / Dart 3.12 (via FVM) |
+| Framework | Flutter 3.47 / Dart 3.13 (via FVM) |
 | State | flutter_bloc / Cubit |
 | Models | Freezed + json_serializable |
 | Local storage | Hive CE |
@@ -46,7 +46,7 @@ cd xplore
 
 # Install the pinned Flutter SDK (from .fvmrc)
 fvm install
-fvm use 3.44.0 --skip-pub-get
+fvm use 3.47.9 --skip-pub-get
 
 make get                          # dependencies
 cp assets/.env.example assets/.env  # required asset (works with empty keys)

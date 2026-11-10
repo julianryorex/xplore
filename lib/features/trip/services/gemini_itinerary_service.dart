@@ -68,7 +68,7 @@ class GeminiItineraryService implements ItineraryGenerator {
       final plans = _parse(output, draft);
       if (plans.isEmpty) {
         _logger.w('Gemini returned no usable days; falling back to skeleton.');
-        return _fallback.generate(draft);
+        return await _fallback.generate(draft);
       }
       return plans;
     } catch (err) {
