@@ -38,8 +38,7 @@ class _JoinByLinkSheetState extends State<_JoinByLinkSheet> {
   }
 
   void _submit() {
-    final uri = Uri.tryParse(_controller.text.trim());
-    final invite = uri == null ? null : InviteLink.parse(uri);
+    final invite = InviteLink.parsePasted(_controller.text);
     if (invite == null) {
       setState(() => _error = 'That doesn’t look like an Xplore invite link.');
       return;

@@ -101,15 +101,18 @@ class _Stat extends StatelessWidget {
     return Column(
       mainAxisAlignment: MainAxisAlignment.center,
       children: [
-        Text(
-          value,
-          maxLines: 1,
-          overflow: TextOverflow.ellipsis,
-          style: TextStyle(
-            fontSize: 22,
-            fontWeight: FontWeight.w700,
-            letterSpacing: -0.4,
-            color: accent ? XploreColors.accent : XploreColors.white,
+        // Values like "12 of 14" must stay whole, so they shrink rather than truncate.
+        FittedBox(
+          fit: BoxFit.scaleDown,
+          child: Text(
+            value,
+            maxLines: 1,
+            style: TextStyle(
+              fontSize: 22,
+              fontWeight: FontWeight.w700,
+              letterSpacing: -0.4,
+              color: accent ? XploreColors.accent : XploreColors.white,
+            ),
           ),
         ),
         const SizedBox(height: 2),

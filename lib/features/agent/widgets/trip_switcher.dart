@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:xplore/constants/constants.dart';
 import 'package:xplore/features/trip/bloc/trip_cubit.dart';
+import 'package:xplore/features/trip/bloc/trip_state.dart';
 import 'package:xplore/features/trip/models/trip_model.dart';
 
 /// Capsule showing the active trip's title. With more than one trip it opens a
@@ -56,10 +57,15 @@ class TripSwitcher extends StatelessWidget {
       showDragHandle: true,
       builder: (_) => _TripPickerSheet(trips: trips, activeId: active.id),
     );
-    if (pickedId != null && pickedId != active.id) {
+    if (pickedId != null && pickedId != active.id && _isStillLoaded(tripCubit.state, pickedId)) {
       tripCubit.setActiveTrip(pickedId);
     }
   }
+
+  // The sheet lists a snapshot of the trips, and setActiveTrip keeps an unknown
+  // id as pending, so a trip removed while the sheet was open must be ignored.
+  bool _isStillLoaded(TripState state, String tripId) =>
+      state is TripLoaded && state.all.any((trip) => trip.id == tripId);
 }
 
 class _TripPickerSheet extends StatelessWidget {

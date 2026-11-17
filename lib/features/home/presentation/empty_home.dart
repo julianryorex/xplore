@@ -35,8 +35,8 @@ class _EmptyHomeState extends State<EmptyHome> {
       return;
     }
     _focusNode.unfocus();
+    // The text is kept so backing out of trip creation does not lose it.
     Navigator.pushNamed(context, Paths.createTrip, arguments: description);
-    _controller.clear();
   }
 
   @override

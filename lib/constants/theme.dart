@@ -57,6 +57,11 @@ ThemeData getTheme() => ThemeData(
     onPrimary: XploreColors.onAccent,
     secondary: XploreColors.accent,
     onSecondary: XploreColors.onAccent,
+    // Opaque [XploreColors.accentSoft] over a card. M3 falls back to solid
+    // Jade here, which turns the date range picker's in-range band (white day
+    // numbers on secondaryContainer) unreadable and hides the start/end circles.
+    secondaryContainer: Color(0xFF253832),
+    onSecondaryContainer: XploreColors.white,
     error: XploreColors.error,
     onError: XploreColors.white,
     surface: XploreColors.card,
@@ -95,6 +100,8 @@ ThemeData getTheme() => ThemeData(
   snackBarTheme: SnackBarThemeData(
     backgroundColor: XploreColors.raised,
     contentTextStyle: defaultTextTheme.bodyMedium,
+    actionTextColor: XploreColors.accent,
+    closeIconColor: XploreColors.secondaryLabel,
     behavior: SnackBarBehavior.floating,
     shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(radiusMd)),
   ),

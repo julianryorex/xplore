@@ -128,7 +128,7 @@ class _NotificationRow extends StatelessWidget {
                       padding: const EdgeInsets.only(top: 1),
                       child: Text(
                         item.timeLabel,
-                        style: context.pText.labelSmall?.copyWith(color: XploreColors.subtleText),
+                        style: context.pText.labelSmall?.copyWith(color: XploreColors.secondaryLabel),
                       ),
                     ),
                     if (unread) ...[

@@ -1,5 +1,6 @@
 import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:hive_ce_flutter/hive_ce_flutter.dart';
@@ -110,11 +111,16 @@ class MyApp extends StatelessWidget {
               BlocProvider<GalleryCubit>(create: (_) => GalleryCubit(authService)),
               BlocProvider<ProfileCubit>(create: (_) => ProfileCubit(authService)),
             ],
-            child: MaterialApp(
-              debugShowCheckedModeBanner: false,
-              theme: getTheme(),
-              home: const DeepLinkHandler(child: AuthGate()),
-              onGenerateRoute: RouteGenerator.generateRoute,
+            // The UI is dark-only, so keep light status-bar glyphs regardless of
+            // the device's appearance setting.
+            child: AnnotatedRegion<SystemUiOverlayStyle>(
+              value: SystemUiOverlayStyle.light,
+              child: MaterialApp(
+                debugShowCheckedModeBanner: false,
+                theme: getTheme(),
+                home: const DeepLinkHandler(child: AuthGate()),
+                onGenerateRoute: RouteGenerator.generateRoute,
+              ),
             ),
           );
         },

@@ -1,14 +1,21 @@
 import 'package:xplore/features/home/models/trip_overview.dart';
+import 'package:xplore/features/trip/bloc/trip_state.dart';
 
 /// One-line summary of the active trip for the agent screen, e.g.
-/// "Tokyo is 12 days out. 5 of your 7 days are still open." Pass a null
-/// [overview] when there is no trip, and [itineraryLoaded] false while the
-/// itinerary is unknown so the line never claims days are open or planned.
-String agentStatusLine(TripOverview? overview, {bool itineraryLoaded = true}) {
-  if (overview == null) {
-    return 'Create a trip to start planning.';
-  }
+/// "Tokyo is 12 days out. 5 of your 7 days are still open." [overview] is the
+/// active trip's overview when [tripState] is loaded. Returns null while trips
+/// are loading or failed to load, so a user with trips is never told to create
+/// one. Pass [itineraryLoaded] false while the itinerary is unknown so the line
+/// never claims days are open or planned.
+String? agentStatusLine(TripState tripState, TripOverview? overview, {bool itineraryLoaded = true}) {
+  return switch (tripState) {
+    TripEmpty() => 'Create a trip to start planning.',
+    TripLoaded() when overview != null => _tripLine(overview, itineraryLoaded: itineraryLoaded),
+    _ => null,
+  };
+}
 
+String _tripLine(TripOverview overview, {required bool itineraryLoaded}) {
   final when = _timingSentence(overview);
   if (overview.timing == TripTiming.past || !itineraryLoaded) {
     return when;

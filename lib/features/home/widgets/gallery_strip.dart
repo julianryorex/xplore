@@ -68,10 +68,13 @@ class _PhotoStrip extends StatelessWidget {
         padding: const EdgeInsets.only(right: 16),
         itemCount: photos.length,
         separatorBuilder: (_, _) => const SizedBox(width: 8),
+        // excludeSemantics drops the GestureDetector's tap action, so the
+        // Semantics node carries its own onTap for screen readers.
         itemBuilder: (context, index) => Semantics(
           button: true,
           label: 'Photo ${index + 1} of ${photos.length}. Opens the gallery',
           excludeSemantics: true,
+          onTap: () => context.push(Paths.gallery),
           child: GestureDetector(
             onTap: () => context.push(Paths.gallery),
             child: ClipRRect(

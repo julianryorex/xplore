@@ -25,19 +25,38 @@ class TripOverview {
   final DateTime _today;
 
   DateTime? get _start => trip.startDate == null ? null : _dateOnly(trip.startDate!);
-  DateTime? get _end => trip.endDate == null ? null : _dateOnly(trip.endDate!);
+
+  // An end date before the start date is treated as missing, so it never yields
+  // a reversed range or a trip that has "ended" on its first day.
+  DateTime? get _end {
+    final start = _start;
+    final end = trip.endDate == null ? null : _dateOnly(trip.endDate!);
+    return start != null && end != null && end.isBefore(start) ? null : end;
+  }
+
+  /// Days the trip spans according to its dates, or null without a complete range.
+  int? get _datedLength {
+    final start = _start;
+    final end = _end;
+    return start == null || end == null ? null : _daysBetween(start, end) + 1;
+  }
 
   /// Days the trip spans: from its dates when set, otherwise from the number of
   /// itinerary days. Null when neither is known.
-  int? get lengthInDays {
-    final start = _start;
-    final end = _end;
-    if (start != null && end != null && !end.isBefore(start)) {
-      return _daysBetween(start, end) + 1;
-    }
-    return dailyPlans.isEmpty ? null : dailyPlans.length;
+  int? get lengthInDays => _datedLength ?? (dailyPlans.isEmpty ? null : dailyPlans.length);
+
+  /// Itinerary days that fall within the trip's dates; all of them when undated.
+  List<DailyPlanModel> get _tripDays {
+    final length = _datedLength;
+    return length == null || dailyPlans.length <= length ? dailyPlans : dailyPlans.sublist(0, length);
   }
 
+  /// Index of the first day still worth planning: today's while the trip is
+  /// under way, so days that have already passed are not suggested.
+  int get _firstRemainingDayIndex => timing == TripTiming.ongoing ? currentDayNumber! - 1 : 0;
+
+  /// Where today falls relative to the trip's dates. A trip without a (valid)
+  /// end date counts as a single day.
   TripTiming get timing {
     final start = _start;
     if (start == null) {
@@ -56,16 +75,31 @@ class TripOverview {
   /// 1-based day of the trip today is; null unless the trip is [TripTiming.ongoing].
   int? get currentDayNumber => timing == TripTiming.ongoing ? _daysBetween(_start!, _today) + 1 : null;
 
-  /// Itinerary days that have at least one stop.
-  int get plannedDays => dailyPlans.where(_hasStops).length;
+  /// Itinerary days within the trip that have at least one stop.
+  int get plannedDays => _tripDays.where(_hasStops).length;
 
-  /// Days of the trip that still have no stops.
-  int get openDays => math.max(0, (lengthInDays ?? 0) - plannedDays);
+  /// Remaining days of the trip (from today while it is under way) that still have no stops.
+  int get openDays {
+    final from = _firstRemainingDayIndex;
+    final plannedRemaining = _tripDays.skip(from).where(_hasStops).length;
+    return math.max(0, (lengthInDays ?? 0) - from - plannedRemaining);
+  }
 
-  /// Index of the first itinerary day with no stops, or null when every day has one.
+  /// Index of the first remaining itinerary day with no stops, or null when
+  /// every one has some. Days already past are skipped while the trip is under way.
   int? get firstEmptyDayIndex {
-    final index = dailyPlans.indexWhere((day) => !_hasStops(day));
+    final index = _tripDays.indexWhere((day) => !_hasStops(day), _firstRemainingDayIndex);
     return index == -1 ? null : index;
+  }
+
+  /// Agent prompt asking to plan the itinerary day at [dayIndex], e.g. "Plan Apr 5 for me".
+  String planDayPrompt(int dayIndex) => 'Plan ${dayLabel(dayIndex)} for me';
+
+  /// [planDayPrompt] for the first remaining empty day, or null when there is
+  /// none or the trip is over.
+  String? get suggestedPlanDayPrompt {
+    final index = firstEmptyDayIndex;
+    return index == null || timing == TripTiming.past ? null : planDayPrompt(index);
   }
 
   /// Calendar date of the itinerary day at [dayIndex], or null for an undated trip.
@@ -78,6 +112,12 @@ class TripOverview {
     return date == null ? 'Day ${dayIndex + 1}' : formatMonthDay(date);
   }
 
+  /// The itinerary day's own title, or its [dayLabel] when the title is blank.
+  String dayTitle(int dayIndex) {
+    final title = dailyPlans[dayIndex].title.trim();
+    return title.isEmpty ? dayLabel(dayIndex) : title;
+  }
+
   /// "Apr 3 – Apr 9", or null when the trip has no complete date range.
   String? get dateRangeLabel {
     final start = _start;
@@ -87,8 +127,6 @@ class TripOverview {
     }
     return '${formatMonthDay(start)} – ${formatMonthDay(end)}';
   }
-
-  bool get isSolo => trip.memberIds.length <= 1;
 
   static bool _hasStops(DailyPlanModel day) => day.plan.locations.isNotEmpty;
 

@@ -32,18 +32,34 @@ LoadedItineraryState _itinerary(List<DailyPlanModel> days) => LoadedItinerarySta
 
 void main() {
   final loadedTrip = TripState.loaded(active: _trip, all: [_trip]);
+  final beforeTrip = DateTime(2026, 3, 22);
 
   test('suggests planning the first day that has no stops', () {
     final entries = QuickMenuEntries.from(
       trip: loadedTrip,
       itinerary: _itinerary([_day(stops: 2), _day(stops: 0), _day(stops: 0)]),
+      now: beforeTrip,
     );
 
     expect(entries.planDayPrompt, 'Plan Apr 4 for me');
   });
 
   test('offers no suggestion once every day has stops', () {
-    final entries = QuickMenuEntries.from(trip: loadedTrip, itinerary: _itinerary([_day(stops: 1), _day(stops: 3)]));
+    final entries = QuickMenuEntries.from(
+      trip: loadedTrip,
+      itinerary: _itinerary([_day(stops: 1), _day(stops: 3)]),
+      now: beforeTrip,
+    );
+
+    expect(entries.planDayPrompt, isNull);
+  });
+
+  test('offers no suggestion once the trip is over', () {
+    final entries = QuickMenuEntries.from(
+      trip: loadedTrip,
+      itinerary: _itinerary([_day(stops: 2), _day(stops: 0)]),
+      now: DateTime(2026, 4, 6),
+    );
 
     expect(entries.planDayPrompt, isNull);
   });

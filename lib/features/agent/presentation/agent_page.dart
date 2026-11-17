@@ -13,7 +13,6 @@ import 'package:xplore/features/itinerary/bloc/itinerary_cubit.dart';
 import 'package:xplore/features/profile/bloc/profile_cubit.dart';
 import 'package:xplore/features/trip/bloc/trip_cubit.dart';
 import 'package:xplore/features/trip/bloc/trip_state.dart';
-import 'package:xplore/features/trip/models/trip_model.dart';
 
 /// Route arguments for [AgentPage].
 class AgentPageArgs {
@@ -75,7 +74,7 @@ class _AgentPageState extends State<AgentPage> {
               child: SingleChildScrollView(
                 keyboardDismissBehavior: ScrollViewKeyboardDismissBehavior.onDrag,
                 padding: const EdgeInsets.fromLTRB(16, 48, 16, 16),
-                child: _AgentIntro(activeTrip: trips?.active, onSuggestionSelected: _useSuggestion),
+                child: _AgentIntro(tripState: tripState, onSuggestionSelected: _useSuggestion),
               ),
             ),
             const _UnavailableCaption(),
@@ -142,9 +141,9 @@ class _CloseButton extends StatelessWidget {
 /// Greeting, trip status and "Try asking", built from the active trip's
 /// itinerary when it has loaded.
 class _AgentIntro extends StatelessWidget {
-  const _AgentIntro({required this.activeTrip, required this.onSuggestionSelected});
+  const _AgentIntro({required this.tripState, required this.onSuggestionSelected});
 
-  final TripModel? activeTrip;
+  final TripState tripState;
   final ValueChanged<String> onSuggestionSelected;
 
   @override
@@ -152,7 +151,10 @@ class _AgentIntro extends StatelessWidget {
     final name = context.select<ProfileCubit, String>((cubit) => cubit.state.name);
     final itineraryState = context.watch<ItineraryCubit>().state;
     final itinerary = itineraryState is LoadedItineraryState ? itineraryState.itinerary : null;
-    final trip = activeTrip;
+    final trip = switch (tripState) {
+      TripLoaded(:final active) => active,
+      _ => null,
+    };
     final overview = trip == null ? null : TripOverview(trip: trip, dailyPlans: itinerary?.dailyPlans ?? const []);
     final suggestions = overview != null && itinerary != null ? agentSuggestions(overview) : const <String>[];
 
@@ -163,7 +165,7 @@ class _AgentIntro extends StatelessWidget {
           padding: const EdgeInsets.symmetric(horizontal: 4),
           child: AgentHero(
             title: greetingFor('What are we planning', name),
-            subtitle: agentStatusLine(overview, itineraryLoaded: itinerary != null),
+            subtitle: agentStatusLine(tripState, overview, itineraryLoaded: itinerary != null),
           ),
         ),
         if (suggestions.isNotEmpty) ...[

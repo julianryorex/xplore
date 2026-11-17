@@ -140,7 +140,7 @@ class _DayRow extends StatelessWidget {
   }
 
   Widget _plannedDay(BuildContext context, DailyPlanModel day, List<String> stopNames) {
-    final title = day.title.trim().isEmpty ? overview.dayLabel(dayIndex) : day.title;
+    final title = overview.dayTitle(dayIndex);
     return InkWell(
       onTap: () => Navigator.pushNamed(context, Paths.itineraryOverview, arguments: dayIndex),
       child: Padding(
@@ -205,7 +205,7 @@ class _DayRow extends StatelessWidget {
             onPressed: () => Navigator.pushNamed(
               context,
               Paths.agent,
-              arguments: AgentPageArgs(initialPrompt: 'Plan ${overview.dayLabel(dayIndex)} for me'),
+              arguments: AgentPageArgs(initialPrompt: overview.planDayPrompt(dayIndex)),
             ),
           ),
         ],
@@ -236,18 +236,22 @@ class _DateTile extends StatelessWidget {
         color: planned ? XploreColors.accentSoft : XploreColors.raised,
         borderRadius: BorderRadius.circular(radiusSm),
       ),
-      child: Column(
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: [
-          Text(
-            caption,
-            style: TextStyle(fontSize: 10, fontWeight: FontWeight.w700, letterSpacing: 0.4, color: foreground),
-          ),
-          Text(
-            number,
-            style: TextStyle(fontSize: 17, fontWeight: FontWeight.w700, height: 1.05, color: foreground),
-          ),
-        ],
+      // The tile keeps its fixed size, so large text sizes shrink to fit instead of overflowing.
+      child: FittedBox(
+        fit: BoxFit.scaleDown,
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Text(
+              caption,
+              style: TextStyle(fontSize: 10, fontWeight: FontWeight.w700, letterSpacing: 0.4, color: foreground),
+            ),
+            Text(
+              number,
+              style: TextStyle(fontSize: 17, fontWeight: FontWeight.w700, height: 1.05, color: foreground),
+            ),
+          ],
+        ),
       ),
     );
   }

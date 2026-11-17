@@ -10,6 +10,8 @@ class XploreColors {
 
   static const white = Color(0xFFFFFFFF);
   static const secondaryLabel = Color(0xFFA1A1A8);
+
+  /// Disabled and decorative use only: it is below WCAG AA contrast as text.
   static const tertiaryLabel = Color(0xFF5A5A60);
 
   /// Unselected controls sitting on glass or cards (tab labels, input icons).
@@ -24,7 +26,7 @@ class XploreColors {
   static const onAccent = Color(0xFF06201A);
 
   static const success = Color(0xFF00C853);
-  static const error = Color(0xFFD50000);
+  static const error = Color(0xFFFF453A);
   static const warning = Color(0xFFFFC400);
   static const info = Color(0xFF00B0FF);
 
@@ -36,15 +38,8 @@ class XploreColors {
   // Names from the previous teal palette, repointed at the new tokens so the
   // screens that have not been redesigned yet inherit the new look. Prefer the
   // tokens above in new code.
-  static const primary = raised;
-  static const secondary = accent;
-  static const tertiary = raised;
   static const alternate = accent;
-  static const primaryText = white;
-  static const secondaryText = secondaryLabel;
   static const primaryBg = background;
-  static const secondaryBg = raised;
-  static const lineColor = separator;
   static const darkBg = card;
   static const black = background;
   static const surface = card;

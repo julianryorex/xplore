@@ -68,13 +68,31 @@ void main() {
       expect(overview.dateRangeLabel, isNull);
     });
 
+    // Each pair spans a DST change only in its own region's time zones (EU: Mar 29,
+    // US: Mar 8), so together they cover whichever zone the tests run in.
     test('does not drift across a daylight-saving change', () {
-      final overview = TripOverview(
+      final acrossEuChange = TripOverview(
         trip: _trip(start: DateTime(2026, 4, 3), end: DateTime(2026, 4, 9)),
         now: DateTime(2026, 3, 27),
       );
+      final acrossUsChange = TripOverview(
+        trip: _trip(start: DateTime(2026, 3, 10), end: DateTime(2026, 3, 12)),
+        now: DateTime(2026, 3, 3),
+      );
 
-      expect(overview.daysToGo, 7);
+      expect(acrossEuChange.daysToGo, 7);
+      expect(acrossUsChange.daysToGo, 7);
+    });
+
+    test('treats an end date before the start date as missing', () {
+      final overview = TripOverview(
+        trip: _trip(start: end, end: start),
+        now: DateTime(2026, 4, 9),
+      );
+
+      expect(overview.timing, TripTiming.ongoing);
+      expect(overview.lengthInDays, isNull);
+      expect(overview.dateRangeLabel, isNull);
     });
   });
 
@@ -91,6 +109,29 @@ void main() {
       expect(overview.firstEmptyDayIndex, 2);
       expect(overview.dayLabel(2), 'Apr 5');
       expect(overview.dateRangeLabel, 'Apr 3 – Apr 9');
+    });
+
+    test('ignores itinerary days beyond the dated trip length', () {
+      final overview = TripOverview(
+        trip: _trip(start: start, end: DateTime(2026, 4, 5)),
+        dailyPlans: [for (var i = 0; i < 5; i++) _day(stops: 1)],
+      );
+
+      expect(overview.lengthInDays, 3);
+      expect(overview.plannedDays, 3);
+      expect(overview.openDays, 0);
+    });
+
+    test('skips days that have already passed while the trip is under way', () {
+      final overview = TripOverview(
+        trip: _trip(start: start, end: end),
+        dailyPlans: [_day(stops: 5), _day(stops: 1), _day(), _day(stops: 1), _day(), _day(), _day(stops: 2)],
+        now: DateTime(2026, 4, 6),
+      );
+
+      expect(overview.firstEmptyDayIndex, 4);
+      expect(overview.suggestedPlanDayPrompt, 'Plan Apr 7 for me');
+      expect(overview.openDays, 2);
     });
 
     test('falls back to the itinerary length and positional day labels when undated', () {
