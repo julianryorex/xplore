@@ -15,7 +15,7 @@ class LayoutPadding extends StatelessWidget {
     // MediaQuery here: the enclosing SafeArea consumes the top inset and zeroes
     // it out for its descendants, so MediaQuery would report 0. Reading the
     // view directly lets the scrim reach up behind the status bar so the
-    // ambient glow doesn't peek out above it as a hard teal band.
+    // scrolled content doesn't peek out above it as a hard band.
     final view = View.of(context);
     final topInset = view.viewPadding.top / view.devicePixelRatio;
 

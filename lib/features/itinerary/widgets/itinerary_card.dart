@@ -21,102 +21,56 @@ class ItineraryCard extends StatelessWidget {
   Widget build(BuildContext context) {
     final radius = BorderRadius.circular(radiusLg);
 
-    return DecoratedBox(
-      decoration: BoxDecoration(
-        borderRadius: radius,
-        gradient: LinearGradient(
-          begin: Alignment.topLeft,
-          end: Alignment.bottomRight,
-          // Greens nudged toward the dark base to mute the saturation slightly,
-          // and the dark brought in a touch earlier — keeps the brand feel but
-          // tones the green down a notch.
-          colors: [
-            Color.lerp(XploreColors.alternate, XploreColors.primary, 0.12)!,
-            Color.lerp(XploreColors.secondary, XploreColors.primary, 0.24)!,
-            XploreColors.primary,
-          ],
-          stops: const [0, 0.5, 1],
-        ),
-        border: Border.all(color: XploreColors.white.withValues(alpha: 0.12)),
-        boxShadow: [
-          BoxShadow(
-            color: XploreColors.alternate.withValues(alpha: 0.16),
-            blurRadius: 32,
-            spreadRadius: -6,
-            offset: const Offset(0, 18),
-          ),
-        ],
-      ),
-      child: Material(
-        shape: RoundedRectangleBorder(borderRadius: radius),
-        clipBehavior: Clip.antiAlias,
-        color: Colors.transparent,
-        child: InkWell(
-          onTap: () {
-            HapticFeedback.mediumImpact();
-            Navigator.pushNamed(context, Paths.itineraryOverview, arguments: dayIndex);
-          },
-          child: Stack(
+    return Material(
+      shape: RoundedRectangleBorder(borderRadius: radius),
+      clipBehavior: Clip.antiAlias,
+      color: XploreColors.card,
+      child: InkWell(
+        onTap: () {
+          HapticFeedback.mediumImpact();
+          Navigator.pushNamed(context, Paths.itineraryOverview, arguments: dayIndex);
+        },
+        child: Padding(
+          padding: const EdgeInsets.all(paddingUnit * 1.25),
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              // Soft sheen sweeping across the top-left to give the surface depth.
-              Positioned(
-                top: -60,
-                left: -40,
-                child: IgnorePointer(
-                  child: Container(
-                    width: 200,
-                    height: 200,
-                    decoration: BoxDecoration(
-                      shape: BoxShape.circle,
-                      gradient: RadialGradient(
-                        colors: [XploreColors.white.withValues(alpha: 0.20), XploreColors.white.withValues(alpha: 0)],
-                      ),
-                    ),
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  const Flexible(
+                    child: _GlassChip(label: 'Daily plan', icon: Icons.route_rounded),
                   ),
-                ),
+                  const _SaveButton(),
+                ],
               ),
-              Padding(
-                padding: const EdgeInsets.all(paddingUnit * 1.25),
+              SizedBox(
+                width: double.infinity,
                 child: Column(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  mainAxisAlignment: MainAxisAlignment.end,
                   children: [
-                    Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                      children: [
-                        _GlassChip(label: 'Daily plan', icon: Icons.route_rounded),
-                        const _SaveButton(),
-                      ],
+                    Text(
+                      dailyPlan.title,
+                      style: context.pText.headlineSmall?.copyWith(height: 1.06, letterSpacing: -0.4),
                     ),
-                    SizedBox(
-                      width: double.infinity,
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        mainAxisAlignment: MainAxisAlignment.end,
-                        children: [
-                          Text(
-                            dailyPlan.title,
-                            style: context.pText.headlineSmall?.copyWith(height: 1.06, letterSpacing: -0.4),
+                    const SizedBox(height: paddingUnit / 2),
+                    Row(
+                      children: [
+                        Icon(Icons.place_outlined, size: 15, color: XploreColors.white.withValues(alpha: 0.82)),
+                        const SizedBox(width: 4),
+                        Expanded(
+                          child: Text(
+                            dailyPlan.location,
+                            style: context.pText.bodySmall?.copyWith(
+                              color: XploreColors.white.withValues(alpha: 0.82),
+                              letterSpacing: 0.2,
+                            ),
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
                           ),
-                          const SizedBox(height: paddingUnit / 2),
-                          Row(
-                            children: [
-                              Icon(Icons.place_outlined, size: 15, color: XploreColors.white.withValues(alpha: 0.82)),
-                              const SizedBox(width: 4),
-                              Expanded(
-                                child: Text(
-                                  dailyPlan.location,
-                                  style: context.pText.bodySmall?.copyWith(
-                                    color: XploreColors.white.withValues(alpha: 0.82),
-                                    letterSpacing: 0.2,
-                                  ),
-                                  maxLines: 1,
-                                  overflow: TextOverflow.ellipsis,
-                                ),
-                              ),
-                            ],
-                          ),
-                        ],
-                      ),
+                        ),
+                      ],
                     ),
                   ],
                 ),
@@ -149,9 +103,13 @@ class _GlassChip extends StatelessWidget {
         children: [
           Icon(icon, size: 13, color: XploreColors.white),
           const SizedBox(width: 5),
-          Text(
-            label,
-            style: context.pText.labelSmall?.copyWith(color: XploreColors.white, fontWeight: FontWeight.w600),
+          Flexible(
+            child: Text(
+              label,
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+              style: context.pText.labelSmall?.copyWith(color: XploreColors.white, fontWeight: FontWeight.w600),
+            ),
           ),
         ],
       ),

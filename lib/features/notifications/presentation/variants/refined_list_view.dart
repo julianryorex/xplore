@@ -96,7 +96,7 @@ class _NotificationRow extends StatelessWidget {
     return GlassSurface(
       borderRadius: radiusMd,
       // Unread rows get a touch more fill so they sit slightly forward.
-      tint: unread ? XploreColors.glassFillStrong : XploreColors.glassFill,
+      tint: unread ? XploreColors.raised : XploreColors.card,
       padding: const EdgeInsets.fromLTRB(paddingUnit, paddingUnit, paddingUnit, paddingUnit),
       onTap: onTap,
       child: Row(

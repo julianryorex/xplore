@@ -34,7 +34,7 @@ the high-level "what" and a minimal run; this file covers the details.
 lib/
 ├── main.dart                  # Firebase/Hive CE/Gemini init, MultiBlocProvider root
 ├── routes.dart                # Named routes with FadePageRoute transitions
-├── constants/                 # Colors, theme (dark + Poppins), extensions
+├── constants/                 # Colors, theme (dark, system font), extensions
 ├── core/                      # Shared UI primitives (navbar, header, avatar marker)
 ├── features/
 │   ├── auth/                  # Sign-in, AuthCubit/AuthGate

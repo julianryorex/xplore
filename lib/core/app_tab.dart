@@ -1,4 +1,4 @@
-import 'package:flutter/material.dart';
+import 'package:flutter/cupertino.dart';
 
 /// Top-level destinations owned by the authenticated root shell.
 ///
@@ -14,7 +14,7 @@ enum AppTab {
   };
 
   IconData get icon => switch (this) {
-    AppTab.home => Icons.home_outlined,
-    AppTab.map => Icons.map_rounded,
+    AppTab.home => CupertinoIcons.house_fill,
+    AppTab.map => CupertinoIcons.map,
   };
 }

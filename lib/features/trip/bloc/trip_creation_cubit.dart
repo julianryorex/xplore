@@ -11,8 +11,15 @@ import 'package:xplore/utilities/utilities.dart';
 /// lifecycle. Imports no other cubit; the actual trip persistence runs through
 /// `TripCubit.createTripFromDraft` from the flow widget.
 class TripCreationCubit extends Cubit<TripCreationState> {
-  TripCreationCubit(this._generator, {List<CreateTripStep>? steps})
-    : super(TripCreationState(draft: const TripDraft(), steps: steps ?? CreateTripStep.values));
+  /// [initialNotes] seeds the draft's free-text notes, for callers that already
+  /// collected a description of the trip (the home screen's text field).
+  TripCreationCubit(this._generator, {List<CreateTripStep>? steps, String initialNotes = ''})
+    : super(
+        TripCreationState(
+          draft: TripDraft(notes: initialNotes),
+          steps: steps ?? CreateTripStep.values,
+        ),
+      );
 
   final ItineraryGenerator _generator;
   final Logger _logger = createLogger('TripCreation');

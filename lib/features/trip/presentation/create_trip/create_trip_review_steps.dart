@@ -303,8 +303,8 @@ class _FinishingStepState extends State<FinishingStep> {
   }
 }
 
-/// A gradient cover stand-in keyed to the destination. Real cover-image
-/// selection is a phase-2 wrinkle; for now the hero card shows this gradient.
+/// A plain cover stand-in keyed to the destination. Real cover-image
+/// selection is a phase-2 wrinkle; for now the hero card shows this placeholder.
 class _CoverPreview extends StatelessWidget {
   const _CoverPreview({required this.destination});
 
@@ -315,19 +315,7 @@ class _CoverPreview extends StatelessWidget {
     return Container(
       height: 150,
       width: double.infinity,
-      decoration: BoxDecoration(
-        borderRadius: BorderRadius.circular(radiusLg),
-        gradient: LinearGradient(
-          begin: Alignment.topLeft,
-          end: Alignment.bottomRight,
-          colors: [
-            Color.lerp(XploreColors.alternate, XploreColors.primary, 0.1)!,
-            Color.lerp(XploreColors.secondary, XploreColors.primary, 0.3)!,
-            XploreColors.primary,
-          ],
-        ),
-        border: Border.all(color: XploreColors.white.withValues(alpha: 0.12)),
-      ),
+      decoration: BoxDecoration(color: XploreColors.card, borderRadius: BorderRadius.circular(radiusLg)),
       child: Padding(
         padding: const EdgeInsets.all(paddingUnit * 1.25),
         child: Column(
