@@ -53,6 +53,19 @@ void main() {
     await cubit.close();
   });
 
+  test('loadPreview emits alreadyMember when the user is on the trip', () async {
+    final tripId = await seedTrip(members: ['owner-1', 'joiner-1']);
+    final handle = await tripService.createInvite(tripId, 'owner-1');
+    final cubit = cubitFor(tripId, handle.invite.token);
+
+    await cubit.loadPreview();
+
+    expect(cubit.state, isA<JoinTripAlreadyMember>());
+    expect((cubit.state as JoinTripAlreadyMember).trip.title, 'Tokyo 2026');
+
+    await cubit.close();
+  });
+
   test('loadPreview emits invalid for a revoked invite', () async {
     final tripId = await seedTrip();
     final handle = await tripService.createInvite(tripId, 'owner-1');

@@ -1,5 +1,9 @@
 import 'package:flutter/widgets.dart';
-import 'package:xplore/constants/theme.dart';
+
+/// The family name Flutter's engine registers for the platform system font on
+/// Apple platforms (San Francisco). Named explicitly because raw [TextStyle]s
+/// handed to button themes skip the typography defaults.
+const systemFontFamily = 'CupertinoSystemText';
 
 /// The app's type scale. Sizes are deliberately small, so hierarchy comes from
 /// weight, colour and spacing rather than size. Styles carry no colour: they

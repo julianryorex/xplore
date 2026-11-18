@@ -128,9 +128,17 @@ class TripService {
   }
 
   /// Fetches an invite for the join-confirmation preview and classifies it as
-  /// valid or invalid (not found / revoked / expired). Does not touch the trip
-  /// document, so it works for not-yet-members.
-  Future<InviteLookup> lookupInvite(String tripId, String token, {DateTime? now}) async {
+  /// valid, invalid (not found / revoked / expired), or — when [uid] is given and
+  /// already on the trip — already a member. Membership wins over a dead invite,
+  /// since a member has nothing left to join.
+  Future<InviteLookup> lookupInvite(String tripId, String token, {String? uid, DateTime? now}) async {
+    if (uid != null) {
+      final trip = await _tripIfMember(tripId, uid);
+      if (trip != null) {
+        return InviteLookup.alreadyMember(trip);
+      }
+    }
+
     final DocumentSnapshot<Map<String, dynamic>> snapshot;
     try {
       snapshot = await _invites(tripId).doc(token).get();
@@ -207,6 +215,22 @@ class TripService {
     // Now a member: the read is permitted and returns the joined trip.
     final joinedSnapshot = await tripRef.get();
     return InviteAcceptResult.joined(_tripFromDoc(joinedSnapshot));
+  }
+
+  /// Returns the trip when [uid] is a member of it, otherwise `null`. Rules only
+  /// let members read a trip, so a denied (or failed) read simply means "not a
+  /// member" and the caller falls back to the invite preview.
+  Future<TripModel?> _tripIfMember(String tripId, String uid) async {
+    try {
+      final snapshot = await _trips.doc(tripId).get();
+      if (!snapshot.exists || snapshot.data() == null) {
+        return null;
+      }
+      final trip = _tripFromDoc(snapshot);
+      return trip.memberIds.contains(uid) ? trip : null;
+    } on FirebaseException {
+      return null;
+    }
   }
 
   /// Returns the failure reason for [snapshot], or `null` when the invite is
