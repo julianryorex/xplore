@@ -67,12 +67,10 @@ flutter:
     - assets/illustrations/
 
   fonts:
-    - family: Poppins
+    # Wordmark only (variable font, used at ExtraBold); UI text is the system font.
+    - family: Manrope
       fonts:
-        - asset: assets/fonts/Poppins-Medium.ttf
-          weight: 500
-        - asset: assets/fonts/Poppins-SemiBold.ttf
-          weight: 600
+        - asset: assets/fonts/Manrope-Variable.ttf
 
 flutter_launcher_icons:
   image_path: assets/branding/app_icon.jpg

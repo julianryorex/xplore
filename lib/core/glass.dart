@@ -4,16 +4,12 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:xplore/constants/constants.dart';
 
-/// A single liquid-glass material primitive.
+/// The shared surface primitive for cards and floating controls.
 ///
-/// Renders a translucent, backdrop-blurred surface with a hairline rim border
-/// and a soft specular highlight along the top edge — the same recipe Apple's
-/// Liquid Glass uses for the floating control layer. Whatever sits *behind* the
-/// surface is blurred and tinted, so place these above colorful content
-/// (see [AmbientBackground]) for the effect to read.
-///
-/// Keep glass for controls / floating chrome; content (lists, hero cards)
-/// should stay on opaque surfaces for legibility.
+/// By default it is an opaque card ([XploreColors.card]). With [strong] (or a
+/// translucent [tint]) it becomes floating chrome: a translucent, backdrop-blurred
+/// fill with a hairline rim and a soft top highlight, for controls that sit over
+/// photos or the map.
 class GlassSurface extends StatelessWidget {
   final Widget child;
   final double borderRadius;
@@ -21,8 +17,8 @@ class GlassSurface extends StatelessWidget {
   final EdgeInsetsGeometry padding;
   final Color? tint;
 
-  /// Use the stronger fill for small, dense controls (icon buttons, chips)
-  /// where more contrast against busy backgrounds helps legibility.
+  /// Use the translucent chrome fill for small controls (icon buttons, chips)
+  /// that float over photos, the map, or a card.
   final bool strong;
   final bool highlight;
   final VoidCallback? onTap;
@@ -44,7 +40,10 @@ class GlassSurface extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final radius = BorderRadius.circular(borderRadius);
-    final fill = tint ?? (strong ? XploreColors.glassFillStrong : XploreColors.glassFill);
+    final fill = tint ?? (strong ? XploreColors.glassChrome : XploreColors.card);
+    // An opaque fill is a plain card: the blur, rim and specular highlight only
+    // read on translucent material, and on pure black they look like a stray outline.
+    final translucent = fill.a < 1;
 
     Widget content = Padding(padding: padding, child: child);
 
@@ -64,6 +63,13 @@ class GlassSurface extends StatelessWidget {
       );
     }
 
+    if (!translucent) {
+      return ClipRRect(
+        borderRadius: radius,
+        child: ColoredBox(color: fill, child: content),
+      );
+    }
+
     return RepaintBoundary(
       child: ClipRRect(
         borderRadius: radius,
@@ -80,7 +86,7 @@ class GlassSurface extends StatelessWidget {
                   fill.withValues(alpha: (fill.a - 0.05).clamp(0.0, 1.0)),
                 ],
               ),
-              border: Border.all(color: XploreColors.glassBorder),
+              border: Border.all(color: XploreColors.glassChromeBorder),
             ),
             child: Stack(
               children: [

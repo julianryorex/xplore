@@ -1,13 +1,14 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:share_plus/share_plus.dart';
 import 'package:xplore/constants/constants.dart';
 import 'package:xplore/constants/extensions.dart';
 import 'package:xplore/core/glass.dart';
 import 'package:xplore/features/auth/services/auth_service.dart';
 import 'package:xplore/features/trip/bloc/trip_creation_cubit.dart';
 import 'package:xplore/features/trip/bloc/trip_creation_state.dart';
+import 'package:xplore/features/trip/presentation/trip_invite_sharer.dart';
+import 'package:xplore/features/trip/services/invite_results.dart';
 import 'package:xplore/features/trip/services/trip_service.dart';
 
 /// Bucket 5 — Generate + review. Phase 1 produces a deterministic day skeleton
@@ -303,8 +304,8 @@ class _FinishingStepState extends State<FinishingStep> {
   }
 }
 
-/// A gradient cover stand-in keyed to the destination. Real cover-image
-/// selection is a phase-2 wrinkle; for now the hero card shows this gradient.
+/// A plain cover stand-in keyed to the destination. Real cover-image
+/// selection is a phase-2 wrinkle; for now the hero card shows this placeholder.
 class _CoverPreview extends StatelessWidget {
   const _CoverPreview({required this.destination});
 
@@ -315,19 +316,7 @@ class _CoverPreview extends StatelessWidget {
     return Container(
       height: 150,
       width: double.infinity,
-      decoration: BoxDecoration(
-        borderRadius: BorderRadius.circular(radiusLg),
-        gradient: LinearGradient(
-          begin: Alignment.topLeft,
-          end: Alignment.bottomRight,
-          colors: [
-            Color.lerp(XploreColors.alternate, XploreColors.primary, 0.1)!,
-            Color.lerp(XploreColors.secondary, XploreColors.primary, 0.3)!,
-            XploreColors.primary,
-          ],
-        ),
-        border: Border.all(color: XploreColors.white.withValues(alpha: 0.12)),
-      ),
+      decoration: BoxDecoration(color: XploreColors.card, borderRadius: BorderRadius.circular(radiusLg)),
       child: Padding(
         padding: const EdgeInsets.all(paddingUnit * 1.25),
         child: Column(
@@ -363,7 +352,8 @@ class InviteStep extends StatefulWidget {
 class _InviteStepState extends State<InviteStep> {
   bool _isCreating = false;
 
-  Future<void> _share() async {
+  /// [origin] is the share button's rect, which anchors the share sheet on iPad.
+  Future<void> _share(Rect? origin) async {
     final trip = context.read<TripCreationCubit>().state.createdTrip;
     if (trip == null || _isCreating) {
       return;
@@ -379,13 +369,15 @@ class _InviteStepState extends State<InviteStep> {
     }
 
     try {
-      final handle = await tripService.createInvite(trip.id, uid);
+      final TripInviteHandle handle;
+      try {
+        handle = await tripService.createInvite(trip.id, uid);
+      } catch (_) {
+        messenger.showSnackBar(const SnackBar(content: Text('Couldn\u2019t create an invite link. Please try again.')));
+        return;
+      }
       HapticFeedback.lightImpact();
-      await SharePlus.instance.share(
-        ShareParams(text: 'Join "${trip.title}" on Xplore:\n${handle.link}', subject: 'Join my trip on Xplore'),
-      );
-    } catch (_) {
-      messenger.showSnackBar(const SnackBar(content: Text('Couldn\u2019t create an invite link. Please try again.')));
+      await openInviteShareSheet(messenger, tripTitle: trip.title, link: handle.link, origin: origin);
     } finally {
       if (mounted) {
         setState(() => _isCreating = false);
@@ -424,12 +416,14 @@ class _InviteStepState extends State<InviteStep> {
         const SizedBox(height: paddingUnit * 1.5),
         SizedBox(
           width: double.infinity,
-          child: OutlinedButton.icon(
-            onPressed: _isCreating ? null : _share,
-            icon: _isCreating
-                ? const SizedBox(height: 16, width: 16, child: CircularProgressIndicator(strokeWidth: 2))
-                : const Icon(Icons.ios_share_rounded, size: 18),
-            label: Text(solo ? 'Share invite link' : 'Invite your crew'),
+          child: Builder(
+            builder: (buttonContext) => OutlinedButton.icon(
+              onPressed: _isCreating ? null : () => _share(shareOriginOf(buttonContext)),
+              icon: _isCreating
+                  ? const SizedBox(height: 16, width: 16, child: CircularProgressIndicator(strokeWidth: 2))
+                  : const Icon(Icons.ios_share_rounded, size: 18),
+              label: Text(solo ? 'Share invite link' : 'Invite your crew'),
+            ),
           ),
         ),
       ],

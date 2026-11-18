@@ -23,8 +23,8 @@ class AvatarMapIcon extends StatelessWidget {
         ),
         child: CircleAvatar(
           foregroundImage: image,
-          backgroundColor: XploreColors.secondary,
-          child: Text('J', style: context.pText.headlineMedium),
+          backgroundColor: XploreColors.accent,
+          child: Text('J', style: context.pText.headlineMedium?.copyWith(color: XploreColors.onAccent)),
         ),
       ),
     );

@@ -68,10 +68,11 @@ class ItineraryCubit extends Cubit<ItineraryStates> with TripStreamMixin, AuthCl
     }
 
     _activeTripId = tripId;
+    // Emit before the first await: TripCubit has already emitted the new trip,
+    // and listeners must not pair it with the previous trip's days meanwhile.
+    _safeEmit(const LoadingItineraryState());
     await _itinerarySubscription?.cancel();
     _itinerarySubscription = null;
-
-    _safeEmit(const LoadingItineraryState());
 
     final cached = await _repository.loadFromCache(tripId);
     if (cached != null && _activeTripId == tripId && state is! LoadedItineraryState) {

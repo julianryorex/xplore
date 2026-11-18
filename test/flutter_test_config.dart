@@ -9,12 +9,11 @@ import 'package:flutter_test/flutter_test.dart';
 ///
 /// Ported from the reference repo's `flutter_test_config.dart` +
 /// `golden_toolkit.loadAppFonts()`. Its one job is to load **all** bundled
-/// fonts once — the Poppins families *and* the `MaterialIcons` glyph font — so
-/// that any widget/golden test renders real text and icons instead of the Ahem
-/// fallback / tofu boxes. Without this, every golden would have to load fonts by
-/// hand (the pattern the old `itinerary_card` / `profile_page` tests used) and
-/// any test that forgot would silently bake placeholder glyphs into its
-/// baseline.
+/// fonts once — the Manrope wordmark family *and* the `MaterialIcons` glyph
+/// font. UI text uses the platform system font, which tests cannot load, so it
+/// still renders in the Ahem fallback; only the wordmark and icons render with
+/// real glyphs. Without this, any test that forgot to load fonts would bake
+/// tofu boxes into its icon and wordmark baselines.
 ///
 /// Keep this lean: anything that mutates global state per-test (view size,
 /// platform channels) belongs in the individual test or a helper so it can be
@@ -25,7 +24,7 @@ Future<void> testExecutable(FutureOr<void> Function() testMain) async {
   return testMain();
 }
 
-/// Loads every font declared in the app's `FontManifest.json` (Poppins) as well
+/// Loads every font declared in the app's `FontManifest.json` (Manrope) as well
 /// as the framework-provided `MaterialIcons` font, mirroring what
 /// `golden_toolkit.loadAppFonts()` does.
 Future<void> _loadAppFonts() async {

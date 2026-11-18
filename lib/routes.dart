@@ -6,6 +6,7 @@ import 'package:logger/logger.dart';
 import 'package:xplore/constants/constants.dart';
 import 'package:xplore/core/app_tab.dart';
 import 'package:xplore/core/root_shell.dart';
+import 'package:xplore/features/agent/presentation/agent_page.dart';
 import 'package:xplore/features/auth/presentation/onboarding_page.dart';
 import 'package:xplore/features/auth/presentation/sign_in_page.dart';
 import 'package:xplore/features/auth/services/auth_service.dart';
@@ -46,8 +47,12 @@ class Paths {
   /// entry points.
   static const dev = '/dev';
 
-  /// Multi-step generative trip-creation flow (FEAT-007).
+  /// Multi-step generative trip-creation flow (FEAT-007). An optional `String`
+  /// route argument pre-fills the draft's notes with a description of the trip.
   static const createTrip = '/create-trip';
+
+  /// Full-screen agent ("Ask anything"). Takes an optional [AgentPageArgs].
+  static const agent = '/agent';
 
   /// Invite join-confirmation screen. Reached via an invite deep link
   /// (`https://xplore.app/join?trip=...&token=...`); expects an
@@ -106,9 +111,17 @@ class RouteGenerator {
         return MaterialPageRoute(
           settings: settings,
           builder: (context) => BlocProvider<TripCreationCubit>(
-            create: (ctx) => TripCreationCubit(ctx.read<ItineraryGenerator>()),
+            create: (ctx) =>
+                TripCreationCubit(ctx.read<ItineraryGenerator>(), initialNotes: args is String ? args : ''),
             child: const CreateTripFlowPage(),
           ),
+        );
+      case Paths.agent:
+        // Presented over Home rather than drilled into, so it fades through
+        // instead of sliding in like the hierarchical screens.
+        return FadeThroughPageRoute(
+          settings: settings,
+          builder: (_) => AgentPage(args: args is AgentPageArgs ? args : const AgentPageArgs()),
         );
       case Paths.onboarding:
         return MaterialPageRoute(builder: (_) => const OnboardingPage());

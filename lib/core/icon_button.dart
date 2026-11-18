@@ -55,7 +55,7 @@ class XploreIconBtn extends StatelessWidget {
       height: size,
       width: size,
       decoration: BoxDecoration(
-        color: bgColor ?? XploreColors.alternate,
+        color: bgColor ?? XploreColors.accent,
         borderRadius: BorderRadius.circular(borderRadius),
         border: borderColor != null ? Border.all(color: borderColor!, width: 2) : null,
         boxShadow: [BoxShadow(color: Colors.black.withValues(alpha: 0.24), blurRadius: 16, offset: const Offset(0, 8))],
@@ -64,7 +64,14 @@ class XploreIconBtn extends StatelessWidget {
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.all(Radius.circular(borderRadius))),
         clipBehavior: Clip.hardEdge,
         color: Colors.transparent,
-        child: InkWell(onTap: _onTapCallback, child: icon),
+        child: InkWell(
+          onTap: _onTapCallback,
+          // The default accent fill is light, so icons on it need dark content.
+          child: IconTheme.merge(
+            data: IconThemeData(color: bgColor == null ? XploreColors.onAccent : null),
+            child: icon ?? const SizedBox.shrink(),
+          ),
+        ),
       ),
     );
   }

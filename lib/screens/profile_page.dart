@@ -307,19 +307,7 @@ class _SaveChangesButton extends StatelessWidget {
   Widget build(BuildContext context) {
     return SizedBox(
       width: double.infinity,
-      child: ElevatedButton(
-        onPressed: () {},
-        style: ElevatedButton.styleFrom(
-          // A clean near-white primary reads as premium on dark, and keeps the
-          // brand accent for sparing, intentional use elsewhere.
-          backgroundColor: XploreColors.white,
-          foregroundColor: XploreColors.primaryBg,
-          elevation: 0,
-          minimumSize: const Size.fromHeight(54),
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(radiusMd)),
-        ),
-        child: Text('Save changes', style: context.pText.labelLarge?.copyWith(color: XploreColors.primaryBg)),
-      ),
+      child: ElevatedButton(onPressed: () {}, child: const Text('Save changes')),
     );
   }
 }

@@ -6,6 +6,8 @@ import 'package:google_maps_flutter/google_maps_flutter.dart';
 import 'package:logger/logger.dart';
 import 'package:xplore/features/auth/services/auth_service.dart';
 import 'package:xplore/features/location/models/location_models.dart';
+import 'package:xplore/features/map/models/map_theme.dart';
+import 'package:xplore/features/map/services/map_theme_store.dart';
 import 'package:xplore/features/map/services/marker_service.dart';
 import 'package:xplore/utilities/utilities.dart';
 
@@ -19,10 +21,14 @@ part 'map_states.dart';
 class MapCubit extends Cubit<MapStates> {
   late final Logger _logger;
   final AuthService _authService;
-  late String mapStyle;
+  final MapThemeStore _themeStore;
+  final Map<MapTheme, String> _styles = {};
+  MapTheme _theme = MapTheme.fallback;
   late MarkerService markerService;
 
-  MapCubit(this._authService) : super(InitialMapState()) {
+  MapCubit(this._authService, {MapThemeStore? themeStore})
+    : _themeStore = themeStore ?? MapThemeStore(),
+      super(InitialMapState()) {
     _logger = createLogger('Map');
     markerService = MarkerService();
     init();
@@ -35,7 +41,7 @@ class MapCubit extends Cubit<MapStates> {
 
   @visibleForTesting
   Future<void> init() async {
-    await _loadMapStyle();
+    await _loadMapStyles();
     await checkUserMarkerState();
   }
 
@@ -53,7 +59,7 @@ class MapCubit extends Cubit<MapStates> {
       return;
     }
 
-    emit(const LoadedMapState());
+    emit(LoadedMapState(theme: _theme));
   }
 
   //! -------------------------------------------------------------------------
@@ -70,7 +76,18 @@ class MapCubit extends Cubit<MapStates> {
     final iconBytes = await markerService.convertMarkerWidgetToBytes();
     _logger.d('Generated iconBytes (${iconBytes?.length} bytes)');
     await markerService.updateMarkerIcon(uid, iconBytes!);
-    emit(const LoadedMapState());
+    emit(LoadedMapState(theme: _theme));
+  }
+
+  /// Google Maps style JSON for [theme].
+  String styleFor(MapTheme theme) => _styles[theme]!;
+
+  /// Switches the map's colour scheme and remembers it on this device.
+  Future<void> setTheme(MapTheme theme) async {
+    _theme = theme;
+    final current = state;
+    if (current is LoadedMapState) emit(current.copyWith(theme: theme));
+    await _themeStore.save(theme);
   }
 
   void updateCenter(LatLng newCenter) {
@@ -114,8 +131,12 @@ class MapCubit extends Cubit<MapStates> {
     return LatLng(position.latitude, position.longitude);
   }
 
-  /// Loads [GoogleMap] style
-  Future<void> _loadMapStyle() async {
-    mapStyle = await rootBundle.loadString('assets/maps/GoogleMapNeon.json');
+  /// Loads every [GoogleMap] style up front, so switching themes is instant,
+  /// along with the theme saved on this device.
+  Future<void> _loadMapStyles() async {
+    for (final theme in MapTheme.values) {
+      _styles[theme] = await rootBundle.loadString(theme.asset);
+    }
+    _theme = await _themeStore.load();
   }
 }

@@ -24,7 +24,7 @@ enum NotificationKind {
   Color get accent => switch (this) {
     NotificationKind.tripInvite => XploreColors.alternate,
     NotificationKind.itinerary => XploreColors.info,
-    NotificationKind.gallery => XploreColors.secondaryText,
+    NotificationKind.gallery => XploreColors.accent,
     NotificationKind.location => XploreColors.warning,
     NotificationKind.system => XploreColors.alternate,
   };

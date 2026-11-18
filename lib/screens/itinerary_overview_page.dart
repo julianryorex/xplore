@@ -153,7 +153,7 @@ class _Checklist extends StatelessWidget {
 
     if (locationPlan.completed) {
       return XploreIconBtn(
-        icon: Icon(Icons.check, color: XploreColors.darkBg, size: 30),
+        icon: const Icon(Icons.check, color: XploreColors.onAccent, size: 30),
         onTapCallback: callback,
         size: rowSize,
         borderRadius: 100,
