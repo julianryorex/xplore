@@ -2,6 +2,7 @@ import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:xplore/constants/constants.dart';
+import 'package:xplore/constants/typography.dart';
 import 'package:xplore/features/trip/bloc/trip_cubit.dart';
 import 'package:xplore/features/trip/bloc/trip_state.dart';
 import 'package:xplore/features/trip/models/trip_model.dart';
@@ -35,7 +36,7 @@ class TripSwitcher extends StatelessWidget {
                   active.title,
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
-                  style: const TextStyle(fontSize: 15, fontWeight: FontWeight.w600, color: XploreColors.white),
+                  style: XploreText.footnoteStrong.copyWith(color: XploreColors.white),
                 ),
               ),
               if (canSwitch) ...[
@@ -81,12 +82,9 @@ class _TripPickerSheet extends StatelessWidget {
         shrinkWrap: true,
         padding: const EdgeInsets.only(bottom: 8),
         children: [
-          const Padding(
-            padding: EdgeInsets.fromLTRB(20, 0, 20, 8),
-            child: Text(
-              'Switch trip',
-              style: TextStyle(fontSize: 17, fontWeight: FontWeight.w600, color: XploreColors.white),
-            ),
+          Padding(
+            padding: const EdgeInsets.fromLTRB(20, 0, 20, 8),
+            child: Text('Switch trip', style: XploreText.heading.copyWith(color: XploreColors.white)),
           ),
           for (final trip in trips)
             _TripRow(trip: trip, selected: trip.id == activeId, onTap: () => Navigator.pop(context, trip.id)),
@@ -110,7 +108,7 @@ class _TripRow extends StatelessWidget {
       child: InkWell(
         onTap: onTap,
         child: ConstrainedBox(
-          constraints: const BoxConstraints(minHeight: 52),
+          constraints: const BoxConstraints(minHeight: 46),
           child: Padding(
             padding: const EdgeInsets.symmetric(horizontal: 20),
             child: Row(
@@ -120,10 +118,10 @@ class _TripRow extends StatelessWidget {
                     trip.title,
                     maxLines: 1,
                     overflow: TextOverflow.ellipsis,
-                    style: const TextStyle(fontSize: 17, color: XploreColors.white),
+                    style: XploreText.body.copyWith(color: XploreColors.white),
                   ),
                 ),
-                if (selected) const Icon(CupertinoIcons.checkmark_alt, size: 20, color: XploreColors.accent),
+                if (selected) const Icon(CupertinoIcons.checkmark_alt, size: 18, color: XploreColors.accent),
               ],
             ),
           ),

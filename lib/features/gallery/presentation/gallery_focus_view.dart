@@ -5,6 +5,7 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:photo_view/photo_view.dart';
 import 'package:photo_view/photo_view_gallery.dart';
 import 'package:xplore/constants/constants.dart';
+import 'package:xplore/constants/typography.dart';
 import 'package:xplore/core/glass.dart';
 import 'package:xplore/core/header.dart';
 import 'package:xplore/features/gallery/bloc/gallery_cubit.dart';
@@ -163,10 +164,7 @@ class _PhotoCounter extends StatelessWidget {
       strong: true,
       borderRadius: radiusLg,
       padding: const EdgeInsets.symmetric(horizontal: paddingUnit, vertical: paddingUnit * 0.5),
-      child: Text(
-        '${index + 1} / $total',
-        style: TextStyle(color: XploreColors.white, fontWeight: FontWeight.w600, fontSize: 13),
-      ),
+      child: Text('${index + 1} / $total', style: XploreText.footnoteStrong.copyWith(color: XploreColors.white)),
     );
   }
 }

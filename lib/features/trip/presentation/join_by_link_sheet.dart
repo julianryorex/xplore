@@ -2,6 +2,7 @@ import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:xplore/constants/constants.dart';
+import 'package:xplore/constants/typography.dart';
 import 'package:xplore/features/trip/services/invite_link.dart';
 import 'package:xplore/routes.dart';
 
@@ -66,20 +67,17 @@ class _JoinByLinkSheetState extends State<_JoinByLinkSheet> {
           mainAxisSize: MainAxisSize.min,
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
-            const Text(
-              'Join a trip',
-              style: TextStyle(fontSize: 22, fontWeight: FontWeight.w700, color: XploreColors.white),
-            ),
+            Text('Join a trip', style: XploreText.heading.copyWith(color: XploreColors.white)),
             const SizedBox(height: 4),
-            const Text(
+            Text(
               'Paste the invite link a friend shared with you.',
-              style: TextStyle(fontSize: 15, color: XploreColors.secondaryLabel),
+              style: XploreText.footnote.copyWith(color: XploreColors.secondaryLabel),
             ),
             const SizedBox(height: 16),
             _LinkField(controller: _controller, onSubmitted: _submit, onPaste: _paste),
             if (_error != null) ...[
               const SizedBox(height: 8),
-              Text(_error!, style: const TextStyle(fontSize: 13, color: XploreColors.error)),
+              Text(_error!, style: XploreText.footnote.copyWith(color: XploreColors.error)),
             ],
             const SizedBox(height: 16),
             _JoinButton(onPressed: _submit),
@@ -100,8 +98,8 @@ class _LinkField extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
-      height: 52,
-      padding: const EdgeInsets.only(left: 16, right: 4),
+      height: 46,
+      padding: const EdgeInsets.only(left: 16, right: 2),
       decoration: BoxDecoration(color: XploreColors.raised, borderRadius: BorderRadius.circular(radiusSm)),
       child: Row(
         children: [
@@ -114,10 +112,10 @@ class _LinkField extends StatelessWidget {
               textInputAction: TextInputAction.go,
               onSubmitted: (_) => onSubmitted(),
               cursorColor: XploreColors.accent,
-              style: const TextStyle(fontSize: 17, color: XploreColors.white),
-              decoration: const InputDecoration.collapsed(
+              style: XploreText.body.copyWith(color: XploreColors.white),
+              decoration: InputDecoration.collapsed(
                 hintText: 'Invite link',
-                hintStyle: TextStyle(fontSize: 17, color: XploreColors.secondaryLabel),
+                hintStyle: XploreText.body.copyWith(color: XploreColors.secondaryLabel),
               ),
             ),
           ),
@@ -130,7 +128,7 @@ class _LinkField extends StatelessWidget {
               onTap: onPaste,
               child: const SizedBox.square(
                 dimension: minTouchTarget,
-                child: Icon(CupertinoIcons.doc_on_clipboard, size: 20, color: XploreColors.accent),
+                child: Icon(CupertinoIcons.doc_on_clipboard, size: 18, color: XploreColors.accent),
               ),
             ),
           ),
@@ -148,7 +146,7 @@ class _JoinButton extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return SizedBox(
-      height: 50,
+      height: 48,
       child: FilledButton(onPressed: onPressed, child: const Text('Join')),
     );
   }

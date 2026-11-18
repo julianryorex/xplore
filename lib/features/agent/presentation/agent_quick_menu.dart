@@ -4,6 +4,7 @@ import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:xplore/constants/constants.dart';
+import 'package:xplore/constants/typography.dart';
 import 'package:xplore/features/agent/models/quick_menu_entries.dart';
 import 'package:xplore/features/agent/presentation/agent_page.dart';
 import 'package:xplore/features/itinerary/bloc/itinerary_cubit.dart';
@@ -202,7 +203,7 @@ class _QuickMenuRow extends StatelessWidget {
       child: InkWell(
         onTap: onTap,
         child: SizedBox(
-          height: 50,
+          height: 44,
           child: Padding(
             padding: const EdgeInsets.symmetric(horizontal: 16),
             child: Row(
@@ -213,11 +214,11 @@ class _QuickMenuRow extends StatelessWidget {
                     label,
                     maxLines: 1,
                     overflow: TextOverflow.ellipsis,
-                    style: Theme.of(context).textTheme.bodyLarge
-                        ?.copyWith(fontSize: 17, color: color, fontWeight: accent ? FontWeight.w600 : FontWeight.w400),
+                    style: (accent ? XploreText.bodyStrong.copyWith(fontWeight: FontWeight.w600) : XploreText.body)
+                        .copyWith(color: color),
                   ),
                 ),
-                Icon(icon, size: 20, color: color),
+                Icon(icon, size: 18, color: color),
               ],
             ),
           ),

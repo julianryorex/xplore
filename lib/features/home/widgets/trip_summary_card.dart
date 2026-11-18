@@ -2,6 +2,7 @@ import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:xplore/constants/constants.dart';
+import 'package:xplore/constants/typography.dart';
 import 'package:xplore/features/home/models/trip_overview.dart';
 import 'package:xplore/features/home/widgets/capsule_button.dart';
 import 'package:xplore/features/profile/bloc/profile_cubit.dart';
@@ -43,7 +44,8 @@ class TripSummaryCard extends StatelessWidget {
             ),
           ),
           Padding(
-            padding: const EdgeInsets.fromLTRB(16, 12, 12, 12),
+            // The Invite pill's padded tap target already adds height, so the row needs less.
+            padding: const EdgeInsets.fromLTRB(16, 8, 12, 8),
             child: Row(
               children: [
                 Expanded(child: _MemberAvatars(otherMembers: overview.trip.memberIds.length - 1)),
@@ -107,12 +109,7 @@ class _Stat extends StatelessWidget {
           child: Text(
             value,
             maxLines: 1,
-            style: TextStyle(
-              fontSize: 22,
-              fontWeight: FontWeight.w700,
-              letterSpacing: -0.4,
-              color: accent ? XploreColors.accent : XploreColors.white,
-            ),
+            style: XploreText.stat.copyWith(color: accent ? XploreColors.accent : XploreColors.white),
           ),
         ),
         const SizedBox(height: 2),
@@ -120,7 +117,7 @@ class _Stat extends StatelessWidget {
           label,
           maxLines: 1,
           overflow: TextOverflow.ellipsis,
-          style: const TextStyle(fontSize: 12, color: XploreColors.secondaryLabel),
+          style: XploreText.caption.copyWith(color: XploreColors.secondaryLabel),
         ),
       ],
     );
@@ -142,7 +139,7 @@ class _MemberAvatars extends StatelessWidget {
 
   final int otherMembers;
 
-  static const _size = 32.0;
+  static const _size = 28.0;
   static const _overlap = 8.0;
 
   @override
@@ -165,10 +162,7 @@ class _MemberAvatars extends StatelessWidget {
             Transform.translate(
               offset: const Offset(-_overlap, 0),
               child: _AvatarBubble(
-                child: Text(
-                  '+$otherMembers',
-                  style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w600, color: XploreColors.secondaryLabel),
-                ),
+                child: Text('+$otherMembers', style: XploreText.caption.copyWith(color: XploreColors.secondaryLabel)),
               ),
             ),
         ],
@@ -184,7 +178,7 @@ class _MemberAvatars extends StatelessWidget {
     final name = profile.name.trim();
     return Text(
       name.isEmpty ? '?' : name.characters.first.toUpperCase(),
-      style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w600, color: XploreColors.white),
+      style: XploreText.caption.copyWith(color: XploreColors.white),
     );
   }
 }

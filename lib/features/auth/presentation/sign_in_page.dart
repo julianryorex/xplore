@@ -3,6 +3,7 @@ import 'package:flutter/services.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:xplore/constants/constants.dart';
 import 'package:xplore/constants/extensions.dart';
+import 'package:xplore/constants/typography.dart';
 import 'package:xplore/core/ambient_background.dart';
 import 'package:xplore/core/glass.dart';
 import 'package:xplore/features/auth/bloc/auth_cubit.dart';
@@ -66,14 +67,7 @@ class _SignInPageState extends State<SignInPage> {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 const Spacer(),
-                Text(
-                  'Sign in',
-                  style: context.pText.displaySmall?.copyWith(
-                    color: XploreColors.white,
-                    fontWeight: FontWeight.w700,
-                    letterSpacing: -0.5,
-                  ),
-                ),
+                Text('Sign in', style: XploreText.title.copyWith(color: XploreColors.white)),
                 const SizedBox(height: paddingUnit),
                 Text(
                   'Sign in to get started. Your trips and photos sync to your profile.',
@@ -196,6 +190,7 @@ class _GoogleGlyph extends StatelessWidget {
       height: 22,
       alignment: Alignment.center,
       decoration: const BoxDecoration(color: Colors.white, shape: BoxShape.circle),
+      // Bespoke size: sized to the chip as a logo stand-in, not running text.
       child: const Text(
         'G',
         style: TextStyle(color: Color(0xFF4285F4), fontWeight: FontWeight.w700, fontSize: 15, height: 1.1),

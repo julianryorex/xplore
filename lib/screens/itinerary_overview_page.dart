@@ -124,7 +124,7 @@ class _Checklist extends StatelessWidget {
                 children: [
                   for (final (index, location) in locations.indexed)
                     Padding(
-                      padding: const EdgeInsets.only(top: 10, bottom: 40),
+                      padding: const EdgeInsets.only(top: 6, bottom: 36),
                       child: _renderCheckOrCircle(context, location, index, rowSize),
                     ),
                 ],

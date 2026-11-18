@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:xplore/constants/constants.dart';
 import 'package:xplore/constants/extensions.dart';
+import 'package:xplore/constants/typography.dart';
 import 'package:xplore/core/enums.dart';
 import 'package:xplore/features/gallery/bloc/gallery_cubit.dart';
 import 'package:xplore/features/gallery/models/image_models.dart';
@@ -31,7 +32,7 @@ class GalleryStrip extends StatelessWidget {
               onAction: () => context.push(Paths.gallery),
             ),
           ),
-          const SizedBox(height: 10),
+          const SizedBox(height: 8),
           BlocBuilder<GalleryCubit, GalleryState>(
             builder: (context, state) {
               final photos = _newestFirst(state.imageMap.values);
@@ -117,33 +118,25 @@ class _NoPhotosCard extends StatelessWidget {
         clipBehavior: Clip.antiAlias,
         child: InkWell(
           onTap: () => context.push(Paths.gallery),
-          child: const Padding(
-            padding: EdgeInsets.fromLTRB(16, 16, 14, 16),
+          child: Padding(
+            padding: const EdgeInsets.fromLTRB(16, 16, 14, 16),
             child: Row(
               children: [
                 Expanded(
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      Text(
-                        'No photos yet',
-                        style: TextStyle(
-                          fontSize: 17,
-                          fontWeight: FontWeight.w600,
-                          letterSpacing: -0.2,
-                          color: XploreColors.white,
-                        ),
-                      ),
-                      SizedBox(height: 2),
+                      Text('No photos yet', style: XploreText.bodyStrong.copyWith(color: XploreColors.white)),
+                      const SizedBox(height: 2),
                       Text(
                         'Add the first shots from your trip for everyone to see.',
-                        style: TextStyle(fontSize: 14, color: XploreColors.secondaryLabel),
+                        style: XploreText.footnote.copyWith(color: XploreColors.secondaryLabel),
                       ),
                     ],
                   ),
                 ),
-                SizedBox(width: 12),
-                Icon(CupertinoIcons.chevron_right, size: 16, color: XploreColors.tertiaryLabel),
+                const SizedBox(width: 12),
+                const Icon(CupertinoIcons.chevron_right, size: 16, color: XploreColors.tertiaryLabel),
               ],
             ),
           ),

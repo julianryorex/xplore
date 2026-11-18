@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:xplore/constants/constants.dart';
 import 'package:xplore/constants/extensions.dart';
+import 'package:xplore/constants/typography.dart';
 import 'package:xplore/core/ambient_background.dart';
 import 'package:xplore/core/glass.dart';
 import 'package:xplore/features/auth/presentation/sign_in_page.dart';
@@ -30,15 +31,7 @@ class OnboardingPage extends StatelessWidget {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 const Spacer(),
-                Text(
-                  'Welcome to\nXplore',
-                  style: context.pText.displaySmall?.copyWith(
-                    color: XploreColors.white,
-                    fontWeight: FontWeight.w700,
-                    letterSpacing: -0.5,
-                    height: 1.05,
-                  ),
-                ),
+                Text('Welcome to\nXplore', style: XploreText.title.copyWith(color: XploreColors.white)),
                 const SizedBox(height: paddingUnit),
                 Text(
                   'Plan trips, share moments, and see your group on the map — all in one place.',

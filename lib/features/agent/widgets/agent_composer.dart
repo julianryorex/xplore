@@ -3,8 +3,9 @@ import 'dart:math' as math;
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:xplore/constants/constants.dart';
+import 'package:xplore/constants/typography.dart';
 
-/// The 56pt capsule text field with a round accent send button used by the
+/// The 50pt capsule text field with a round accent send button used by the
 /// agent screen and the first-trip Home. A null [onSend] dims and disables send.
 class AgentComposer extends StatelessWidget {
   const AgentComposer({
@@ -25,11 +26,11 @@ class AgentComposer extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
-      height: 56,
-      padding: const EdgeInsets.only(left: 20, right: 6),
+      height: 50,
+      padding: const EdgeInsets.only(left: 18, right: 3),
       decoration: BoxDecoration(
         color: XploreColors.card,
-        borderRadius: BorderRadius.circular(28),
+        borderRadius: BorderRadius.circular(25),
         border: Border.all(color: borderColor),
       ),
       child: Row(
@@ -41,10 +42,10 @@ class AgentComposer extends StatelessWidget {
               cursorColor: XploreColors.accent,
               textInputAction: onSend == null ? TextInputAction.done : TextInputAction.send,
               onSubmitted: onSend == null ? null : (_) => onSend!(),
-              style: const TextStyle(fontSize: 17, color: XploreColors.white),
+              style: XploreText.body.copyWith(color: XploreColors.white),
               decoration: InputDecoration.collapsed(
                 hintText: placeholder,
-                hintStyle: const TextStyle(fontSize: 17, color: XploreColors.secondaryLabel),
+                hintStyle: XploreText.body.copyWith(color: XploreColors.secondaryLabel),
               ),
             ),
           ),
@@ -79,10 +80,10 @@ class _SendButton extends StatelessWidget {
               opacity: enabled ? 1 : 0.35,
               duration: const Duration(milliseconds: 150),
               child: const SizedBox.square(
-                dimension: 40,
+                dimension: 36,
                 child: DecoratedBox(
                   decoration: BoxDecoration(color: XploreColors.accent, shape: BoxShape.circle),
-                  child: Icon(CupertinoIcons.arrow_up, size: 20, color: XploreColors.onAccent),
+                  child: Icon(CupertinoIcons.arrow_up, size: 18, color: XploreColors.onAccent),
                 ),
               ),
             ),

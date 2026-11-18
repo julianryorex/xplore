@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:xplore/constants/constants.dart';
+import 'package:xplore/constants/typography.dart';
 
 /// First word of a profile's display name, or null when it has none.
 String? firstNameOf(String name) {
@@ -14,7 +15,7 @@ String greetingFor(String question, String profileName) {
   return name == null ? '$question?' : '$question, $name?';
 }
 
-/// The 52pt accent disc with xplore's sparkle that marks agent surfaces.
+/// The 44pt accent disc with xplore's sparkle that marks agent surfaces.
 class AgentBadge extends StatelessWidget {
   const AgentBadge({super.key});
 
@@ -22,10 +23,10 @@ class AgentBadge extends StatelessWidget {
   Widget build(BuildContext context) {
     return const ExcludeSemantics(
       child: SizedBox.square(
-        dimension: 52,
+        dimension: 44,
         child: DecoratedBox(
           decoration: BoxDecoration(color: XploreColors.accent, shape: BoxShape.circle),
-          child: Icon(Icons.auto_awesome, size: 28, color: XploreColors.onAccent),
+          child: Icon(Icons.auto_awesome, size: 24, color: XploreColors.onAccent),
         ),
       ),
     );
@@ -46,23 +47,14 @@ class AgentHero extends StatelessWidget {
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         const AgentBadge(),
-        const SizedBox(height: 14),
+        const SizedBox(height: 16),
         Semantics(
           header: true,
-          child: Text(
-            title,
-            style: const TextStyle(
-              fontSize: 40,
-              height: 1.05,
-              fontWeight: FontWeight.w700,
-              letterSpacing: -1.2,
-              color: XploreColors.white,
-            ),
-          ),
+          child: Text(title, style: XploreText.title.copyWith(color: XploreColors.white)),
         ),
         if (subtitle != null) ...[
-          const SizedBox(height: 14),
-          Text(subtitle, style: const TextStyle(fontSize: 17, height: 1.4, color: XploreColors.secondaryLabel)),
+          const SizedBox(height: 8),
+          Text(subtitle, style: XploreText.body.copyWith(color: XploreColors.secondaryLabel)),
         ],
       ],
     );
