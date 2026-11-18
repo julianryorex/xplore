@@ -10,6 +10,7 @@ import 'package:xplore/core/glass.dart';
 import 'package:xplore/core/header.dart';
 import 'package:xplore/features/location/bloc/location_cubit.dart';
 import 'package:xplore/features/map/bloc/map_cubit.dart';
+import 'package:xplore/features/map/presentation/map_theme_sheet.dart';
 import 'package:xplore/features/profile/bloc/profile_cubit.dart';
 import 'package:xplore/utilities/utilities.dart';
 
@@ -130,21 +131,33 @@ class _MapCanvasState extends State<MapCanvas> {
                   // pinned header and the floating glass nav bar.
                   padding: EdgeInsets.only(top: headerZone, bottom: bottomClearance),
                   onTap: (_) {},
-                  style: context.read<MapCubit>().mapStyle,
+                  style: context.read<MapCubit>().styleFor(state.theme),
                 );
               },
             ),
           ),
         ),
-        // Floating glass recenter control, pinned just above the nav bar.
+        // Floating glass map controls, pinned just above the nav bar.
         Positioned(
           right: paddingUnit * 1.5,
           bottom: bottomClearance + paddingUnit,
-          child: GlassIconButton(
-            icon: Icons.my_location_rounded,
-            tooltip: 'Recenter',
-            iconColor: XploreColors.alternate,
-            onTap: recenterToCurrentLocation,
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              GlassIconButton(
+                icon: Icons.layers_outlined,
+                tooltip: 'Map style',
+                iconColor: XploreColors.alternate,
+                onTap: pickMapTheme,
+              ),
+              const SizedBox(height: paddingUnit),
+              GlassIconButton(
+                icon: Icons.my_location_rounded,
+                tooltip: 'Recenter',
+                iconColor: XploreColors.alternate,
+                onTap: recenterToCurrentLocation,
+              ),
+            ],
           ),
         ),
         // Top scrim: blends the status-bar area into the base color and keeps
@@ -209,6 +222,16 @@ class _MapCanvasState extends State<MapCanvas> {
     final currentPosition = await context.read<LocationCubit>().getCurrentLocation();
     final update = CameraUpdate.newCameraPosition(CameraPosition(target: currentPosition, zoom: 16));
     await mapController.animateCamera(update);
+  }
+
+  /// Lets the user pick the map's colour scheme; the choice is saved by the cubit.
+  Future<void> pickMapTheme() async {
+    final mapCubit = context.read<MapCubit>();
+    final state = mapCubit.state;
+    if (state is! LoadedMapState) return;
+
+    final picked = await showMapThemeSheet(context, selected: state.theme);
+    if (picked != null && picked != state.theme) await mapCubit.setTheme(picked);
   }
 
   void onCameraMove(CameraPosition position) {
