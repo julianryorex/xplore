@@ -27,9 +27,13 @@ part 'itinerary_states.dart';
 /// path ([loadDemoItinerary]) used by tests and goldens can construct the cubit
 /// with no arguments.
 class ItineraryCubit extends Cubit<ItineraryStates> with TripStreamMixin, AuthCleanupMixin {
-  ItineraryCubit([this._service, this._authService, ItineraryRepository? repository])
-    : _repository = repository ?? ItineraryRepository(),
-      super(const InitialItineraryState()) {
+  ItineraryCubit([
+    this._service,
+    this._authService,
+    ItineraryRepository? repository,
+    this._retryBackoff = const Duration(seconds: 1),
+  ]) : _repository = repository ?? ItineraryRepository(),
+       super(const InitialItineraryState()) {
     _logger = createLogger('Itinerary');
     _tripSubscription = listenToTripState(_onTripStateChanged);
     // Optional auth service: the demo/golden path constructs the cubit without
@@ -43,6 +47,9 @@ class ItineraryCubit extends Cubit<ItineraryStates> with TripStreamMixin, AuthCl
   ItineraryService? _service;
   final AuthService? _authService;
   final ItineraryRepository _repository;
+
+  /// Base delay before re-listening after a stream error; tests shorten it.
+  final Duration _retryBackoff;
   late final Logger _logger;
 
   StreamSubscription<TripState>? _tripSubscription;
@@ -61,10 +68,21 @@ class ItineraryCubit extends Cubit<ItineraryStates> with TripStreamMixin, AuthCl
   /// Lazily created so the demo/test path never touches Firebase.
   ItineraryService get _itineraryService => _service ??= ItineraryService();
 
+  // A trip that was just created becomes active from the local write, before
+  // the server has it, so the read rule denies the first listen. Re-listening
+  // shortly after succeeds; only a failure that persists is shown as an error.
+  static const _maxAutoRetries = 2;
+  int _autoRetries = 0;
+
   /// Loads the itinerary for [tripId]: cache first, then a live cloud listener.
-  Future<void> loadForTrip(String tripId) async {
+  Future<void> loadForTrip(String tripId) => _load(tripId, isAutoRetry: false);
+
+  Future<void> _load(String tripId, {required bool isAutoRetry}) async {
     if (_activeTripId == tripId && _itinerarySubscription != null) {
       return;
+    }
+    if (!isAutoRetry) {
+      _autoRetries = 0;
     }
 
     _activeTripId = tripId;
@@ -85,11 +103,26 @@ class ItineraryCubit extends Cubit<ItineraryStates> with TripStreamMixin, AuthCl
           (itinerary) => _onItinerarySnapshot(tripId, itinerary),
           onError: (Object error) {
             _logger.w('Itinerary stream error for $tripId: $error');
-            if (_activeTripId == tripId) {
-              _safeEmit(ErrorItineraryState(error.toString()));
+            if (_activeTripId != tripId) {
+              return;
             }
+            if (_autoRetries < _maxAutoRetries) {
+              _autoRetries++;
+              unawaited(_reloadAfter(tripId, _retryBackoff * _autoRetries));
+              return;
+            }
+            _safeEmit(ErrorItineraryState(error.toString()));
           },
         );
+  }
+
+  Future<void> _reloadAfter(String tripId, Duration delay) async {
+    await Future<void>.delayed(delay);
+    if (isClosed || _activeTripId != tripId) {
+      return;
+    }
+    _activeTripId = null;
+    await _load(tripId, isAutoRetry: true);
   }
 
   /// Re-attaches the itinerary listener for the active trip after a failure.
@@ -109,6 +142,7 @@ class ItineraryCubit extends Cubit<ItineraryStates> with TripStreamMixin, AuthCl
     if (_activeTripId != tripId) {
       return;
     }
+    _autoRetries = 0;
 
     if (itinerary == null) {
       await _seedIfPossible(tripId);

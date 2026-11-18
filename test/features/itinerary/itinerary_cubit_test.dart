@@ -25,6 +25,19 @@ import '../../helpers/auth_fixtures.dart';
 
 class _TripStreamHarness with TripStreamMixin {}
 
+/// Fails the first listen the way Firestore does for a trip the server has not committed yet.
+class _DeniedOnceItineraryService extends ItineraryService {
+  _DeniedOnceItineraryService(FakeFirebaseFirestore firestore) : super(firestore: firestore);
+
+  int listens = 0;
+
+  @override
+  Stream<ItineraryModel?> watchItinerary(String tripId) {
+    listens++;
+    return listens == 1 ? Stream.error(Exception('permission-denied')) : super.watchItinerary(tripId);
+  }
+}
+
 TripModel _trip(String id, {List<String> memberIds = const ['user-1']}) {
   return TripModel(id: id, title: 'Trip $id', memberIds: memberIds, createdBy: memberIds.first);
 }
@@ -168,6 +181,28 @@ void main() {
 
       await reloading;
       expect((await reloaded).itinerary.id, 'trip-1');
+    });
+
+    test('a listen denied while the trip is still being committed is retried', () async {
+      await firestore.collection('itineraries').doc('trip-1').set({
+        'invitees': ['user-1'],
+        'daily_plans': [_dayPlan(title: 'SkyTree Day')],
+        'pins': <dynamic>[],
+        'last_updated': Timestamp.fromDate(DateTime.utc(2023, 6, 15, 8, 30)),
+      });
+      final flaky = _DeniedOnceItineraryService(firestore);
+      final cubit = ItineraryCubit(flaky, fakeAuthService(), ItineraryRepository(), Duration.zero);
+      addTearDown(cubit.close);
+      final states = <ItineraryStates>[];
+      final subscription = cubit.stream.listen(states.add);
+      addTearDown(subscription.cancel);
+      final loaded = _waitFor<LoadedItineraryState>(cubit);
+
+      _TripStreamHarness().pushTripEvent(TripState.loaded(active: _trip('trip-1'), all: [_trip('trip-1')]));
+
+      expect((await loaded).itinerary.dailyPlans.single.title, 'SkyTree Day');
+      expect(flaky.listens, 2);
+      expect(states.whereType<ErrorItineraryState>(), isEmpty);
     });
 
     test('retry is a no-op when no trip is active', () async {
