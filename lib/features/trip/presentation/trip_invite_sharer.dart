@@ -29,25 +29,20 @@ Future<void> shareTripInvite(BuildContext context, TripModel trip) async {
   }
 
   HapticFeedback.lightImpact();
-  await openInviteShareSheet(messenger, tripTitle: trip.title, link: handle.link, origin: origin);
+  await openInviteShareSheet(messenger, link: handle.link, origin: origin);
 }
 
-/// Opens the system share sheet with the invite message for [link]. [origin] anchors
+/// Opens the system share sheet with the bare invite [link]. [origin] anchors
 /// the popover on iPad, where share_plus throws without one. Reports failures via [messenger].
 Future<void> openInviteShareSheet(
   ScaffoldMessengerState messenger, {
-  required String tripTitle,
   required String link,
   required Rect? origin,
 }) async {
   try {
-    await SharePlus.instance.share(
-      ShareParams(
-        text: 'Join "$tripTitle" on Xplore:\n$link',
-        subject: 'Join my trip on Xplore',
-        sharePositionOrigin: origin,
-      ),
-    );
+    // Shared as a URL with no text, so Messages and other apps show only the link
+    // and build their rich preview card from the page's Open Graph tags.
+    await SharePlus.instance.share(ShareParams(uri: Uri.parse(link), sharePositionOrigin: origin));
   } catch (_) {
     messenger.showSnackBar(const SnackBar(content: Text('Couldn’t open the share sheet. Please try again.')));
   }

@@ -1,0 +1,19 @@
+# Cloudflare Worker for xplore.olympuslabs.ai: trip invite links (FEAT-003).
+# Deploy from this folder with `npx wrangler deploy` (see infra/README.md).
+name = "xplore-links"
+main = "worker.js"
+compatibility_date = "2026-10-01"
+
+routes = [{ pattern = "xplore.olympuslabs.ai/*", zone_name = "olympuslabs.ai" }]
+
+# Static files (the link-preview image and icons) are served straight from
+# ./public; every other path reaches worker.js.
+[assets]
+directory = "./public"
+
+[vars]
+FIREBASE_PROJECT_ID = "xplore-a7012"
+FIRESTORE_DATABASE_ID = "xplore-app"
+# Where "Get Xplore" sends people who don't have the app yet. Point this at the
+# App Store listing once it exists.
+GET_APP_URL = "https://olympuslabs.ai"
