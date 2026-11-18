@@ -22,16 +22,19 @@ class JoinTripCubit extends Cubit<JoinTripState> {
 
   final Logger _logger = createLogger('JoinTripCubit');
 
-  /// Fetches the invite preview. Safe to call again to retry after a failure.
+  /// Fetches the invite preview, or detects that the user is already on the
+  /// trip. Safe to call again to retry after a failure.
   Future<void> loadPreview() async {
     emit(const JoinTripState.looking());
     try {
-      final lookup = await _tripService.lookupInvite(tripId, token);
+      final lookup = await _tripService.lookupInvite(tripId, token, uid: _authService.currentUid);
       switch (lookup) {
         case InviteLookupValid(:final invite):
           emit(JoinTripState.ready(invite));
         case InviteLookupInvalid(:final reason):
           emit(JoinTripState.invalid(reason));
+        case InviteLookupAlreadyMember(:final trip):
+          emit(JoinTripState.alreadyMember(trip));
       }
     } catch (error, stackTrace) {
       _logger.e('Invite lookup failed', error: error, stackTrace: stackTrace);

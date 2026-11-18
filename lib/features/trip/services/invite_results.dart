@@ -60,6 +60,8 @@ sealed class InviteLookup {
   const factory InviteLookup.valid(TripInvite invite) = InviteLookupValid;
 
   const factory InviteLookup.invalid(InviteFailureReason reason) = InviteLookupInvalid;
+
+  const factory InviteLookup.alreadyMember(TripModel trip) = InviteLookupAlreadyMember;
 }
 
 class InviteLookupValid extends InviteLookup {
@@ -72,6 +74,13 @@ class InviteLookupInvalid extends InviteLookup {
   const InviteLookupInvalid(this.reason);
 
   final InviteFailureReason reason;
+}
+
+/// The signed-in user is already on the trip, so there is nothing to join.
+class InviteLookupAlreadyMember extends InviteLookup {
+  const InviteLookupAlreadyMember(this.trip);
+
+  final TripModel trip;
 }
 
 /// Result of attempting to accept (join via) an invite.

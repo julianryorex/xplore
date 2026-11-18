@@ -212,7 +212,9 @@ entitlement on the macOS target if macOS universal links are wanted.)
 
 ### 3. App-side delivery
 `app_links` is already wired (`DeepLinkService` + `DeepLinkHandler` in
-`lib/features/trip/`); no extra Flutter code is needed. The handler parses
+`lib/features/trip/`). `FlutterDeepLinkingEnabled` is `false` in
+`ios/Runner/Info.plist` so Flutter's built-in deep linking doesn't also push
+the URL as a route (which lands on the error page). The handler parses
 `*/join?trip=...&token=...`, waits for auth if needed, then pushes the join
 screen.
 

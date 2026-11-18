@@ -19,6 +19,9 @@ sealed class JoinTripState with _$JoinTripState {
   /// Successfully joined [trip].
   const factory JoinTripState.joined(TripModel trip) = JoinTripJoined;
 
+  /// The user is already on [trip]; offer to open it instead of joining.
+  const factory JoinTripState.alreadyMember(TripModel trip) = JoinTripAlreadyMember;
+
   /// Invite cannot be used (not found / revoked / expired / full / unavailable).
   const factory JoinTripState.invalid(InviteFailureReason reason) = JoinTripInvalid;
 }
