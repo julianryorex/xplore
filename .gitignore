@@ -65,3 +65,5 @@ infra/terraform.tfvars
 infra/*.auto.tfvars
 # Keep the dependency lock file committed:
 !infra/.terraform.lock.hcl
+# Cloudflare Wrangler local cache
+.wrangler/

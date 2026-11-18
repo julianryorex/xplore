@@ -4,7 +4,7 @@
 |-------|-------|
 | **ID** | FEAT-015 |
 | **Priority** | P1 |
-| **Status** | `backlog` |
+| **Status** | `in_progress` |
 | **Revenue impact** | retention |
 | **Effort** | L (was M — grew with cross-device read model + handle) |
 | **Owner** | — |
@@ -91,23 +91,26 @@ on next sign-in. **Letting users choose/edit their handle is part of the onboard
 
 ## Acceptance criteria
 
-- [ ] On account creation, `users/{uid}` is seeded with `displayName`, `email`, `photoUrl`
+- [x] On account creation, `users/{uid}` is seeded with `displayName`, `email`, `photoUrl`
       (when the provider supplies one), `providers`, and a generated `username` — no empty
       or hardcoded identity fields.
-- [ ] `ProfileCubit` hydrates from `users/{uid}` on login **and** on returning-session app
+- [x] `ProfileCubit` hydrates from `users/{uid}` on login **and** on returning-session app
       open, cache-first (Hive) then a live Firestore listener; the `'Julian Rechsteiner'`
       default is removed.
-- [ ] Editable **handle** on the Edit Profile page (display name stays read-only, sourced
-      from the auth provider); Save Changes persists to `users/{uid}` (no longer a no-op)
-      and updates the local cache.
+- [ ] ~~Editable **handle** on the Edit Profile page~~ — superseded: handle editing moved to
+      the FEAT-005 onboarding step, and the display name stays read-only. The page now shows
+      the real cloud name and handle, but **Save changes is still a no-op**
+      (`_SaveChangesButton` in `profile_page.dart`): remove it or give it something to save.
 - [ ] Changing the avatar uploads the source image to Storage (`avatars/{uid}`), writes
       `photoUrl` to `users/{uid}`, and regenerates + uploads the marker, recording its URL.
+      — avatar upload + `photoUrl` shipped; `MarkerService.uploadMarkerIcon` returns the
+      marker URL but nothing stores it as `markerUrl` yet.
 - [ ] A trip-mate's avatar marker is fetched by URL and cached when it isn't already in
       local Hive, so peers render real avatars instead of the default pin (with FEAT-046).
 - [ ] Firestore rules expose only the public profile fields (`displayName`, `username`,
       `photoUrl`, `markerUrl`) to other signed-in trip members while keeping `email` and
       other PII owner-only; rules pass the security-rules auditor.
-- [ ] Handles are **globally unique** via a `usernames/{handleLower}` registry claimed
+- [x] Handles are **globally unique** via a `usernames/{handleLower}` registry claimed
       transactionally, enforced by security rules, with **auto-generated unique handles
       (e.g. `firstname-<hash>`) at account creation** and lazy backfill for existing users.
       Letting users **pick/edit** a handle (live availability check) is part of the
@@ -133,20 +136,38 @@ on next sign-in. **Letting users choose/edit their handle is part of the onboard
 ## Decisions (locked)
 
 - **Handles are globally unique** — registry + transaction + rules, core scope (effort L).
+- **Existing users get a handle lazily** on next sign-in, via the same generate-and-claim
+  path as new users.
 - **Peer reads** via a denormalized `publicProfiles/{uid}` mirror (keeps `email`/PII
   owner-only, avoids cross-doc trip lookups in rules).
 - **Hive is a read-through cache:** the `users/{uid}` snapshot listener is the only writer,
   writes go to Firestore and echo back, Firestore offline persistence enabled.
 
+## Remaining work
+
+Phases 1–4 (handle seeding and claim, profile service/repository, cloud hydration, avatar
+upload, real data on the profile page) shipped in a97d47e. Left:
+
+1. **Cross-device avatars (closes #46).** Store the marker URL from `uploadMarkerIcon` as
+   `markerUrl`; keep a `publicProfiles/{uid}` mirror of the four public fields in sync with
+   `users/{uid}` (written with the same profile writes); in `MapCubit.updateUserMarkers`, on a
+   local Hive miss read the peer's `markerUrl` from `publicProfiles`, download, cache, and
+   build the bitmap. Keep the default pin only when the peer has no avatar. FEAT-046 owns the
+   marker rendering fixes; this owns the cross-device fetch it consumes.
+2. **Rules.** `publicProfiles/{uid}`: signed-in read, owner write limited to the four public
+   fields; `users/{uid}` stays owner-only. Storage: owner write + member read for
+   `markers/{uid}`. The `usernames/{handle}` and `avatars/{uid}` rules already exist. Run the
+   security-rules auditor over all of these, focusing on handle squatting/stealing; rules
+   deploy is tracked separately.
+3. **Save changes button.** Remove it, or keep it only if the page gains something editable.
+4. **Onboarding profile step (with FEAT-005).** Show the generated handle and let the user
+   change it with a live availability check, reusing the claim transaction; optional photo.
+   Skippable.
+
 ## Open questions
 
-- Public-profile read model: relax `users/{uid}` read to shared-trip members, or
-  denormalize a `publicProfiles/{uid}` doc with only the four public fields? (Leaning
-  denormalized — simpler/safer rules, keeps `email` private, no cross-doc trip lookups.)
 - Avatar variants: one bounded master (FEAT-046 Option A) is enough for both the page and
   the marker; do we also need a separate thumbnail? (Default: master-only.)
-- Migration: existing users have no `username` — generate lazily on next sign-in vs. a
-  one-off backfill.
 
 ## Related code
 
@@ -195,3 +216,6 @@ on next sign-in. **Letting users choose/edit their handle is part of the onboard
   editable handle, cross-device avatar read, and a public-profile rules model. Recommended
   auto-seed + optional onboarding customization; flagged strict-handle uniqueness as the
   open scope decision (M→L). Wired the onboarding tie-in into FEAT-005.
+- 2026-11-17: Recorded what shipped in a97d47e (handles, hydration, avatar upload), moved
+  handle editing to onboarding, resolved the public-profile and migration questions, and
+  listed the remaining cross-device avatar work.
