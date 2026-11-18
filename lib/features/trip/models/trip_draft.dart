@@ -57,6 +57,9 @@ enum TripInterest {
 /// Longest trip name the trip document accepts (see `infra/rules/firestore.rules`).
 const maxTripTitleLength = 80;
 
+/// Longest notes the trip rules accept.
+const maxTripNotesLength = 500;
+
 /// A flat, additive draft accumulated as the user moves through the
 /// create-trip flow. Deliberately flat so adding a new field never breaks an
 /// existing step (FEAT-007 extensibility principle).

@@ -39,6 +39,7 @@ enum CreateTripBlocker {
 
   /// Plan: the trip name is longer than [maxTripTitleLength].
   titleTooLong,
+  notesTooLong,
 
   /// Plan: the trip is being created.
   submitting,
@@ -96,16 +97,21 @@ abstract class TripCreationState with _$TripCreationState {
   CreateTripBlocker? get advanceBlocker => switch (currentStep) {
     CreateTripStep.where => draft.stops.isEmpty ? CreateTripBlocker.noStops : null,
     CreateTripStep.when => _tripShapeBlocker,
-    CreateTripStep.whoAndVibe || CreateTripStep.invite => null,
+    CreateTripStep.whoAndVibe => _notesBlocker,
+    CreateTripStep.invite => null,
     CreateTripStep.plan =>
       phase == TripCreationPhase.submitting
           ? CreateTripBlocker.submitting
           : _tripShapeBlocker ??
+                _notesBlocker ??
                 (draft.effectiveTitle.length > maxTripTitleLength ? CreateTripBlocker.titleTooLong : null),
   };
 
   /// Whether the current step's primary action is enabled; see [advanceBlocker].
   bool get canAdvance => advanceBlocker == null;
+
+  CreateTripBlocker? get _notesBlocker =>
+      draft.notes.trim().length > maxTripNotesLength ? CreateTripBlocker.notesTooLong : null;
 
   CreateTripBlocker? get _tripShapeBlocker {
     if (draft.stops.isEmpty) {

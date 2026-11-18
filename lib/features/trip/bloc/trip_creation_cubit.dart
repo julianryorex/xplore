@@ -4,7 +4,6 @@ import 'package:xplore/features/trip/data/place_catalog.dart';
 import 'package:xplore/features/trip/models/nights_allocation.dart' as nights;
 import 'package:xplore/features/trip/models/trip_draft.dart';
 import 'package:xplore/features/trip/models/trip_model.dart';
-import 'package:xplore/features/trip/models/trip_stop.dart';
 import 'package:xplore/features/trip/services/stub_plan_builder.dart';
 
 /// Drives the four-step create-trip flow (where, when, who and vibe, plan) and
@@ -174,32 +173,6 @@ class TripCreationCubit extends Cubit<TripCreationState> {
   void markSubmitFailed() => emit(
     state.copyWith(phase: TripCreationPhase.error, errorMessage: 'Couldn’t create your trip. Please try again.'),
   );
-
-  // --- TEMPORARY shims for the old 7-step screens ---------------------------
-  // Remove with lib/features/trip/presentation/create_trip/ once the new
-  // screens land. New code must use addStop / setFlexible / setStopNights.
-
-  /// TEMPORARY: replaces the stops with the single place named [value]: its
-  /// catalog entry when one matches exactly, otherwise an uncatalogued stop.
-  void setDestination(String value) {
-    final name = value.trim();
-    if (name.isEmpty) {
-      _updateTripShape(_resplitIfExact(state.draft.copyWith(stops: const [])));
-      return;
-    }
-    final folded = foldForSearch(name);
-    final match = _catalog.search(name).where((place) => foldForSearch(place.name) == folded).firstOrNull;
-    final stop =
-        match?.toStop(nights: nights.defaultFlexibleNights) ??
-        TripStop(id: 'custom:$folded', name: name, country: '', latitude: 0, longitude: 0);
-    _updateTripShape(_resplitIfExact(state.draft.copyWith(stops: [stop])));
-  }
-
-  /// TEMPORARY: switches to flexible dates lasting [days] days, split evenly.
-  void setFlexibleDuration(int days) {
-    final draft = state.draft.copyWith(datesAreFlexible: true);
-    _updateTripShape(_withSplit(draft, (days - 1).clamp(draft.stops.length, nights.maxTripNights)));
-  }
 
   // --- Internals ------------------------------------------------------------
 
