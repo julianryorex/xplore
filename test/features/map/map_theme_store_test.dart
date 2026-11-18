@@ -25,9 +25,9 @@ void main() {
   });
 
   test('returns the saved theme', () async {
-    await store.save(MapTheme.daylight);
+    await store.save(MapTheme.dawn);
 
-    expect(await store.load(), MapTheme.daylight);
+    expect(await store.load(), MapTheme.dawn);
   });
 
   test('falls back when the saved name is no longer a theme', () async {

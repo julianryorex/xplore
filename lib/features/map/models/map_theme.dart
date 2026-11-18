@@ -19,13 +19,13 @@ enum MapTheme {
     water: Color(0xFF08090A),
     park: Color(0xFF1B2A24),
   ),
-  daylight(
-    label: 'Daylight',
-    description: 'Light and soft',
-    asset: 'assets/maps/daylight.json',
-    land: Color(0xFFF2EFE9),
-    water: Color(0xFFA8D8E0),
-    park: Color(0xFFC9E6CF),
+  dawn(
+    label: 'Dawn',
+    description: 'A lighter Dusk',
+    asset: 'assets/maps/dawn.json',
+    land: Color(0xFF46595A),
+    water: Color(0xFF3C8E9E),
+    park: Color(0xFF3F7D63),
   );
 
   const MapTheme({
