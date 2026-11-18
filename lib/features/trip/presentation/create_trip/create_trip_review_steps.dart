@@ -377,7 +377,7 @@ class _InviteStepState extends State<InviteStep> {
         return;
       }
       HapticFeedback.lightImpact();
-      await openInviteShareSheet(messenger, tripTitle: trip.title, link: handle.link, origin: origin);
+      await openInviteShareSheet(messenger, link: handle.link, origin: origin);
     } finally {
       if (mounted) {
         setState(() => _isCreating = false);

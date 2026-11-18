@@ -1,0 +1,114 @@
+<!doctype html>
+<!--
+  Source for public/og-invite.png, the 1200x630 image in invite link previews.
+  Regenerate with infra/hosting/og/render.sh after editing.
+-->
+<html>
+<head>
+<meta charset="utf-8">
+<link href="https://fonts.googleapis.com/css2?family=Manrope:wght@800&display=block" rel="stylesheet">
+<style>
+  html, body { margin: 0; width: 1200px; height: 630px; overflow: hidden; background: #000; }
+  .canvas {
+    position: relative;
+    width: 1200px;
+    height: 630px;
+    background:
+      radial-gradient(900px 520px at 88% 18%, rgba(79, 191, 147, 0.30), transparent 62%),
+      radial-gradient(700px 420px at 8% 110%, rgba(79, 191, 147, 0.14), transparent 60%),
+      #000;
+    font-family: -apple-system, BlinkMacSystemFont, "SF Pro Display", "Helvetica Neue", sans-serif;
+    color: #fff;
+  }
+  svg.map { position: absolute; inset: 0; }
+  .wordmark {
+    position: absolute; left: 72px; top: 64px;
+    font-family: Manrope, sans-serif; font-weight: 800; font-size: 44px; letter-spacing: -1.6px;
+  }
+  .copy { position: absolute; left: 72px; bottom: 76px; }
+  .pill {
+    display: inline-flex; align-items: center; gap: 10px;
+    padding: 10px 20px; border-radius: 999px;
+    background: rgba(79, 191, 147, 0.17); color: #4fbf93;
+    font-size: 26px; font-weight: 600; letter-spacing: 0.2px;
+  }
+  .pill i { width: 10px; height: 10px; border-radius: 50%; background: #4fbf93; display: block; }
+  h1 { margin: 22px 0 0; font-size: 96px; line-height: 0.98; letter-spacing: -3px; font-weight: 700; }
+  h1 span { color: #4fbf93; }
+</style>
+</head>
+<body>
+<div class="canvas">
+  <svg class="map" width="1200" height="630" viewBox="0 0 1200 630" xmlns="http://www.w3.org/2000/svg">
+    <defs>
+      <pattern id="grid" width="48" height="48" patternUnits="userSpaceOnUse">
+        <path d="M48 0H0V48" fill="none" stroke="rgba(255,255,255,0.045)" stroke-width="1"/>
+      </pattern>
+      <linearGradient id="fade" x1="0" x2="1">
+        <stop offset="0" stop-color="#000" stop-opacity="1"/>
+        <stop offset="0.45" stop-color="#000" stop-opacity="0"/>
+      </linearGradient>
+      <filter id="glow" x="-50%" y="-50%" width="200%" height="200%">
+        <feGaussianBlur stdDeviation="8"/>
+      </filter>
+    </defs>
+    <rect width="1200" height="630" fill="url(#grid)"/>
+
+    <!-- Contour lines, like terrain on a dark map. -->
+    <g fill="none" stroke="rgba(255,255,255,0.07)" stroke-width="1.5">
+      <path d="M620 40 C760 10, 980 60, 1120 30"/>
+      <path d="M600 120 C740 80, 900 160, 1180 100"/>
+      <path d="M640 520 C820 470, 960 560, 1200 500"/>
+      <path d="M700 600 C860 560, 1000 640, 1200 590"/>
+      <ellipse cx="1010" cy="300" rx="120" ry="70"/>
+      <ellipse cx="1010" cy="300" rx="190" ry="115"/>
+      <ellipse cx="1010" cy="300" rx="260" ry="165"/>
+    </g>
+    <rect width="1200" height="630" fill="url(#fade)"/>
+
+    <!-- The trip route: glow underneath, then a dashed line. -->
+    <path d="M790 500 C840 420, 850 410, 890 330 S1000 190, 1090 170"
+          fill="none" stroke="#4fbf93" stroke-opacity="0.55" stroke-width="10" filter="url(#glow)"/>
+    <path d="M790 500 C840 420, 850 410, 890 330 S1000 190, 1090 170"
+          fill="none" stroke="#4fbf93" stroke-width="5" stroke-linecap="round" stroke-dasharray="2 16"/>
+
+    <!-- Stops along the way. -->
+    <g>
+      <circle cx="790" cy="500" r="13" fill="#000" stroke="#4fbf93" stroke-width="5"/>
+      <circle cx="890" cy="330" r="10" fill="#4fbf93"/>
+      <circle cx="890" cy="330" r="22" fill="none" stroke="#4fbf93" stroke-opacity="0.3" stroke-width="2"/>
+    </g>
+
+    <!-- Destination pin. -->
+    <g transform="translate(1090 170)">
+      <circle r="46" fill="#4fbf93" fill-opacity="0.16"/>
+      <path d="M0 18 C-22 -4 -28 -14 -28 -28 A28 28 0 1 1 28 -28 C28 -14 22 -4 0 18 Z"
+            transform="translate(0 -14)" fill="#4fbf93"/>
+      <circle cy="-42" r="10" fill="#06201a"/>
+    </g>
+
+    <!-- Fellow travelers converging on the trip. -->
+    <g font-family="-apple-system, sans-serif" font-size="22" font-weight="700" text-anchor="middle">
+      <g transform="translate(1000 420)">
+        <circle r="30" fill="#2c2c2e" stroke="#000" stroke-width="5"/>
+        <text y="8" fill="#fff">A</text>
+      </g>
+      <g transform="translate(1046 420)">
+        <circle r="30" fill="#4fbf93" stroke="#000" stroke-width="5"/>
+        <text y="8" fill="#06201a">M</text>
+      </g>
+      <g transform="translate(1092 420)">
+        <circle r="30" fill="#3a3a3c" stroke="#000" stroke-width="5"/>
+        <text y="8" fill="#fff">+</text>
+      </g>
+    </g>
+  </svg>
+
+  <div class="wordmark">xplore</div>
+  <div class="copy">
+    <div class="pill"><i></i>Trip invite</div>
+    <h1>You’re invited<span>.</span><br>Pack your bags.</h1>
+  </div>
+</div>
+</body>
+</html>

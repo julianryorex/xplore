@@ -170,37 +170,34 @@ not open the app.
 > `infra/hosting/`. Production enablement (the steps below) is intentionally
 > deferred until launch + >100 users — tracked in **GitHub #99**.
 
-### 1. Apple App Site Association (AASA) file — hosting
-Serve `infra/hosting/apple-app-site-association` at
-**`https://xplore.olympuslabs.ai/.well-known/apple-app-site-association`**
-(`application/json`, **no** `.json` extension, HTTPS, no redirects):
+### 1. Link host — Cloudflare Worker
+The app shares the **bare link** (no message text), so the chat app draws a
+rich preview card from the link's page, like a shared Google Maps pin. The
+Worker in `infra/hosting/` serves everything on `xplore.olympuslabs.ai`:
 
-```json
-{
-  "applinks": {
-    "details": [
-      {
-        "appIDs": ["NY5PB8UM8W.com.olympuslabs.xplore"],
-        "components": [{ "/": "/join*", "comment": "Trip invite links" }]
-      }
-    ]
-  }
-}
-```
+| Path | What it serves |
+|------|----------------|
+| `/.well-known/apple-app-site-association` | AASA JSON (same as `infra/hosting/apple-app-site-association`), so iOS opens `/join*` links in the app |
+| `/join?trip=…&token=…` | Invite page with Open Graph tags: the trip title (read from the invite doc via the Firestore REST API) as `og:title` and `public/og-invite.png` as `og:image`. Doubles as the landing page for people without the app |
+| `/og-invite.png`, `/apple-touch-icon.png`, `/favicon.png` | Static files from `infra/hosting/public/` |
 
-`NY5PB8UM8W` is the Apple Developer Team ID (same one used for Sign in with Apple
-above); the bundle id is `com.olympuslabs.xplore`. Since `olympuslabs.ai` is on
-Cloudflare and nothing else lives on the subdomain yet, the simplest host is the
-staged **Cloudflare Worker** (`infra/hosting/aasa-worker.js`):
+The page reads `trips/{trip}/invites/{token}` signed out, which the Firestore
+rules allow with `get` (apply the rules with Terraform first). If that read
+fails the page falls back to a generic "Trip invite" preview.
+
+Deploy (needs a Cloudflare login with access to the `olympuslabs.ai` zone):
 
 ```bash
-cd infra/hosting && npx wrangler deploy aasa-worker.js --name xplore-aasa
+cd infra/hosting && npx wrangler deploy
 ```
 
-Then add a **proxied** `xplore` DNS record (e.g. `AAAA` → `100::`, orange cloud
-ON) and bind the Worker to the route `xplore.olympuslabs.ai/*`. (If a web app
-later lives on this subdomain, drop the Worker and ship the AASA inside the web
-build's `web/.well-known/` instead.)
+`wrangler.toml` binds the route `xplore.olympuslabs.ai/*`; also add a
+**proxied** `xplore` DNS record (e.g. `AAAA` → `100::`, orange cloud ON) so the
+hostname resolves. Set `GET_APP_URL` in `wrangler.toml` to the App Store
+listing once it exists. To change the preview image, edit
+`infra/hosting/og/og-invite.html` and run `infra/hosting/og/render.sh` (macOS,
+Google Chrome). (If a web app later lives on this subdomain, move these routes
+into it.)
 
 ### 2. Associated Domains entitlement — Xcode
 Already added to `ios/Runner/Runner.entitlements`:
@@ -224,6 +221,10 @@ screen.
   (or tap a link in Notes/Messages on a device) should foreground the app on
   the join-confirmation screen.
 - Apple's CDN caches the AASA; use a fresh install / `swcutil` to debug.
+- Share an invite from the app into Messages: only the link should be sent, and
+  it should render as a card with the preview image and the trip title. Check
+  the tags with `curl -s "https://xplore.olympuslabs.ai/join?trip=<id>&token=<tok>" | grep og:`.
+  Messages caches previews per URL, so test with a fresh invite after changes.
 
 ### Security follow-up (tracked, not blocking the cut line)
 The join write is gated by the `validTripJoin` Firestore rule (self-add only +
