@@ -15,20 +15,20 @@ const wordmarkFontFamily = 'Manrope';
 // tracking for their size; `bodyMedium` is also the default every `Text`
 // inherits, so unstyled text is tightened too.
 final defaultTextTheme = const TextTheme(
-  headlineLarge: TextStyle(fontSize: 34, fontWeight: FontWeight.w700, height: 1.08, letterSpacing: -0.8),
-  headlineMedium: TextStyle(fontSize: 28, fontWeight: FontWeight.w700, height: 1.12, letterSpacing: -0.6),
-  headlineSmall: TextStyle(fontSize: 22, fontWeight: FontWeight.w700, height: 1.18, letterSpacing: -0.4),
-  bodyLarge: TextStyle(fontSize: 17, fontWeight: FontWeight.w400, height: 1.4, letterSpacing: -0.41),
-  bodyMedium: TextStyle(fontSize: 15, fontWeight: FontWeight.w400, height: 1.4, letterSpacing: -0.23),
+  headlineLarge: TextStyle(fontSize: 28, fontWeight: FontWeight.w700, height: 1.08, letterSpacing: -0.8),
+  headlineMedium: TextStyle(fontSize: 24, fontWeight: FontWeight.w700, height: 1.12, letterSpacing: -0.6),
+  headlineSmall: TextStyle(fontSize: 17, fontWeight: FontWeight.w600, height: 1.2, letterSpacing: -0.3),
+  bodyLarge: TextStyle(fontSize: 15, fontWeight: FontWeight.w400, height: 1.4, letterSpacing: -0.2),
+  bodyMedium: TextStyle(fontSize: 14, fontWeight: FontWeight.w400, height: 1.4, letterSpacing: -0.15),
   bodySmall: TextStyle(
-    fontSize: 14,
+    fontSize: 13,
     fontWeight: FontWeight.w400,
-    height: 1.4,
-    letterSpacing: -0.15,
+    height: 1.35,
+    letterSpacing: -0.1,
     color: XploreColors.secondaryLabel,
   ),
-  labelLarge: TextStyle(fontSize: 17, fontWeight: FontWeight.w600, height: 1.3, letterSpacing: -0.41),
-  labelMedium: TextStyle(fontSize: 15, fontWeight: FontWeight.w600, height: 1.3, letterSpacing: -0.23),
+  labelLarge: TextStyle(fontSize: 15, fontWeight: FontWeight.w600, height: 1.3, letterSpacing: -0.2),
+  labelMedium: TextStyle(fontSize: 14, fontWeight: FontWeight.w500, height: 1.3, letterSpacing: -0.15),
   labelSmall: TextStyle(fontSize: 12, fontWeight: FontWeight.w500, height: 1.3, color: XploreColors.secondaryLabel),
 ).apply(fontFamily: systemFontFamily, bodyColor: XploreColors.white, displayColor: XploreColors.white);
 
