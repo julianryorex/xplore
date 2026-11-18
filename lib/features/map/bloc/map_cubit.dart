@@ -116,6 +116,6 @@ class MapCubit extends Cubit<MapStates> {
 
   /// Loads [GoogleMap] style
   Future<void> _loadMapStyle() async {
-    mapStyle = await rootBundle.loadString('assets/maps/GoogleMapNeon.json');
+    mapStyle = await rootBundle.loadString('assets/maps/GoogleMapDark.json');
   }
 }
