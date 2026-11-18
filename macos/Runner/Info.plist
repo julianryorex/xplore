@@ -28,5 +28,23 @@
 	<string>MainMenu</string>
 	<key>NSPrincipalClass</key>
 	<string>NSApplication</string>
+	<key>NSLocationUsageDescription</key>
+	<string>This app requires access to locations when open.</string>
+	<key>GIDClientID</key>
+	<!-- Google sign-in client. macOS shares the iOS bundle id, so it reuses the iOS OAuth
+	     client; the macOS GoogleService-Info.plist carries no CLIENT_ID of its own. -->
+	<string>700905798457-571mao6672vld4vpbgcgj1det1spttg3.apps.googleusercontent.com</string>
+	<key>CFBundleURLTypes</key>
+	<array>
+		<dict>
+			<key>CFBundleTypeRole</key>
+			<string>Editor</string>
+			<key>CFBundleURLSchemes</key>
+			<array>
+				<!-- Google sign-in OAuth redirect: the reversed GIDClientID. -->
+				<string>com.googleusercontent.apps.700905798457-571mao6672vld4vpbgcgj1det1spttg3</string>
+			</array>
+		</dict>
+	</array>
 </dict>
 </plist>

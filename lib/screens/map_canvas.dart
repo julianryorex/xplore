@@ -1,10 +1,12 @@
 import 'dart:async';
 
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
 import 'package:xplore/constants/constants.dart';
 import 'package:xplore/constants/extensions.dart';
+import 'package:xplore/constants/typography.dart';
 import 'package:xplore/core/avatar_map_icon.dart';
 import 'package:xplore/core/header.dart';
 import 'package:xplore/features/location/bloc/location_cubit.dart';
@@ -21,12 +23,18 @@ class MapCanvas extends StatefulWidget {
   State<MapCanvas> createState() => _MapCanvasState();
 }
 
+// google_maps_flutter has no desktop implementation, so on macOS the map would
+// render as an empty black platform view.
+bool get _mapsSupported =>
+    kIsWeb || defaultTargetPlatform == TargetPlatform.iOS || defaultTargetPlatform == TargetPlatform.android;
+
 class _MapCanvasState extends State<MapCanvas> {
   /// Key that checks whether a re-render is necessary.
   late Object redrawKey;
 
-  /// Controller for [GoogleMap]
-  late GoogleMapController mapController;
+  /// Controller for [GoogleMap]; null until the map is created, and always on
+  /// platforms without map support.
+  GoogleMapController? mapController;
 
   Timer? debounce;
 
@@ -38,7 +46,7 @@ class _MapCanvasState extends State<MapCanvas> {
 
   @override
   void dispose() {
-    mapController.dispose();
+    mapController?.dispose();
     super.dispose();
   }
 
@@ -114,6 +122,9 @@ class _MapCanvasState extends State<MapCanvas> {
             },
             child: BlocBuilder<MapCubit, MapStates>(
               builder: (context, state) {
+                if (!_mapsSupported) {
+                  return const _MapUnavailable();
+                }
                 if (state is! LoadedMapState) {
                   return const Center(child: CircularProgressIndicator());
                 }
@@ -138,11 +149,12 @@ class _MapCanvasState extends State<MapCanvas> {
           ),
         ),
         // Floating map controls, pinned above the nav bar on the page gutter.
-        Positioned(
-          right: 16,
-          bottom: bottomClearance + 16,
-          child: MapControls(onPickStyle: pickMapTheme, onRecenter: recenterToCurrentLocation),
-        ),
+        if (_mapsSupported)
+          Positioned(
+            right: 16,
+            bottom: bottomClearance + 16,
+            child: MapControls(onPickStyle: pickMapTheme, onRecenter: recenterToCurrentLocation),
+          ),
         // Top scrim: blends the status-bar area into the base color and keeps
         // the header legible over the bright, busy map underneath.
         Positioned(
@@ -195,7 +207,7 @@ class _MapCanvasState extends State<MapCanvas> {
 
     debounce = Timer(const Duration(milliseconds: 1000), () {
       final update = CameraUpdate.newCameraPosition(CameraPosition(target: currentPosition, zoom: 16));
-      mapController.animateCamera(update);
+      mapController?.animateCamera(update);
     });
   }
 
@@ -204,7 +216,7 @@ class _MapCanvasState extends State<MapCanvas> {
   Future<void> recenterToCurrentLocation() async {
     final currentPosition = await context.read<LocationCubit>().getCurrentLocation();
     final update = CameraUpdate.newCameraPosition(CameraPosition(target: currentPosition, zoom: 16));
-    await mapController.animateCamera(update);
+    await mapController?.animateCamera(update);
   }
 
   /// Lets the user pick the map's colour scheme; the choice is saved by the cubit.
@@ -241,6 +253,25 @@ class _MapTitle extends StatelessWidget {
           overflow: TextOverflow.ellipsis,
         ),
       ],
+    );
+  }
+}
+
+/// Shown in place of the map on platforms Google Maps doesn't support.
+class _MapUnavailable extends StatelessWidget {
+  const _MapUnavailable();
+
+  @override
+  Widget build(BuildContext context) {
+    return Center(
+      child: Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 32),
+        child: Text(
+          'The map is available in the iPhone app.',
+          textAlign: TextAlign.center,
+          style: XploreText.body.copyWith(color: XploreColors.secondaryLabel),
+        ),
+      ),
     );
   }
 }
