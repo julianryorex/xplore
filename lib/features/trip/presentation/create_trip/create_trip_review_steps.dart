@@ -25,13 +25,9 @@ class GenerateReviewStep extends StatelessWidget {
           children: [
             _ReviewHeader(state: state),
             const SizedBox(height: paddingUnit * 1.5),
-            switch (state.phase) {
-              TripCreationPhase.generating => const _GeneratingPlaceholder(),
-              TripCreationPhase.generated ||
-              TripCreationPhase.submitting ||
-              TripCreationPhase.submitted => _ItinerarySkeletonList(state: state),
-              _ => _BeforeGenerate(state: state),
-            },
+            // TEMPORARY: the plan is built on entering the step, so the old
+            // generate phases collapse to "has a plan or not".
+            if (state.plan != null) _ItinerarySkeletonList(state: state) else _BeforeGenerate(state: state),
           ],
         );
       },
@@ -46,7 +42,7 @@ class _ReviewHeader extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final generated = state.phase == TripCreationPhase.generated;
+    final generated = state.plan != null;
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -159,25 +155,6 @@ class _SummaryDivider extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Divider(height: paddingUnit, thickness: 1, color: XploreColors.divider);
-  }
-}
-
-class _GeneratingPlaceholder extends StatelessWidget {
-  const _GeneratingPlaceholder();
-
-  @override
-  Widget build(BuildContext context) {
-    return SizedBox(
-      height: 220,
-      child: Column(
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: [
-          const CircularProgressIndicator(),
-          const SizedBox(height: paddingUnit),
-          Text('Building your itinerary…', style: context.pText.bodyMedium?.copyWith(color: XploreColors.mutedText)),
-        ],
-      ),
-    );
   }
 }
 

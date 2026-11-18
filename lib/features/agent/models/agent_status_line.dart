@@ -51,7 +51,4 @@ String _planningSentence(TripOverview overview) {
   return open == 1 ? '1 of your $length days is still open.' : '$open of your $length days are still open.';
 }
 
-String _placeName(TripOverview overview) {
-  final destination = overview.trip.destination?.trim() ?? '';
-  return destination.isNotEmpty ? destination : overview.trip.title;
-}
+String _placeName(TripOverview overview) => overview.trip.headline ?? overview.trip.title;

@@ -141,7 +141,7 @@ class DatesStep extends StatelessWidget {
                     label: 'Flexible',
                     icon: Icons.auto_awesome_rounded,
                     selected: flexible,
-                    onTap: () => cubit.setFlexibleDuration(draft.flexibleDurationDays),
+                    onTap: () => cubit.setFlexibleDuration(draft.durationDays),
                   ),
                 ),
                 const SizedBox(width: paddingUnit),
@@ -157,7 +157,7 @@ class DatesStep extends StatelessWidget {
             ),
             const SizedBox(height: paddingUnit * 1.5),
             if (flexible)
-              _DurationStepper(days: draft.flexibleDurationDays, onChanged: cubit.setFlexibleDuration)
+              _DurationStepper(days: draft.durationDays, onChanged: cubit.setFlexibleDuration)
             else
               GlassSurface(
                 onTap: () => _pickRange(context),

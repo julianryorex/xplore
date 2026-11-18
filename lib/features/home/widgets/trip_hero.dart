@@ -3,8 +3,8 @@ import 'package:xplore/constants/constants.dart';
 import 'package:xplore/constants/typography.dart';
 import 'package:xplore/features/home/models/trip_overview.dart';
 
-/// The top of the trip home: trip name, destination as a large title, and the
-/// date range with the trip's length.
+/// The top of the trip home: trip name, its place headline (`TripModel.headline`)
+/// as a large title, and the date range with the trip's length.
 class TripHero extends StatelessWidget {
   const TripHero({required this.overview, super.key});
 
@@ -13,8 +13,8 @@ class TripHero extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final trip = overview.trip;
-    final destination = trip.destination?.trim() ?? '';
-    final hasDestination = destination.isNotEmpty;
+    final destination = trip.headline;
+    final hasDestination = destination != null;
 
     return Padding(
       padding: const EdgeInsets.fromLTRB(20, 26, 20, 0),
@@ -30,7 +30,7 @@ class TripHero extends StatelessWidget {
             ),
             const SizedBox(height: 6),
           ],
-          _HeroTitle(hasDestination ? destination : trip.title),
+          _HeroTitle(destination ?? trip.title),
           const SizedBox(height: 8),
           Text(_subtitle(), style: XploreText.footnote.copyWith(color: XploreColors.secondaryLabel)),
         ],

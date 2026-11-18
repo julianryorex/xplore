@@ -65,11 +65,11 @@ class TripCubit extends Cubit<TripState> with TripStreamMixin {
 
   /// Creates a minimally-specified trip from just a title (legacy/quick path).
   Future<void> createTrip(String title) async {
-    await createTripFromDraft(TripDraft(title: title.trim(), destination: ''));
+    await createTripFromDraft(TripDraft(title: title.trim()));
   }
 
   /// Creates a trip from the multi-step create flow's [draft] (FEAT-007),
-  /// persisting destination/dates/preferences and seeding the itinerary with
+  /// persisting stops/destination/dates/preferences and seeding the itinerary with
   /// the generated [itinerary] skeleton. The created trip is marked active so
   /// the flow's invite step (and the rest of the app) sees it immediately.
   ///
@@ -80,12 +80,12 @@ class TripCubit extends Cubit<TripState> with TripStreamMixin {
       throw StateError('Cannot create a trip while unauthenticated.');
     }
 
-    final resolvedTitle = draft.title.trim().isEmpty ? draft.suggestedTitle : draft.title.trim();
+    final resolvedTitle = draft.effectiveTitle;
     if (resolvedTitle.isEmpty) {
       throw ArgumentError.value(draft.title, 'title', 'Trip title cannot be empty.');
     }
 
-    final destination = draft.destination.trim();
+    final destination = _legacyDestination(draft);
     final trip = await _tripService.createTrip(
       resolvedTitle,
       uid,
@@ -94,11 +94,21 @@ class TripCubit extends Cubit<TripState> with TripStreamMixin {
       endDate: draft.datesAreFlexible ? null : draft.endDate,
       coverImageUrl: draft.coverImageUrl,
       preferences: draft.toPreferences(),
+      stops: draft.stops,
     );
 
     await _seedItinerary(trip, itinerary);
     setActiveTrip(trip.id);
     return trip;
+  }
+
+  // The trip rules cap `destination` at 120 characters; many long place names
+  // fall back to the short headline rather than failing creation.
+  static const _maxDestinationLength = 120;
+
+  String _legacyDestination(TripDraft draft) {
+    final joined = draft.destination.trim();
+    return joined.length <= _maxDestinationLength ? joined : draft.headline;
   }
 
   /// Best-effort: a failed seed must not fail trip creation. The itinerary

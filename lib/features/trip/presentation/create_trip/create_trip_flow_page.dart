@@ -39,7 +39,7 @@ class CreateTripFlowPage extends StatelessWidget {
         // being created: popping mid-await would dispose the cubit/context while
         // the in-flight work is still running. This covers the system back
         // gesture and predictive back, not just our close button.
-        final isBusy = state.phase == TripCreationPhase.generating || state.phase == TripCreationPhase.submitting;
+        final isBusy = state.phase == TripCreationPhase.submitting;
 
         return PopScope(
           canPop: !isBusy,
@@ -86,12 +86,24 @@ class CreateTripFlowPage extends StatelessWidget {
 
   Widget _stepBody(CreateTripStep step) {
     return switch (step) {
-      CreateTripStep.destination => const DestinationStep(),
-      CreateTripStep.dates => const DatesStep(),
-      CreateTripStep.group => const GroupStep(),
-      CreateTripStep.vibe => const VibeStep(),
-      CreateTripStep.generate => const GenerateReviewStep(),
-      CreateTripStep.finishing => const FinishingStep(),
+      // TEMPORARY: the old 7-step screens mapped onto the new 4 steps until the
+      // redesigned screens replace this folder.
+      CreateTripStep.where => const DestinationStep(),
+      CreateTripStep.when => const DatesStep(),
+      CreateTripStep.whoAndVibe => const Column(
+        children: [
+          GroupStep(),
+          SizedBox(height: paddingUnit * 2),
+          VibeStep(),
+        ],
+      ),
+      CreateTripStep.plan => const Column(
+        children: [
+          GenerateReviewStep(),
+          SizedBox(height: paddingUnit * 2),
+          FinishingStep(),
+        ],
+      ),
       CreateTripStep.invite => const InviteStep(),
     };
   }
@@ -106,10 +118,10 @@ class _FlowTopBar extends StatelessWidget {
   Widget build(BuildContext context) {
     final cubit = context.read<TripCreationCubit>();
     // Once the trip exists (invite step), there's nothing to go back to.
-    final canGoBack = !state.isFirstStep && state.phase != TripCreationPhase.submitted;
+    final canGoBack = state.canGoBack;
     // Closing mid-generation/submit would dispose the flow while an await is in
     // flight; block it until the in-flight work settles.
-    final isBusy = state.phase == TripCreationPhase.generating || state.phase == TripCreationPhase.submitting;
+    final isBusy = state.phase == TripCreationPhase.submitting;
 
     return Padding(
       padding: const EdgeInsets.fromLTRB(paddingUnit, paddingUnit * 0.5, paddingUnit, paddingUnit * 0.5),
@@ -174,13 +186,11 @@ class _FlowBottomBar extends StatelessWidget {
 
   Widget _buildActions(BuildContext context, TripCreationCubit cubit) {
     switch (state.currentStep) {
-      case CreateTripStep.generate:
-        return _generateActions(context, cubit);
-      case CreateTripStep.finishing:
+      case CreateTripStep.plan:
         return _PrimaryButton(
           label: 'Create trip',
           busy: state.phase == TripCreationPhase.submitting,
-          onPressed: onSubmit,
+          onPressed: state.canAdvance ? onSubmit : null,
         );
       case CreateTripStep.invite:
         return _PrimaryButton(label: 'Done', onPressed: () => Navigator.of(context).maybePop());
@@ -198,32 +208,14 @@ class _FlowBottomBar extends StatelessWidget {
         );
     }
   }
-
-  Widget _generateActions(BuildContext context, TripCreationCubit cubit) {
-    return switch (state.phase) {
-      TripCreationPhase.generating => const _PrimaryButton(label: 'Generating…', busy: true, onPressed: null),
-      TripCreationPhase.generated || TripCreationPhase.submitting || TripCreationPhase.submitted => Column(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          _PrimaryButton(label: 'Looks good — continue', onPressed: cubit.next),
-          TextButton(
-            onPressed: cubit.generate,
-            child: Text('Regenerate', style: context.pText.labelMedium?.copyWith(color: XploreColors.subtleText)),
-          ),
-        ],
-      ),
-      _ => _PrimaryButton(label: 'Generate itinerary', icon: Icons.auto_awesome_rounded, onPressed: cubit.generate),
-    };
-  }
 }
 
 class _PrimaryButton extends StatelessWidget {
-  const _PrimaryButton({required this.label, this.onPressed, this.busy = false, this.icon});
+  const _PrimaryButton({required this.label, this.onPressed, this.busy = false});
 
   final String label;
   final VoidCallback? onPressed;
   final bool busy;
-  final IconData? icon;
 
   @override
   Widget build(BuildContext context) {
@@ -234,13 +226,7 @@ class _PrimaryButton extends StatelessWidget {
         style: FilledButton.styleFrom(minimumSize: const Size.fromHeight(54)),
         child: busy
             ? const SizedBox(height: 20, width: 20, child: CircularProgressIndicator(strokeWidth: 2.4))
-            : Row(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  if (icon != null) ...[Icon(icon, size: 18), const SizedBox(width: paddingUnit * 0.5)],
-                  Text(label),
-                ],
-              ),
+            : Text(label),
       ),
     );
   }

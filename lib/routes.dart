@@ -19,7 +19,6 @@ import 'package:xplore/features/trip/bloc/trip_creation_cubit.dart';
 import 'package:xplore/features/trip/presentation/create_trip/create_trip_flow_page.dart';
 import 'package:xplore/features/trip/presentation/join_trip_page.dart';
 import 'package:xplore/features/trip/services/invite_link.dart';
-import 'package:xplore/features/trip/services/itinerary_generator.dart';
 import 'package:xplore/features/trip/services/trip_service.dart';
 import 'package:xplore/screens/gallery_page.dart';
 import 'package:xplore/screens/generic_error_page.dart';
@@ -111,8 +110,7 @@ class RouteGenerator {
         return MaterialPageRoute(
           settings: settings,
           builder: (context) => BlocProvider<TripCreationCubit>(
-            create: (ctx) =>
-                TripCreationCubit(ctx.read<ItineraryGenerator>(), initialNotes: args is String ? args : ''),
+            create: (_) => TripCreationCubit(initialNotes: args is String ? args : ''),
             child: const CreateTripFlowPage(),
           ),
         );
