@@ -5,18 +5,22 @@ import 'package:xplore/constants/extensions.dart';
 import 'package:xplore/core/ambient_background.dart';
 import 'package:xplore/core/glass.dart';
 import 'package:xplore/core/header.dart';
+import 'package:xplore/features/home/models/trip_overview.dart';
+import 'package:xplore/features/nav/bloc/nav_cubit.dart';
 import 'package:xplore/features/trip/bloc/join_trip_cubit.dart';
 import 'package:xplore/features/trip/bloc/join_trip_state.dart';
 import 'package:xplore/features/trip/bloc/trip_cubit.dart';
 import 'package:xplore/features/trip/models/trip_invite.dart';
+import 'package:xplore/features/trip/models/trip_model.dart';
 import 'package:xplore/features/trip/services/invite_results.dart';
 
 /// The join-confirmation screen reached via an invite deep link.
 ///
 /// Liquid-glass styled to match the rest of the app: an [AmbientBackground]
 /// with a centered glass "trip card" (name + member avatars + CTA). It handles
-/// the loading, ready, joining, joined and invalid states; on success it makes
-/// the joined trip active via [TripCubit] and returns to Home.
+/// the loading, ready, joining, joined, already-a-member and invalid states; on
+/// success (or "Open trip" for an existing member) it makes the trip active via
+/// [TripCubit] and returns to Home.
 class JoinTripPage extends StatefulWidget {
   const JoinTripPage({super.key});
 
@@ -34,8 +38,11 @@ class _JoinTripPageState extends State<JoinTripPage> {
     });
   }
 
-  void _onJoined(BuildContext context, String tripId) {
+  void _openTrip(BuildContext context, String tripId) {
     context.read<TripCubit>().setActiveTrip(tripId);
+    // The shell keeps whichever tab was open when the link arrived (often Map);
+    // land on Home, where the trip just opened is front and centre.
+    context.read<NavbarCubit>().reset();
     Navigator.of(context).popUntil((route) => route.isFirst);
   }
 
@@ -63,7 +70,7 @@ class _JoinTripPageState extends State<JoinTripPage> {
                     listenWhen: (previous, current) => current is JoinTripJoined,
                     listener: (context, state) {
                       if (state is JoinTripJoined) {
-                        _onJoined(context, state.trip.id);
+                        _openTrip(context, state.trip.id);
                       }
                     },
                     builder: (context, state) {
@@ -73,6 +80,10 @@ class _JoinTripPageState extends State<JoinTripPage> {
                         JoinTripJoining(:final invite) => _JoinCard(invite: invite, isJoining: true),
                         // Joined is transient — the listener navigates away.
                         JoinTripJoined() => const _JoinLoading(),
+                        JoinTripAlreadyMember(:final trip) => _AlreadyMemberCard(
+                          trip: trip,
+                          onOpen: () => _openTrip(context, trip.id),
+                        ),
                         JoinTripInvalid(:final reason) => _JoinInvalid(reason: reason),
                       };
                     },
@@ -250,6 +261,77 @@ class _AvatarCircle extends StatelessWidget {
       ),
       child: child,
     );
+  }
+}
+
+/// Shown when the invite is for a trip the user is already on: confirms it and
+/// offers a way straight into the trip instead of a pointless "Join".
+class _AlreadyMemberCard extends StatelessWidget {
+  const _AlreadyMemberCard({required this.trip, required this.onOpen});
+
+  final TripModel trip;
+  final VoidCallback onOpen;
+
+  @override
+  Widget build(BuildContext context) {
+    final details = _details();
+
+    return GlassSurface(
+      strong: true,
+      padding: const EdgeInsets.all(paddingUnit * 2),
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Container(
+            width: 56,
+            height: 56,
+            alignment: Alignment.center,
+            decoration: const BoxDecoration(shape: BoxShape.circle, color: XploreColors.accentSoft),
+            child: const Icon(Icons.check_rounded, color: XploreColors.accent, size: 30),
+          ),
+          const SizedBox(height: paddingUnit * 1.25),
+          Text(
+            'You\u2019re already on this trip',
+            style: context.pText.labelSmall?.copyWith(color: XploreColors.accent),
+            textAlign: TextAlign.center,
+          ),
+          const SizedBox(height: 4),
+          Text(
+            trip.title,
+            style: context.pText.headlineSmall?.copyWith(letterSpacing: -0.3),
+            textAlign: TextAlign.center,
+            maxLines: 2,
+            overflow: TextOverflow.ellipsis,
+          ),
+          if (details.isNotEmpty) ...[
+            const SizedBox(height: paddingUnit * 0.5),
+            Text(
+              details,
+              style: context.pText.bodySmall?.copyWith(color: XploreColors.secondaryLabel),
+              textAlign: TextAlign.center,
+            ),
+          ],
+          const SizedBox(height: paddingUnit * 1.75),
+          SizedBox(
+            width: double.infinity,
+            child: FilledButton(onPressed: onOpen, child: const Text('Open trip')),
+          ),
+        ],
+      ),
+    );
+  }
+
+  /// "Lisbon · Jun 12 – Jun 15 · 4 travelers", skipping whatever the trip lacks.
+  String _details() {
+    final destination = trip.destination?.trim();
+    final start = trip.startDate;
+    final end = trip.endDate;
+    final count = trip.memberIds.length;
+    return [
+      if (destination != null && destination.isNotEmpty) destination,
+      if (start != null && end != null) '${formatMonthDay(start)} \u2013 ${formatMonthDay(end)}',
+      count == 1 ? 'Just you' : '$count travelers',
+    ].join(' \u00b7 ');
   }
 }
 

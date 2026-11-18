@@ -99,6 +99,35 @@ void main() {
 
       expect((lookup as InviteLookupInvalid).reason, InviteFailureReason.expired);
     });
+
+    test('returns alreadyMember when the user is on the trip', () async {
+      final tripId = await seedTrip(owner: 'owner-1');
+      final handle = await service.createInvite(tripId, 'owner-1');
+
+      final lookup = await service.lookupInvite(tripId, handle.invite.token, uid: 'owner-1');
+
+      expect(lookup, isA<InviteLookupAlreadyMember>());
+      expect((lookup as InviteLookupAlreadyMember).trip.id, tripId);
+    });
+
+    test('prefers alreadyMember over a revoked invite', () async {
+      final tripId = await seedTrip(owner: 'owner-1');
+      final handle = await service.createInvite(tripId, 'owner-1');
+      await service.revokeInvite(tripId, handle.invite.token);
+
+      final lookup = await service.lookupInvite(tripId, handle.invite.token, uid: 'owner-1');
+
+      expect(lookup, isA<InviteLookupAlreadyMember>());
+    });
+
+    test('returns valid for a signed-in user who is not on the trip', () async {
+      final tripId = await seedTrip(owner: 'owner-1');
+      final handle = await service.createInvite(tripId, 'owner-1');
+
+      final lookup = await service.lookupInvite(tripId, handle.invite.token, uid: 'stranger');
+
+      expect(lookup, isA<InviteLookupValid>());
+    });
   });
 
   group('acceptInvite', () {
