@@ -6,10 +6,10 @@ import 'package:google_maps_flutter/google_maps_flutter.dart';
 import 'package:xplore/constants/constants.dart';
 import 'package:xplore/constants/extensions.dart';
 import 'package:xplore/core/avatar_map_icon.dart';
-import 'package:xplore/core/glass.dart';
 import 'package:xplore/core/header.dart';
 import 'package:xplore/features/location/bloc/location_cubit.dart';
 import 'package:xplore/features/map/bloc/map_cubit.dart';
+import 'package:xplore/features/map/presentation/map_controls.dart';
 import 'package:xplore/features/map/presentation/map_theme_sheet.dart';
 import 'package:xplore/features/profile/bloc/profile_cubit.dart';
 import 'package:xplore/utilities/utilities.dart';
@@ -137,28 +137,11 @@ class _MapCanvasState extends State<MapCanvas> {
             ),
           ),
         ),
-        // Floating glass map controls, pinned just above the nav bar.
+        // Floating map controls, pinned above the nav bar on the page gutter.
         Positioned(
-          right: paddingUnit * 1.5,
-          bottom: bottomClearance + paddingUnit,
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              GlassIconButton(
-                icon: Icons.layers_outlined,
-                tooltip: 'Map style',
-                iconColor: XploreColors.alternate,
-                onTap: pickMapTheme,
-              ),
-              const SizedBox(height: paddingUnit),
-              GlassIconButton(
-                icon: Icons.my_location_rounded,
-                tooltip: 'Recenter',
-                iconColor: XploreColors.alternate,
-                onTap: recenterToCurrentLocation,
-              ),
-            ],
-          ),
+          right: 16,
+          bottom: bottomClearance + 16,
+          child: MapControls(onPickStyle: pickMapTheme, onRecenter: recenterToCurrentLocation),
         ),
         // Top scrim: blends the status-bar area into the base color and keeps
         // the header legible over the bright, busy map underneath.
