@@ -12,12 +12,13 @@ class XploreWordmark extends StatelessWidget {
       'xplore',
       style: TextStyle(
         fontFamily: wordmarkFontFamily,
-        fontSize: 22,
+        // Bespoke size: the wordmark is a logo, not part of the type scale.
+        fontSize: 20,
         // Manrope ships as a variable font, so the weight axis has to be set
         // explicitly; `fontWeight` alone leaves it at the default instance.
         fontWeight: FontWeight.w800,
         fontVariations: [FontVariation('wght', 800)],
-        letterSpacing: -0.8,
+        letterSpacing: -0.7,
         height: 1.2,
         color: XploreColors.white,
       ),

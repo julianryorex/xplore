@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:xplore/constants/constants.dart';
+import 'package:xplore/constants/typography.dart';
 import 'package:xplore/features/home/models/trip_overview.dart';
 
 /// The top of the trip home: trip name, destination as a large title, and the
@@ -25,13 +26,13 @@ class TripHero extends StatelessWidget {
               trip.title,
               maxLines: 1,
               overflow: TextOverflow.ellipsis,
-              style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w600, color: XploreColors.accent),
+              style: XploreText.footnoteStrong.copyWith(color: XploreColors.accent),
             ),
-            const SizedBox(height: 8),
+            const SizedBox(height: 6),
           ],
           _HeroTitle(hasDestination ? destination : trip.title),
           const SizedBox(height: 8),
-          Text(_subtitle(), style: const TextStyle(fontSize: 15, color: XploreColors.secondaryLabel)),
+          Text(_subtitle(), style: XploreText.footnote.copyWith(color: XploreColors.secondaryLabel)),
         ],
       ),
     );
@@ -48,23 +49,19 @@ class TripHero extends StatelessWidget {
   }
 }
 
-/// The 56pt title, stepped down in size when the name would not fit in two
-/// lines or a single word would have to break mid-word.
+/// The display-size title, stepped down in size when the name would not fit in
+/// two lines or a single word would have to break mid-word.
 class _HeroTitle extends StatelessWidget {
   const _HeroTitle(this.text);
 
   final String text;
 
-  static const _fontSizes = [56.0, 48.0, 40.0, 34.0];
+  // Bespoke step-down sizes below XploreText.display, ending at the title size.
+  static const _fontSizes = [40.0, 34.0, 28.0];
   static const _maxLines = 2;
 
-  TextStyle _styleFor(double fontSize) => TextStyle(
-    fontSize: fontSize,
-    height: 1,
-    fontWeight: FontWeight.w700,
-    letterSpacing: fontSize * -0.032,
-    color: XploreColors.white,
-  );
+  TextStyle _styleFor(double fontSize) =>
+      XploreText.display.copyWith(fontSize: fontSize, letterSpacing: fontSize * -0.03, color: XploreColors.white);
 
   @override
   Widget build(BuildContext context) {

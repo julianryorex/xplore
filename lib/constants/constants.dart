@@ -58,8 +58,8 @@ const radiusSm = 12.0;
 const radiusMd = 16.0;
 const radiusLg = 22.0;
 const radiusXl = 32.0;
-const headerIconButtonSize = 48.0;
-const headerIconSize = 24.0;
+const headerIconButtonSize = 44.0;
+const headerIconSize = 22.0;
 
 /// Smallest comfortable tap target, per the iOS Human Interface Guidelines.
 const minTouchTarget = 44.0;

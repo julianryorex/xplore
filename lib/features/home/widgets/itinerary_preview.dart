@@ -2,6 +2,7 @@ import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:xplore/constants/constants.dart';
+import 'package:xplore/constants/typography.dart';
 import 'package:xplore/core/error_state.dart';
 import 'package:xplore/features/agent/presentation/agent_page.dart';
 import 'package:xplore/features/home/models/trip_overview.dart';
@@ -57,7 +58,7 @@ class _ItineraryPreviewState extends State<ItineraryPreview> {
               onAction: () => setState(() => _expanded = !_expanded),
             ),
           ),
-          const SizedBox(height: 10),
+          const SizedBox(height: 8),
           AnimatedSize(
             duration: const Duration(milliseconds: 250),
             curve: Curves.easeOutCubic,
@@ -117,7 +118,7 @@ class _InsetSeparator extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return const Padding(
-      padding: EdgeInsets.only(left: 72),
+      padding: EdgeInsets.only(left: 68),
       child: ColoredBox(
         color: XploreColors.separator,
         child: SizedBox(height: 1, width: double.infinity),
@@ -144,7 +145,7 @@ class _DayRow extends StatelessWidget {
     return InkWell(
       onTap: () => Navigator.pushNamed(context, Paths.itineraryOverview, arguments: dayIndex),
       child: Padding(
-        padding: const EdgeInsets.fromLTRB(16, 12, 14, 12),
+        padding: const EdgeInsets.fromLTRB(16, 8, 14, 8),
         child: Row(
           children: [
             _DateTile(overview: overview, dayIndex: dayIndex, planned: true),
@@ -157,19 +158,14 @@ class _DayRow extends StatelessWidget {
                     title,
                     maxLines: 1,
                     overflow: TextOverflow.ellipsis,
-                    style: const TextStyle(
-                      fontSize: 17,
-                      fontWeight: FontWeight.w600,
-                      letterSpacing: -0.2,
-                      color: XploreColors.white,
-                    ),
+                    style: XploreText.bodyStrong.copyWith(color: XploreColors.white),
                   ),
                   const SizedBox(height: 1),
                   Text(
                     stopSummary(stopNames),
                     maxLines: 1,
                     overflow: TextOverflow.ellipsis,
-                    style: const TextStyle(fontSize: 14, color: XploreColors.secondaryLabel),
+                    style: XploreText.footnote.copyWith(color: XploreColors.secondaryLabel),
                   ),
                 ],
               ),
@@ -184,17 +180,19 @@ class _DayRow extends StatelessWidget {
 
   Widget _emptyDay(BuildContext context) {
     return Padding(
-      padding: const EdgeInsets.fromLTRB(16, 12, 12, 12),
+      // Less vertical padding than a planned row: the pill's padded tap target
+      // is taller than the date tile, and both rows should end up the same height.
+      padding: const EdgeInsets.fromLTRB(16, 4, 12, 4),
       child: Row(
         children: [
           _DateTile(overview: overview, dayIndex: dayIndex, planned: false),
           const SizedBox(width: 12),
-          const Expanded(
+          Expanded(
             child: Text(
               'Nothing planned',
               maxLines: 1,
               overflow: TextOverflow.ellipsis,
-              style: TextStyle(fontSize: 17, color: XploreColors.secondaryLabel),
+              style: XploreText.body.copyWith(color: XploreColors.secondaryLabel),
             ),
           ),
           const SizedBox(width: 12),
@@ -230,8 +228,8 @@ class _DateTile extends StatelessWidget {
     final foreground = planned ? XploreColors.accent : XploreColors.secondaryLabel;
 
     return Container(
-      width: 44,
-      height: 44,
+      width: 40,
+      height: 40,
       decoration: BoxDecoration(
         color: planned ? XploreColors.accentSoft : XploreColors.raised,
         borderRadius: BorderRadius.circular(radiusSm),
@@ -242,14 +240,8 @@ class _DateTile extends StatelessWidget {
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            Text(
-              caption,
-              style: TextStyle(fontSize: 10, fontWeight: FontWeight.w700, letterSpacing: 0.4, color: foreground),
-            ),
-            Text(
-              number,
-              style: TextStyle(fontSize: 17, fontWeight: FontWeight.w700, height: 1.05, color: foreground),
-            ),
+            Text(caption, style: XploreText.overline.copyWith(color: foreground)),
+            Text(number, style: XploreText.stat.copyWith(height: 1.05, color: foreground)),
           ],
         ),
       ),
@@ -261,7 +253,7 @@ class _LoadingCard extends StatelessWidget {
   const _LoadingCard();
 
   // Roughly three day rows, so the section does not jump once days load.
-  static const _height = 206.0;
+  static const _height = 170.0;
 
   @override
   Widget build(BuildContext context) {
@@ -284,7 +276,7 @@ class _QuietCard extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 20),
       decoration: BoxDecoration(color: XploreColors.card, borderRadius: BorderRadius.circular(radiusLg)),
-      child: Text(message, style: const TextStyle(fontSize: 15, color: XploreColors.secondaryLabel)),
+      child: Text(message, style: XploreText.body.copyWith(color: XploreColors.secondaryLabel)),
     );
   }
 }

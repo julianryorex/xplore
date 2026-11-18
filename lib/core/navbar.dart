@@ -6,6 +6,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:xplore/constants/constants.dart';
+import 'package:xplore/constants/typography.dart';
 import 'package:xplore/core/app_tab.dart';
 import 'package:xplore/features/nav/bloc/nav_cubit.dart';
 
@@ -184,9 +185,7 @@ class _TabButton extends StatelessWidget {
                 ),
                 Text(
                   tab.label,
-                  style: Theme.of(context).textTheme.labelSmall?.copyWith(
-                    fontSize: 11,
-                    height: 1.2,
+                  style: XploreText.caption.copyWith(
                     color: color,
                     fontWeight: isSelected ? FontWeight.w600 : FontWeight.w500,
                   ),

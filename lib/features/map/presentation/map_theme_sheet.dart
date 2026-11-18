@@ -1,6 +1,7 @@
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:xplore/constants/constants.dart';
+import 'package:xplore/constants/typography.dart';
 import 'package:xplore/features/map/models/map_theme.dart';
 
 /// Opens the map style picker and returns the chosen theme, or null when dismissed.
@@ -25,17 +26,9 @@ class _MapThemeSheet extends StatelessWidget {
         mainAxisSize: MainAxisSize.min,
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const Padding(
-            padding: EdgeInsets.fromLTRB(20, 0, 20, 8),
-            child: Text(
-              'Map style',
-              style: TextStyle(
-                fontSize: 22,
-                fontWeight: FontWeight.w700,
-                letterSpacing: -0.4,
-                color: XploreColors.white,
-              ),
-            ),
+          Padding(
+            padding: const EdgeInsets.fromLTRB(20, 0, 20, 8),
+            child: Text('Map style', style: XploreText.heading.copyWith(color: XploreColors.white)),
           ),
           for (final theme in MapTheme.values) _MapThemeRow(theme: theme, isSelected: theme == selected),
           const SizedBox(height: 8),
@@ -63,21 +56,18 @@ class _MapThemeRow extends StatelessWidget {
           child: Row(
             children: [
               _Swatch(theme: theme),
-              const SizedBox(width: 14),
+              const SizedBox(width: 12),
               Expanded(
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Text(
-                      theme.label,
-                      style: const TextStyle(fontSize: 17, fontWeight: FontWeight.w600, color: XploreColors.white),
-                    ),
+                    Text(theme.label, style: XploreText.bodyStrong.copyWith(color: XploreColors.white)),
                     const SizedBox(height: 2),
-                    Text(theme.description, style: const TextStyle(fontSize: 14, color: XploreColors.secondaryLabel)),
+                    Text(theme.description, style: XploreText.footnote.copyWith(color: XploreColors.secondaryLabel)),
                   ],
                 ),
               ),
-              if (isSelected) const Icon(CupertinoIcons.checkmark_alt, size: 22, color: XploreColors.accent),
+              if (isSelected) const Icon(CupertinoIcons.checkmark_alt, size: 20, color: XploreColors.accent),
             ],
           ),
         ),
@@ -92,7 +82,7 @@ class _Swatch extends StatelessWidget {
 
   final MapTheme theme;
 
-  static const _size = 48.0;
+  static const _size = 44.0;
 
   @override
   Widget build(BuildContext context) {

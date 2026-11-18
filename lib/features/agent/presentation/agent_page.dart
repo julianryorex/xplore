@@ -2,6 +2,7 @@ import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:xplore/constants/constants.dart';
+import 'package:xplore/constants/typography.dart';
 import 'package:xplore/features/agent/models/agent_status_line.dart';
 import 'package:xplore/features/agent/models/agent_suggestions.dart';
 import 'package:xplore/features/agent/widgets/agent_composer.dart';
@@ -73,7 +74,7 @@ class _AgentPageState extends State<AgentPage> {
             Expanded(
               child: SingleChildScrollView(
                 keyboardDismissBehavior: ScrollViewKeyboardDismissBehavior.onDrag,
-                padding: const EdgeInsets.fromLTRB(16, 48, 16, 16),
+                padding: const EdgeInsets.fromLTRB(16, 40, 16, 16),
                 child: _AgentIntro(tripState: tripState, onSuggestionSelected: _useSuggestion),
               ),
             ),
@@ -169,7 +170,7 @@ class _AgentIntro extends StatelessWidget {
           ),
         ),
         if (suggestions.isNotEmpty) ...[
-          const SizedBox(height: 28),
+          const SizedBox(height: 24),
           AgentSuggestionList(suggestions: suggestions, onSelected: onSuggestionSelected),
         ],
       ],
@@ -182,11 +183,11 @@ class _UnavailableCaption extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return const Padding(
-      padding: EdgeInsets.fromLTRB(20, 8, 20, 0),
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(20, 8, 20, 0),
       child: Text(
         'xplore can’t reply here yet. To get a day-by-day draft from a description, create a new trip.',
-        style: TextStyle(fontSize: 13, height: 1.35, color: XploreColors.secondaryLabel),
+        style: XploreText.footnote.copyWith(color: XploreColors.secondaryLabel),
       ),
     );
   }

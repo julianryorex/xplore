@@ -1,6 +1,7 @@
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:xplore/constants/constants.dart';
+import 'package:xplore/constants/typography.dart';
 
 /// The first-trip "Ways to start" grid: a full-width "Describe your trip" tile
 /// above "Step by step" and "Join a trip".
@@ -55,24 +56,20 @@ class _DescribeTile extends StatelessWidget {
   Widget build(BuildContext context) {
     return _TileSurface(
       color: XploreColors.accentSoft,
-      minHeight: 104,
+      minHeight: 96,
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
       onTap: onTap,
-      child: const Row(
+      child: Row(
         children: [
-          Icon(CupertinoIcons.chat_bubble, size: 28, color: XploreColors.accent),
-          SizedBox(width: 14),
+          const Icon(CupertinoIcons.chat_bubble, size: 28, color: XploreColors.accent),
+          const SizedBox(width: 14),
           Expanded(
             child: _TileText(
               title: 'Describe your trip',
               subtitle: 'Say where and when, and get a day-by-day draft',
-              titleStyle: TextStyle(
-                fontSize: 19,
-                fontWeight: FontWeight.w600,
-                letterSpacing: -0.3,
-                color: XploreColors.white,
-              ),
-              subtitleStyle: TextStyle(fontSize: 14, height: 1.35, color: XploreColors.inactiveControl),
+              // The lead tile reads one step above the smaller tiles' bodyStrong titles.
+              titleStyle: XploreText.heading.copyWith(color: XploreColors.white),
+              subtitleStyle: XploreText.footnote.copyWith(color: XploreColors.inactiveControl),
             ),
           ),
         ],
@@ -93,7 +90,7 @@ class _SmallTile extends StatelessWidget {
   Widget build(BuildContext context) {
     return _TileSurface(
       color: XploreColors.card,
-      minHeight: 116,
+      minHeight: 108,
       padding: const EdgeInsets.all(14),
       onTap: onTap,
       child: Column(
@@ -105,13 +102,8 @@ class _SmallTile extends StatelessWidget {
           _TileText(
             title: title,
             subtitle: subtitle,
-            titleStyle: const TextStyle(
-              fontSize: 17,
-              fontWeight: FontWeight.w600,
-              letterSpacing: -0.2,
-              color: XploreColors.white,
-            ),
-            subtitleStyle: const TextStyle(fontSize: 13, color: XploreColors.secondaryLabel),
+            titleStyle: XploreText.bodyStrong.copyWith(color: XploreColors.white),
+            subtitleStyle: XploreText.footnote.copyWith(color: XploreColors.secondaryLabel),
           ),
         ],
       ),

@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:xplore/constants/constants.dart';
 import 'package:xplore/constants/extensions.dart';
+import 'package:xplore/constants/typography.dart';
 import 'package:xplore/core/xplore_wordmark.dart';
 import 'package:xplore/features/profile/bloc/profile_cubit.dart';
 import 'package:xplore/routes.dart';
@@ -54,7 +55,7 @@ class _ProfileButton extends StatelessWidget {
               ? const Icon(CupertinoIcons.person_fill, size: 20, color: XploreColors.background)
               : Text(
                   name.characters.first.toUpperCase(),
-                  style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w600, color: XploreColors.background),
+                  style: XploreText.heading.copyWith(color: XploreColors.background),
                 ),
         );
       },

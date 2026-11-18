@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:xplore/constants/constants.dart';
 import 'package:xplore/constants/extensions.dart';
+import 'package:xplore/constants/typography.dart';
 import 'package:xplore/core/ambient_background.dart';
 import 'package:xplore/core/enums.dart';
 import 'package:xplore/core/glass.dart';
@@ -180,10 +181,7 @@ class _Hero extends StatelessWidget {
                       children: [
                         Icon(Icons.add_a_photo_outlined, size: 18, color: XploreColors.white),
                         const SizedBox(width: paddingUnit * 0.75),
-                        Text(
-                          'Add photos',
-                          style: TextStyle(color: XploreColors.white, fontWeight: FontWeight.w600, fontSize: 14),
-                        ),
+                        Text('Add photos', style: XploreText.footnoteStrong.copyWith(color: XploreColors.white)),
                       ],
                     ),
                   ),

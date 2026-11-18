@@ -1,8 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:xplore/constants/constants.dart';
+import 'package:xplore/constants/typography.dart';
 
-/// A 44pt pill button with a solid fill, used for Home's inline actions
-/// (Invite, Plan day). Pass a null [onPressed] to disable it.
+/// A 36pt pill button with a solid fill, used for Home's inline actions
+/// (Invite, Plan day). Its tap target is padded out to at least
+/// [minTouchTarget]. Pass a null [onPressed] to disable it.
 class CapsuleButton extends StatelessWidget {
   const CapsuleButton({
     required this.label,
@@ -23,6 +25,8 @@ class CapsuleButton extends StatelessWidget {
   final Widget? leading;
   final double horizontalPadding;
 
+  static const _height = 36.0;
+
   @override
   Widget build(BuildContext context) {
     return FilledButton(
@@ -32,12 +36,14 @@ class CapsuleButton extends StatelessWidget {
         foregroundColor: foregroundColor,
         disabledBackgroundColor: backgroundColor.withValues(alpha: backgroundColor.a * 0.6),
         disabledForegroundColor: foregroundColor.withValues(alpha: 0.6),
-        minimumSize: const Size(0, minTouchTarget),
-        maximumSize: const Size(double.infinity, minTouchTarget),
+        minimumSize: const Size(0, _height),
         padding: EdgeInsets.symmetric(horizontal: horizontalPadding),
         shape: const StadiumBorder(),
-        tapTargetSize: MaterialTapTargetSize.shrinkWrap,
-        textStyle: const TextStyle(fontSize: 15, fontWeight: FontWeight.w600),
+        // A padded target is 48pt at standard density; pinning the density keeps
+        // macOS's compact default from shrinking it below minTouchTarget.
+        visualDensity: VisualDensity.standard,
+        tapTargetSize: MaterialTapTargetSize.padded,
+        textStyle: XploreText.bodyStrong,
       ),
       child: Row(
         mainAxisSize: MainAxisSize.min,

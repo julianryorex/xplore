@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:xplore/constants/constants.dart';
+import 'package:xplore/constants/typography.dart';
 
 /// A Home section title ("Itinerary", "Shared gallery") with an optional
 /// accent text action on the trailing edge.
@@ -20,15 +21,7 @@ class HomeSectionHeader extends StatelessWidget {
         Expanded(
           child: Semantics(
             header: true,
-            child: Text(
-              title,
-              style: const TextStyle(
-                fontSize: 22,
-                fontWeight: FontWeight.w700,
-                letterSpacing: -0.4,
-                color: XploreColors.white,
-              ),
-            ),
+            child: Text(title, style: XploreText.heading.copyWith(color: XploreColors.white)),
           ),
         ),
         if (actionLabel != null)
@@ -39,7 +32,7 @@ class HomeSectionHeader extends StatelessWidget {
               minimumSize: const Size(minTouchTarget, minTouchTarget),
               padding: const EdgeInsets.symmetric(horizontal: 4),
               tapTargetSize: MaterialTapTargetSize.shrinkWrap,
-              textStyle: const TextStyle(fontSize: 16, fontWeight: FontWeight.w400),
+              textStyle: XploreText.footnoteStrong,
             ),
             child: Text(actionLabel),
           ),

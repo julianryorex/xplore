@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:xplore/constants/constants.dart';
-import 'package:xplore/constants/extensions.dart';
+import 'package:xplore/constants/typography.dart';
 import 'package:xplore/features/itinerary/models/itinerary_models.dart';
 import 'package:xplore/routes.dart';
 
@@ -23,7 +23,7 @@ class ItineraryTile extends StatelessWidget {
         },
         child: Container(
           width: width - height - paddingUnit * 2, // minus row size && gap
-          height: 80,
+          height: 72,
           decoration: BoxDecoration(
             borderRadius: BorderRadius.circular(radiusMd),
             border: Border.all(color: XploreColors.divider),
@@ -41,11 +41,7 @@ class ItineraryTile extends StatelessWidget {
                         locationPlan.name,
                         softWrap: true,
                         maxLines: 3,
-                        style: context.pText.bodySmall?.copyWith(
-                          color: XploreColors.white,
-                          fontWeight: FontWeight.w600,
-                          fontSize: 14,
-                        ),
+                        style: XploreText.footnoteStrong.copyWith(color: XploreColors.white),
                       ),
                     ),
                     _buildIconBtn(Icons.map_rounded, () {}),

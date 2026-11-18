@@ -1,6 +1,7 @@
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:xplore/constants/constants.dart';
+import 'package:xplore/constants/typography.dart';
 
 /// The "Try asking" inset grouped list. Tapping a row hands its text to
 /// [onSelected]; the list itself sends nothing.
@@ -15,12 +16,9 @@ class AgentSuggestionList extends StatelessWidget {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        const Padding(
-          padding: EdgeInsets.symmetric(horizontal: 4),
-          child: Text(
-            'Try asking',
-            style: TextStyle(fontSize: 13, fontWeight: FontWeight.w600, color: XploreColors.secondaryLabel),
-          ),
+        Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 4),
+          child: Text('Try asking', style: XploreText.footnoteStrong.copyWith(color: XploreColors.secondaryLabel)),
         ),
         const SizedBox(height: 8),
         ClipRRect(
@@ -53,16 +51,16 @@ class _SuggestionRow extends StatelessWidget {
     return InkWell(
       onTap: onTap,
       child: ConstrainedBox(
-        constraints: const BoxConstraints(minHeight: 52),
+        constraints: const BoxConstraints(minHeight: 46),
         child: Padding(
-          padding: const EdgeInsets.fromLTRB(16, 12, 14, 12),
+          padding: const EdgeInsets.fromLTRB(16, 11, 14, 11),
           child: Row(
             children: [
               Expanded(
-                child: Text(text, style: const TextStyle(fontSize: 17, color: XploreColors.white)),
+                child: Text(text, style: XploreText.body.copyWith(color: XploreColors.white)),
               ),
               const SizedBox(width: 12),
-              const Icon(CupertinoIcons.arrow_up_right, size: 18, color: XploreColors.accent),
+              const Icon(CupertinoIcons.arrow_up_right, size: 16, color: XploreColors.accent),
             ],
           ),
         ),

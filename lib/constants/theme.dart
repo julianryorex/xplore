@@ -99,17 +99,17 @@ ThemeData getTheme() => ThemeData(
   progressIndicatorTheme: const ProgressIndicatorThemeData(color: XploreColors.accent),
   snackBarTheme: SnackBarThemeData(
     backgroundColor: XploreColors.raised,
-    contentTextStyle: defaultTextTheme.bodyMedium,
+    contentTextStyle: defaultTextTheme.bodyLarge,
     actionTextColor: XploreColors.accent,
     closeIconColor: XploreColors.secondaryLabel,
     behavior: SnackBarBehavior.floating,
     shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(radiusMd)),
   ),
   elevatedButtonTheme: ElevatedButtonThemeData(
-    style: _primaryButtonStyle.copyWith(minimumSize: const WidgetStatePropertyAll(Size(250, 54))),
+    style: _primaryButtonStyle.copyWith(minimumSize: const WidgetStatePropertyAll(Size(250, 48))),
   ),
   filledButtonTheme: FilledButtonThemeData(
-    style: _primaryButtonStyle.copyWith(minimumSize: const WidgetStatePropertyAll(Size(64, 50))),
+    style: _primaryButtonStyle.copyWith(minimumSize: const WidgetStatePropertyAll(Size(64, 48))),
   ),
   outlinedButtonTheme: OutlinedButtonThemeData(
     style: ButtonStyle(
@@ -118,7 +118,7 @@ ThemeData getTheme() => ThemeData(
       textStyle: WidgetStatePropertyAll(defaultTextTheme.labelMedium),
       side: const WidgetStatePropertyAll(BorderSide(color: XploreColors.separator)),
       overlayColor: WidgetStatePropertyAll(XploreColors.white.withValues(alpha: 0.08)),
-      minimumSize: const WidgetStatePropertyAll(Size(132, 50)),
+      minimumSize: const WidgetStatePropertyAll(Size(132, 44)),
     ),
   ),
   textButtonTheme: TextButtonThemeData(
@@ -128,6 +128,10 @@ ThemeData getTheme() => ThemeData(
       ),
       textStyle: WidgetStatePropertyAll(defaultTextTheme.labelMedium),
     ),
+  ),
+  dialogTheme: DialogThemeData(
+    titleTextStyle: defaultTextTheme.headlineSmall,
+    contentTextStyle: defaultTextTheme.bodyMedium?.copyWith(color: XploreColors.secondaryLabel),
   ),
   iconTheme: const IconThemeData(color: XploreColors.white),
 );
