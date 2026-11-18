@@ -103,6 +103,27 @@ void main() {
       expect(stopIds(), ['tokyo', 'kyoto', 'osaka']);
     });
 
+    testWidgets('the undo offer times out, and does not follow the user to the next step', (tester) async {
+      for (final id in ['tokyo', 'kyoto', 'osaka']) {
+        cubit.addStop(placeCatalog.byId(id)!);
+      }
+      await pumpFlow(tester);
+
+      await tester.drag(find.byKey(const ValueKey('kyoto')), const Offset(-500, 0));
+      await tester.pumpAndSettle();
+      expect(find.text('Kyoto removed'), findsOneWidget);
+      await tester.pump(const Duration(seconds: 5));
+      await tester.pumpAndSettle();
+      expect(find.text('Kyoto removed'), findsNothing);
+
+      await tester.drag(find.byKey(const ValueKey('osaka')), const Offset(-500, 0));
+      await tester.pumpAndSettle();
+      expect(find.text('Osaka removed'), findsOneWidget);
+      cubit.next();
+      await tester.pumpAndSettle();
+      expect(find.text('Osaka removed'), findsNothing);
+    });
+
     testWidgets('reordering moves the place to the dropped slot', (tester) async {
       for (final id in ['tokyo', 'kyoto', 'osaka']) {
         cubit.addStop(placeCatalog.byId(id)!);

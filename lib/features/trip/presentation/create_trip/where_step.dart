@@ -135,6 +135,9 @@ void _removeWithUndo(BuildContext context, TripStop stop, int index) {
       SnackBar(
         content: Text('${stop.name} removed'),
         action: SnackBarAction(label: 'Undo', onPressed: () => _restore(cubit, stop, index, before)),
+        // A snackbar with an action stays until dismissed unless told otherwise.
+        persist: false,
+        duration: const Duration(seconds: 4),
       ),
     );
 }

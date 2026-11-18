@@ -27,7 +27,10 @@ class CreateTripFlowPage extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return BlocBuilder<TripCreationCubit, TripCreationState>(
+    return BlocConsumer<TripCreationCubit, TripCreationState>(
+      // An undo offer belongs to the step it was made on.
+      listenWhen: (previous, current) => previous.currentStep != current.currentStep,
+      listener: (context, _) => ScaffoldMessenger.of(context).clearSnackBars(),
       buildWhen: (previous, current) =>
           previous.currentStep != current.currentStep ||
           previous.hasUnsavedInput != current.hasUnsavedInput ||
@@ -39,7 +42,10 @@ class CreateTripFlowPage extends StatelessWidget {
           // and nothing may pop mid-submit while TripCubit is still awaiting.
           canPop: state.phase == TripCreationPhase.submitted || (state.isFirstStep && !state.hasUnsavedInput),
           onPopInvokedWithResult: (didPop, _) {
-            if (!didPop) {
+            if (didPop) {
+              // The messenger outlives this page, so nothing of the flow's may follow the user out.
+              ScaffoldMessenger.of(context).clearSnackBars();
+            } else {
               _onBack(context);
             }
           },
