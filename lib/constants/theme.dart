@@ -1,35 +1,24 @@
 import 'package:animations/animations.dart';
 import 'package:flutter/material.dart';
 import 'package:xplore/constants/constants.dart';
-
-/// The family name Flutter's engine registers for the platform system font on
-/// Apple platforms (San Francisco). Named explicitly because raw [TextStyle]s
-/// handed to button themes skip the typography defaults.
-const systemFontFamily = 'CupertinoSystemText';
+import 'package:xplore/constants/typography.dart';
 
 /// Bundled only for the "xplore" wordmark; everything else is the system font.
 const wordmarkFontFamily = 'Manrope';
 
-// Flutter does not apply San Francisco's size-specific tracking, which leaves
-// text looser than native iOS. The body and label styles carry the system's
-// tracking for their size; `bodyMedium` is also the default every `Text`
-// inherits, so unstyled text is tightened too.
-final defaultTextTheme = const TextTheme(
-  headlineLarge: TextStyle(fontSize: 28, fontWeight: FontWeight.w700, height: 1.08, letterSpacing: -0.8),
-  headlineMedium: TextStyle(fontSize: 24, fontWeight: FontWeight.w700, height: 1.12, letterSpacing: -0.6),
-  headlineSmall: TextStyle(fontSize: 17, fontWeight: FontWeight.w600, height: 1.2, letterSpacing: -0.3),
-  bodyLarge: TextStyle(fontSize: 15, fontWeight: FontWeight.w400, height: 1.4, letterSpacing: -0.2),
-  bodyMedium: TextStyle(fontSize: 14, fontWeight: FontWeight.w400, height: 1.4, letterSpacing: -0.15),
-  bodySmall: TextStyle(
-    fontSize: 13,
-    fontWeight: FontWeight.w400,
-    height: 1.35,
-    letterSpacing: -0.1,
-    color: XploreColors.secondaryLabel,
-  ),
-  labelLarge: TextStyle(fontSize: 15, fontWeight: FontWeight.w600, height: 1.3, letterSpacing: -0.2),
-  labelMedium: TextStyle(fontSize: 14, fontWeight: FontWeight.w500, height: 1.3, letterSpacing: -0.15),
-  labelSmall: TextStyle(fontSize: 12, fontWeight: FontWeight.w500, height: 1.3, color: XploreColors.secondaryLabel),
+// Material's slots are filled from [XploreText] so the theme and the type scale
+// cannot drift apart. `bodyMedium` is the default every `Text` inherits, so it
+// is the scale's 15pt body like `bodyLarge`.
+final defaultTextTheme = TextTheme(
+  headlineLarge: XploreText.title,
+  headlineMedium: const TextStyle(fontSize: 24, fontWeight: FontWeight.w700, height: 1.12, letterSpacing: -0.6),
+  headlineSmall: XploreText.heading,
+  bodyLarge: XploreText.body,
+  bodyMedium: XploreText.body,
+  bodySmall: XploreText.footnote.copyWith(color: XploreColors.secondaryLabel),
+  labelLarge: XploreText.bodyStrong.copyWith(fontWeight: FontWeight.w600),
+  labelMedium: XploreText.bodyStrong,
+  labelSmall: XploreText.caption.copyWith(color: XploreColors.secondaryLabel),
 ).apply(fontFamily: systemFontFamily, bodyColor: XploreColors.white, displayColor: XploreColors.white);
 
 const _capsule = StadiumBorder();
@@ -99,7 +88,7 @@ ThemeData getTheme() => ThemeData(
   progressIndicatorTheme: const ProgressIndicatorThemeData(color: XploreColors.accent),
   snackBarTheme: SnackBarThemeData(
     backgroundColor: XploreColors.raised,
-    contentTextStyle: defaultTextTheme.bodyLarge,
+    contentTextStyle: defaultTextTheme.bodyMedium,
     actionTextColor: XploreColors.accent,
     closeIconColor: XploreColors.secondaryLabel,
     behavior: SnackBarBehavior.floating,
@@ -131,7 +120,7 @@ ThemeData getTheme() => ThemeData(
   ),
   dialogTheme: DialogThemeData(
     titleTextStyle: defaultTextTheme.headlineSmall,
-    contentTextStyle: defaultTextTheme.bodyMedium?.copyWith(color: XploreColors.secondaryLabel),
+    contentTextStyle: defaultTextTheme.bodyMedium,
   ),
   iconTheme: const IconThemeData(color: XploreColors.white),
 );
