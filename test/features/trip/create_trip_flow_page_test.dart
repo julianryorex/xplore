@@ -209,6 +209,27 @@ void main() {
       expect(find.text('Open flow'), findsOneWidget);
     });
 
+    testWidgets('system back asks before discarding on the first step and steps back later', (tester) async {
+      cubit
+        ..addStop(placeCatalog.byId('tokyo')!)
+        ..next();
+      await pumpFlow(tester);
+
+      await tester.binding.handlePopRoute();
+      await tester.pumpAndSettle();
+      expect(cubit.state.currentStep, CreateTripStep.where);
+      expect(find.text('Discard this trip?'), findsNothing);
+
+      await tester.binding.handlePopRoute();
+      await tester.pumpAndSettle();
+      expect(find.text('Discard this trip?'), findsOneWidget);
+
+      await tester.tap(find.text('Keep editing'));
+      await tester.pumpAndSettle();
+      expect(find.text('Discard this trip?'), findsNothing);
+      expect(find.text('Where to?'), findsOneWidget);
+    });
+
     testWidgets('closing an untouched flow leaves straight away', (tester) async {
       await pumpFlow(tester);
 

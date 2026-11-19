@@ -323,12 +323,12 @@ class _AlreadyMemberCard extends StatelessWidget {
 
   /// "Lisbon · Jun 12 – Jun 15 · 4 travelers", skipping whatever the trip lacks.
   String _details() {
-    final destination = trip.destination?.trim();
+    final destination = trip.headline;
     final start = trip.startDate;
     final end = trip.endDate;
     final count = trip.memberIds.length;
     return [
-      if (destination != null && destination.isNotEmpty) destination,
+      ?destination,
       if (start != null && end != null) '${formatMonthDay(start)} \u2013 ${formatMonthDay(end)}',
       count == 1 ? 'Just you' : '$count travelers',
     ].join(' \u00b7 ');

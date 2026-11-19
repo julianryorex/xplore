@@ -47,36 +47,46 @@ class _WhereStepState extends State<WhereStep> {
     final stops = context.select((TripCreationCubit cubit) => cubit.state.draft.stops);
     final canAddStop = context.select((TripCreationCubit cubit) => cubit.state.canAddStop);
 
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.stretch,
-      children: [
-        const CreateStepTitle('Where to?'),
-        const SizedBox(height: 18),
-        ValueListenableBuilder<bool>(
-          valueListenable: _isSearching,
-          builder: (context, isSearching, map) => Visibility(
-            visible: !isSearching,
-            maintainSize: true,
-            maintainAnimation: true,
-            maintainState: true,
-            child: map!,
+    return BlocListener<TripCreationCubit, TripCreationState>(
+      // A full trip cannot take a removed place back, so its undo offer would be dead.
+      listenWhen: (previous, current) => previous.canAddStop && !current.canAddStop,
+      listener: (context, _) => ScaffoldMessenger.maybeOf(context)?.hideCurrentSnackBar(),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          const CreateStepTitle('Where to?'),
+          const SizedBox(height: 18),
+          ValueListenableBuilder<bool>(
+            valueListenable: _isSearching,
+            builder: (context, isSearching, map) => Visibility(
+              visible: !isSearching,
+              maintainSize: true,
+              maintainAnimation: true,
+              maintainState: true,
+              child: map!,
+            ),
+            child: RouteMap(stops: stops, surfaceBuilder: widget.mapSurfaceBuilder),
           ),
-          child: RouteMap(stops: stops, surfaceBuilder: widget.mapSurfaceBuilder),
-        ),
-        const SizedBox(height: 14),
-        _StopTimeline(stops: stops),
-        _AddPlaceRow(enabled: canAddStop, continuesRail: stops.isNotEmpty, onTap: () => _searchAndAdd(context)),
-        if (canAddStop) _PlaceSuggestions(stops: stops),
-      ],
+          const SizedBox(height: 14),
+          _StopTimeline(stops: stops),
+          _AddPlaceRow(enabled: canAddStop, continuesRail: stops.isNotEmpty, onTap: () => _searchAndAdd(context)),
+          if (canAddStop) _PlaceSuggestions(stops: stops),
+        ],
+      ),
     );
   }
 
   Future<void> _searchAndAdd(BuildContext context) async {
     final cubit = context.read<TripCreationCubit>();
     _isSearching.value = true;
-    final place = await showPlaceSearchSheet(context, excludeIds: cubit.state.draft.stops.map((stop) => stop.id));
-    if (!mounted) return;
-    _isSearching.value = false;
+    final place = await showPlaceSearchSheet(
+      context,
+      excludeIds: cubit.state.draft.stops.map((stop) => stop.id),
+      // The map would show through the sheet if it came back while the sheet is still sliding away.
+      onClosed: () {
+        if (mounted) _isSearching.value = false;
+      },
+    );
     if (place != null && !cubit.isClosed) {
       cubit.addStop(place);
     }
@@ -110,10 +120,10 @@ class _StopTimeline extends StatelessWidget {
           key: ValueKey(stop.id),
           direction: DismissDirection.endToStart,
           background: const _RemoveBackground(),
-          onDismissed: (_) => _removeWithUndo(context, stop, index),
+          onDismissed: (_) => _removeWithUndo(context, stop),
           child: Semantics(
             customSemanticsActions: {
-              const CustomSemanticsAction(label: 'Remove'): () => _removeWithUndo(context, stop, index),
+              const CustomSemanticsAction(label: 'Remove'): () => _removeWithUndo(context, stop),
             },
             child: _StopRow(stop: stop, index: index, showCountry: showCountry),
           ),
@@ -125,41 +135,26 @@ class _StopTimeline extends StatelessWidget {
 
 /// Removes [stop] and offers to put it back where it was, with every stop's
 /// nights as they were (removing re-splits exact-date nights).
-void _removeWithUndo(BuildContext context, TripStop stop, int index) {
+void _removeWithUndo(BuildContext context, TripStop stop) {
   final cubit = context.read<TripCreationCubit>();
-  final before = cubit.state.draft.stops;
+  final stopsBefore = cubit.state.draft.stops;
   cubit.removeStop(stop.id);
   ScaffoldMessenger.of(context)
     ..hideCurrentSnackBar()
     ..showSnackBar(
       SnackBar(
         content: Text('${stop.name} removed'),
-        action: SnackBarAction(label: 'Undo', onPressed: () => _restore(cubit, stop, index, before)),
+        action: SnackBarAction(
+          label: 'Undo',
+          onPressed: () {
+            if (!cubit.isClosed) cubit.restoreStop(stop.id, stopsBefore: stopsBefore);
+          },
+        ),
         // A snackbar with an action stays until dismissed unless told otherwise.
         persist: false,
         duration: const Duration(seconds: 4),
       ),
     );
-}
-
-void _restore(TripCreationCubit cubit, TripStop stop, int index, List<TripStop> before) {
-  final place = placeCatalog.byId(stop.id);
-  if (cubit.isClosed || place == null || !cubit.state.canAddStop) {
-    return;
-  }
-  cubit.addStop(place);
-  final stops = cubit.state.draft.stops;
-  if (stops.lastOrNull?.id != stop.id) {
-    return;
-  }
-  cubit.reorderStops(stops.length - 1, index);
-  final current = {for (final current in cubit.state.draft.stops) current.id: current.nights};
-  for (final previous in before) {
-    // Zero is only valid for a one-place day trip, which the add already restores.
-    if (previous.nights >= 1 && current[previous.id] != previous.nights) {
-      cubit.setStopNights(previous.id, previous.nights);
-    }
-  }
 }
 
 class _StopRow extends StatelessWidget {

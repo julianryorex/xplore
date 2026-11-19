@@ -6,19 +6,26 @@ import 'package:xplore/features/trip/presentation/create_trip/create_trip_widget
 
 /// Opens a tall sheet to search [catalog] for a place to add, leaving out the
 /// ids in [excludeIds]. Completes with the chosen place, or null when dismissed.
+/// [onClosed] runs once the sheet has finished animating away.
 Future<CatalogPlace?> showPlaceSearchSheet(
   BuildContext context, {
   required Iterable<String> excludeIds,
   PlaceCatalog catalog = placeCatalog,
+  VoidCallback? onClosed,
 }) {
-  return showModalBottomSheet<CatalogPlace>(
-    context: context,
+  final navigator = Navigator.of(context);
+  // Pushed by hand rather than through showModalBottomSheet: its future completes when the sheet
+  // starts closing, and callers need to know when it is fully gone.
+  final route = ModalBottomSheetRoute<CatalogPlace>(
     isScrollControlled: true,
     useSafeArea: true,
     showDragHandle: true,
     backgroundColor: XploreColors.card,
+    capturedThemes: InheritedTheme.capture(from: context, to: navigator.context),
     builder: (_) => _PlaceSearchSheet(excludeIds: excludeIds.toSet(), catalog: catalog),
   );
+  if (onClosed != null) route.completed.whenComplete(onClosed);
+  return navigator.push(route);
 }
 
 /// The search sheet's content: a search field over popular places or matches.

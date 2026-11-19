@@ -1,9 +1,11 @@
+import 'package:collection/collection.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:xplore/features/trip/bloc/trip_creation_state.dart';
 import 'package:xplore/features/trip/data/place_catalog.dart';
 import 'package:xplore/features/trip/models/nights_allocation.dart' as nights;
 import 'package:xplore/features/trip/models/trip_draft.dart';
 import 'package:xplore/features/trip/models/trip_model.dart';
+import 'package:xplore/features/trip/models/trip_stop.dart';
 import 'package:xplore/features/trip/services/stub_plan_builder.dart';
 
 /// Drives the four-step create-trip flow (where, when, who and vibe, plan) and
@@ -74,6 +76,31 @@ class TripCreationCubit extends Cubit<TripCreationState> {
     _updateTripShape(_resplitIfExact(state.draft.copyWith(stops: remaining)));
   }
 
+  /// Undoes [removeStop] for the stop with [id], given [stopsBefore], the stops
+  /// as they were just before the removal. Every stop gets its earlier nights
+  /// back when the other stops are unchanged since; otherwise the stop returns
+  /// to its old slot (clamped) and exact-date nights re-split evenly.
+  void restoreStop(String id, {required List<TripStop> stopsBefore}) {
+    final index = stopsBefore.indexWhere((stop) => stop.id == id);
+    final current = state.draft.stops;
+    if (index < 0 || !state.canAddStop || current.any((stop) => stop.id == id)) {
+      return;
+    }
+    final othersUnchanged = const ListEquality<String>().equals(
+      [
+        for (final stop in stopsBefore)
+          if (stop.id != id) stop.id,
+      ],
+      [for (final stop in current) stop.id],
+    );
+    if (othersUnchanged) {
+      _updateTripShape(state.draft.copyWith(stops: stopsBefore));
+      return;
+    }
+    final restored = [...current]..insert(index.clamp(0, current.length), stopsBefore[index]);
+    _updateTripShape(_resplitIfExact(state.draft.copyWith(stops: restored)));
+  }
+
   /// Moves a stop with ReorderableListView semantics: [newIndex] is the slot
   /// before removal, so moving down passes one past the target. Nights travel
   /// with their stop.
@@ -92,9 +119,9 @@ class TripCreationCubit extends Cubit<TripCreationState> {
 
   // --- When -----------------------------------------------------------------
 
-  /// Switches to exact dates (date-only; swapped if reversed). Nights re-split
-  /// evenly when the trip's night count or date mode changes; shifting the same
-  /// length to other dates keeps hand-tuned nights.
+  /// Switches to exact dates (date-only; swapped if reversed). Hand-set nights
+  /// are kept when they already add up to the new dates, or when the dates keep
+  /// the trip's length; otherwise the nights re-split evenly.
   void setExactDates(DateTime start, DateTime end) {
     var from = nights.dateOnly(start);
     var to = nights.dateOnly(end);
@@ -103,7 +130,9 @@ class TripCreationCubit extends Cubit<TripCreationState> {
     }
     final previousTarget = state.draft.targetNights;
     final updated = state.draft.copyWith(datesAreFlexible: false, startDate: from, endDate: to);
-    _updateTripShape(updated.targetNights == previousTarget ? updated : _resplitIfExact(updated));
+    final target = updated.targetNights;
+    final keepNights = target == previousTarget || target == updated.assignedNights;
+    _updateTripShape(keepNights ? updated : _resplitIfExact(updated));
   }
 
   /// Switches to flexible dates, where the stops' nights are the trip length.
@@ -113,10 +142,12 @@ class TripCreationCubit extends Cubit<TripCreationState> {
     _updateTripShape(state.draft.copyWith(datesAreFlexible: true, stops: stops));
   }
 
-  /// Sets one stop's nights (clamped to 1..[nights.maxTripNights]) without
-  /// touching any other stop; validation reports a mismatch with exact dates.
+  /// Sets one stop's nights (clamped to 1..[nights.maxTripNights], or from 0 on
+  /// a same-day trip) without touching any other stop; validation reports a
+  /// mismatch with exact dates.
   void setStopNights(String id, int value) {
-    final clamped = value.clamp(1, nights.maxTripNights);
+    final minimum = state.draft.targetNights == 0 ? 0 : 1;
+    final clamped = value.clamp(minimum, nights.maxTripNights);
     final stops = [for (final stop in state.draft.stops) stop.id == id ? stop.copyWith(nights: clamped) : stop];
     _updateTripShape(state.draft.copyWith(stops: stops));
   }

@@ -183,6 +183,19 @@ void main() {
       expect(_nights(cubit), [2, 2, 2]);
     });
 
+    test('undo after another place was added keeps the nights adding up', () {
+      addPlaces(['osaka']);
+      cubit.removeStop('hakone'); // [tokyo, kyoto, osaka] at 10 nights
+      final stopsBefore = cubit.state.draft.stops;
+      cubit
+        ..removeStop('kyoto')
+        ..addStop(_place('nara'))
+        ..restoreStop('kyoto', stopsBefore: stopsBefore);
+
+      expect(cubit.state.draft.stops.map((stop) => stop.id), ['tokyo', 'kyoto', 'osaka', 'nara']);
+      expect(cubit.state.draft.isNightsAllocationValid, isTrue);
+    });
+
     test('reversed dates are swapped', () {
       cubit.setExactDates(DateTime(2026, 6, 8, 15), DateTime(2026, 6, 2));
       expect(cubit.state.draft.startDate, DateTime(2026, 6, 2));
@@ -204,10 +217,24 @@ void main() {
     });
   });
 
+  test('picking dates after flexible keeps hand-set nights that already add up', () {
+    addPlaces(['tokyo', 'kyoto']);
+    cubit
+      ..setStopNights('tokyo', 5)
+      ..setStopNights('kyoto', 2)
+      ..setExactDates(DateTime(2026, 4, 1), DateTime(2026, 4, 8)); // 7 nights
+
+    expect(_nights(cubit), [5, 2]);
+  });
+
   test('a single place on a same-day trip is a valid day trip', () {
     addPlaces(['kamakura']);
     cubit.setExactDates(DateTime(2026, 5, 2), DateTime(2026, 5, 2));
 
+    expect(_nights(cubit), [0]);
+    cubit
+      ..setStopNights('kamakura', 1)
+      ..setStopNights('kamakura', 0);
     expect(_nights(cubit), [0]);
     goTo(CreateTripStep.plan);
     expect(cubit.state.itinerary, hasLength(1));

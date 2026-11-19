@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:xplore/constants/typography.dart';
 import 'package:xplore/features/trip/bloc/trip_creation_cubit.dart';
 import 'package:xplore/features/trip/bloc/trip_creation_state.dart';
 import 'package:xplore/features/trip/data/place_catalog.dart';
@@ -8,6 +9,7 @@ import 'package:xplore/features/trip/models/trip_draft.dart';
 import 'package:xplore/features/trip/models/trip_model.dart';
 import 'package:xplore/features/trip/presentation/create_trip/plan_step.dart';
 import 'package:xplore/features/trip/presentation/create_trip/trip_ready_step.dart';
+import 'package:xplore/features/trip/presentation/create_trip/when_step.dart';
 import 'package:xplore/features/trip/presentation/create_trip/who_and_vibe_step.dart';
 
 import '../../helpers/pump_app.dart';
@@ -20,14 +22,24 @@ void main() {
   setUp(() => cubit = TripCreationCubit(initialNotes: 'Cherry blossoms in Ueno'));
   tearDown(() => cubit.close());
 
-  Future<void> pump(WidgetTester tester, Widget step) async {
-    tester.view.physicalSize = const Size(800, 2400);
+  Future<void> pump(
+    WidgetTester tester,
+    Widget step, {
+    Size size = const Size(800, 2400),
+    TextScaler textScaler = TextScaler.noScaling,
+  }) async {
+    tester.view.physicalSize = size;
     tester.view.devicePixelRatio = 1;
     addTearDown(tester.view.resetPhysicalSize);
     addTearDown(tester.view.resetDevicePixelRatio);
     await tester.pumpWidget(
       wrapApp(
-        SingleChildScrollView(child: step),
+        Builder(
+          builder: (context) => MediaQuery(
+            data: MediaQuery.of(context).copyWith(textScaler: textScaler),
+            child: SingleChildScrollView(child: step),
+          ),
+        ),
         providers: [BlocProvider<TripCreationCubit>.value(value: cubit)],
       ),
     );
@@ -133,6 +145,10 @@ void main() {
 
       await tester.enterText(find.byType(TextField), '');
       expect(cubit.state.draft.effectiveTitle, 'Solo in Tokyo');
+
+      FocusManager.instance.primaryFocus?.unfocus();
+      await tester.pumpAndSettle();
+      expect(tester.widget<TextField>(find.byType(TextField)).controller!.text, 'Solo in Tokyo');
     });
 
     testWidgets('a single-place trip lists its days directly', (tester) async {
@@ -145,6 +161,23 @@ void main() {
       expect(find.text('DAY 1'), findsOneWidget);
       expect(find.text('DAY 3'), findsOneWidget);
     });
+  });
+
+  testWidgets('steppers and group tiles fit at the largest text sizes', (tester) async {
+    const phone = Size(390, 2400);
+    const scaler = TextScaler.linear(2.0);
+    cubit
+      ..addStop(_place('tokyo'))
+      ..addStop(_place('kyoto'))
+      ..setGroup(TripGroupKind.friends, size: 12);
+    cubit.setStopNights(cubit.state.draft.stops.first.id, 10);
+
+    // Any overflow fails the test through FlutterError.
+    await pump(tester, const WhoAndVibeStep(), size: phone, textScaler: scaler);
+    await pump(tester, const WhenStep(), size: phone, textScaler: scaler);
+
+    final singleLine = scaler.scale(XploreText.stat.fontSize!) * XploreText.stat.height!;
+    expect(tester.getSize(find.text('10')).height, closeTo(singleLine, 1), reason: 'two digits stay on one line');
   });
 
   group('trip ready', () {

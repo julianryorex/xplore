@@ -16,10 +16,8 @@ const minGroupSize = 2;
 /// count stops being a useful planning signal.
 const maxGroupSize = 20;
 
-/// Longest notes the trip document accepts (see `infra/rules/firestore.rules`).
-
 /// Step 3: who is coming, what they are into, the pace, and free-text notes.
-/// Every input has a default, so the step never blocks.
+/// Every input has a default; only notes over [maxTripNotesLength] block Continue.
 class WhoAndVibeStep extends StatelessWidget {
   const WhoAndVibeStep({super.key});
 
@@ -64,7 +62,13 @@ class _GroupPicker extends StatelessWidget {
       children: [
         for (var row = 0; row < kinds.length; row += 2) ...[
           if (row > 0) const SizedBox(height: 8),
-          Row(children: [tile(kinds[row]), const SizedBox(width: 8), tile(kinds[row + 1])]),
+          // Tiles grow with large text; keep both tiles in a row the same height.
+          IntrinsicHeight(
+            child: Row(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [tile(kinds[row]), const SizedBox(width: 8), tile(kinds[row + 1])],
+            ),
+          ),
         ],
       ],
     );
@@ -108,10 +112,10 @@ class _GroupTile extends StatelessWidget {
             HapticFeedback.selectionClick();
             onTap();
           },
-          child: SizedBox(
-            height: 64,
+          child: ConstrainedBox(
+            constraints: const BoxConstraints(minHeight: 64),
             child: Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 16),
+              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
               child: Column(
                 mainAxisAlignment: MainAxisAlignment.center,
                 crossAxisAlignment: CrossAxisAlignment.start,
@@ -160,21 +164,13 @@ class _GroupSizeRow extends StatelessWidget {
                     child: Row(
                       children: [
                         const Expanded(child: Text('How many of you?', style: XploreText.bodyStrong)),
-                        _StepperButton(
+                        CreateStepperButton(
                           icon: Icons.remove_rounded,
                           label: 'Fewer people',
                           onTap: size > minGroupSize ? () => cubit.setGroupSize(size - 1) : null,
                         ),
-                        SizedBox(
-                          width: 34,
-                          child: Text(
-                            '$size',
-                            textAlign: TextAlign.center,
-                            style: XploreText.stat,
-                            semanticsLabel: '$size people',
-                          ),
-                        ),
-                        _StepperButton(
+                        CreateStepperValue(size, semanticsLabel: '$size people', minWidth: 34),
+                        CreateStepperButton(
                           icon: Icons.add_rounded,
                           label: 'More people',
                           onTap: size < maxGroupSize ? () => cubit.setGroupSize(size + 1) : null,
@@ -186,48 +182,6 @@ class _GroupSizeRow extends StatelessWidget {
                 ],
               ),
             ),
-    );
-  }
-}
-
-/// A 32pt outlined circle inside a full 44pt tap target.
-class _StepperButton extends StatelessWidget {
-  const _StepperButton({required this.icon, required this.label, required this.onTap});
-
-  final IconData icon;
-  final String label;
-  final VoidCallback? onTap;
-
-  @override
-  Widget build(BuildContext context) {
-    final enabled = onTap != null;
-    return Semantics(
-      button: true,
-      enabled: enabled,
-      label: label,
-      child: InkResponse(
-        onTap: onTap == null
-            ? null
-            : () {
-                HapticFeedback.selectionClick();
-                onTap!();
-              },
-        radius: minTouchTarget / 2,
-        child: SizedBox.square(
-          dimension: minTouchTarget,
-          child: Center(
-            child: Container(
-              width: 32,
-              height: 32,
-              decoration: BoxDecoration(
-                shape: BoxShape.circle,
-                border: Border.all(color: XploreColors.raised),
-              ),
-              child: Icon(icon, size: 16, color: enabled ? XploreColors.white : XploreColors.tertiaryLabel),
-            ),
-          ),
-        ),
-      ),
     );
   }
 }
@@ -452,17 +406,19 @@ class _NotesFieldState extends State<_NotesField> {
       ),
     );
   }
-}
 
-/// Stays out of the way until the notes approach the limit.
-Widget? _notesCounter(BuildContext context, {required int currentLength, required bool isFocused, int? maxLength}) {
-  final limit = maxLength ?? maxTripNotesLength;
-  if (currentLength < limit - 50) {
-    return null;
+  /// Stays out of the way until the notes approach the limit. Counts trimmed
+  /// text, as the Continue blocker does, so both agree on what is too long.
+  Widget? _notesCounter(BuildContext context, {required int currentLength, required bool isFocused, int? maxLength}) {
+    final length = _controller.text.trim().length;
+    const limit = maxTripNotesLength;
+    if (length < limit - 50) {
+      return null;
+    }
+    final over = length - limit;
+    return Text(
+      over > 0 ? '$over ${over == 1 ? 'character' : 'characters'} over the limit' : '$length / $limit',
+      style: XploreText.caption.copyWith(color: over > 0 ? XploreColors.error : XploreColors.secondaryLabel),
+    );
   }
-  final over = currentLength > limit;
-  return Text(
-    over ? '${currentLength - limit} characters over the limit' : '$currentLength / $limit',
-    style: XploreText.caption.copyWith(color: over ? XploreColors.error : XploreColors.secondaryLabel),
-  );
 }

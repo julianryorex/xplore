@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:xplore/constants/constants.dart';
 import 'package:xplore/constants/typography.dart';
@@ -182,6 +181,8 @@ class _NightsSection extends StatelessWidget {
           _NightsRow(
             stop: stops[i],
             stay: draft.stayRangeFor(i),
+            // A same-day trip has no nights to give, so its one place may drop to zero.
+            minimumNights: draft.targetNights == 0 ? 0 : 1,
             onChanged: (nights) => cubit.setStopNights(stops[i].id, nights),
           ),
         const CreateHairline(),
@@ -193,10 +194,11 @@ class _NightsSection extends StatelessWidget {
 }
 
 class _NightsRow extends StatelessWidget {
-  const _NightsRow({required this.stop, required this.stay, required this.onChanged});
+  const _NightsRow({required this.stop, required this.stay, required this.minimumNights, required this.onChanged});
 
   final TripStop stop;
   final StayRange? stay;
+  final int minimumNights;
   final ValueChanged<int> onChanged;
 
   @override
@@ -223,7 +225,7 @@ class _NightsRow extends StatelessWidget {
               ],
             ),
           ),
-          _NightsStepper(value: stop.nights, placeName: stop.name, onChanged: onChanged),
+          _NightsStepper(value: stop.nights, minimum: minimumNights, placeName: stop.name, onChanged: onChanged),
         ],
       ),
     );
@@ -231,9 +233,10 @@ class _NightsRow extends StatelessWidget {
 }
 
 class _NightsStepper extends StatelessWidget {
-  const _NightsStepper({required this.value, required this.placeName, required this.onChanged});
+  const _NightsStepper({required this.value, required this.minimum, required this.placeName, required this.onChanged});
 
   final int value;
+  final int minimum;
   final String placeName;
   final ValueChanged<int> onChanged;
 
@@ -242,72 +245,18 @@ class _NightsStepper extends StatelessWidget {
     return Row(
       mainAxisSize: MainAxisSize.min,
       children: [
-        _StepperButton(
+        CreateStepperButton(
           icon: Icons.remove_rounded,
           label: 'Fewer nights in $placeName',
-          onTap: value > 1 ? () => onChanged(value - 1) : null,
+          onTap: value > minimum ? () => onChanged(value - 1) : null,
         ),
-        SizedBox(
-          width: 30,
-          child: Semantics(
-            label: '${nightsLabel(value)} in $placeName',
-            excludeSemantics: true,
-            child: Text(
-              '$value',
-              textAlign: TextAlign.center,
-              style: XploreText.stat.copyWith(color: XploreColors.white),
-            ),
-          ),
-        ),
-        _StepperButton(
+        CreateStepperValue(value, semanticsLabel: '${nightsLabel(value)} in $placeName'),
+        CreateStepperButton(
           icon: Icons.add_rounded,
           label: 'More nights in $placeName',
           onTap: value < maxTripNights ? () => onChanged(value + 1) : null,
         ),
       ],
-    );
-  }
-}
-
-/// An outlined 32pt circle inside a 44pt hit area; [onTap] null disables it.
-class _StepperButton extends StatelessWidget {
-  const _StepperButton({required this.icon, required this.label, required this.onTap});
-
-  final IconData icon;
-  final String label;
-  final VoidCallback? onTap;
-
-  @override
-  Widget build(BuildContext context) {
-    final enabled = onTap != null;
-    return Semantics(
-      button: true,
-      enabled: enabled,
-      label: label,
-      excludeSemantics: true,
-      child: GestureDetector(
-        behavior: HitTestBehavior.opaque,
-        onTap: enabled
-            ? () {
-                HapticFeedback.selectionClick();
-                onTap!();
-              }
-            : null,
-        child: SizedBox.square(
-          dimension: minTouchTarget,
-          child: Center(
-            child: Container(
-              width: 32,
-              height: 32,
-              decoration: BoxDecoration(
-                shape: BoxShape.circle,
-                border: Border.all(color: XploreColors.raised),
-              ),
-              child: Icon(icon, size: 16, color: enabled ? XploreColors.white : XploreColors.tertiaryLabel),
-            ),
-          ),
-        ),
-      ),
     );
   }
 }
