@@ -1,5 +1,6 @@
 import 'dart:async';
 
+import 'package:firebase_core/firebase_core.dart' show FirebaseException;
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:freezed_annotation/freezed_annotation.dart';
 import 'package:logger/logger.dart';
@@ -27,9 +28,13 @@ part 'itinerary_states.dart';
 /// path ([loadDemoItinerary]) used by tests and goldens can construct the cubit
 /// with no arguments.
 class ItineraryCubit extends Cubit<ItineraryStates> with TripStreamMixin, AuthCleanupMixin {
-  ItineraryCubit([this._service, this._authService, ItineraryRepository? repository])
-    : _repository = repository ?? ItineraryRepository(),
-      super(const InitialItineraryState()) {
+  ItineraryCubit([
+    this._service,
+    this._authService,
+    ItineraryRepository? repository,
+    this._retryBackoff = const Duration(seconds: 1),
+  ]) : _repository = repository ?? ItineraryRepository(),
+       super(const InitialItineraryState()) {
     _logger = createLogger('Itinerary');
     _tripSubscription = listenToTripState(_onTripStateChanged);
     // Optional auth service: the demo/golden path constructs the cubit without
@@ -43,6 +48,9 @@ class ItineraryCubit extends Cubit<ItineraryStates> with TripStreamMixin, AuthCl
   ItineraryService? _service;
   final AuthService? _authService;
   final ItineraryRepository _repository;
+
+  /// Base delay before re-listening after a stream error; tests shorten it.
+  final Duration _retryBackoff;
   late final Logger _logger;
 
   StreamSubscription<TripState>? _tripSubscription;
@@ -61,21 +69,61 @@ class ItineraryCubit extends Cubit<ItineraryStates> with TripStreamMixin, AuthCl
   /// Lazily created so the demo/test path never touches Firebase.
   ItineraryService get _itineraryService => _service ??= ItineraryService();
 
+  // A trip that was just created becomes active from the local write, before
+  // the server has it, so the read rule denies the first listen. Re-listening
+  // shortly after succeeds; only a failure that persists is shown as an error.
+  // The budget is reset only by caller-started loads, never by a snapshot:
+  // offline persistence delivers a cached snapshot before every server denial,
+  // which would otherwise refill the budget and re-listen forever.
+  static const _maxAutoRetries = 2;
+  int _autoRetries = 0;
+  Timer? _retryTimer;
+
+  // Bumped whenever a load starts or the cubit is cleared, so a load still
+  // awaiting the cache knows it was superseded and must not attach a listener.
+  int _loadGeneration = 0;
+
   /// Loads the itinerary for [tripId]: cache first, then a live cloud listener.
+  /// No-op while that trip is already loaded or loading.
   Future<void> loadForTrip(String tripId) async {
     if (_activeTripId == tripId && _itinerarySubscription != null) {
       return;
     }
+    await _startLoad(tripId);
+  }
 
+  /// Re-attaches the itinerary listener for the active trip after a failure.
+  Future<void> retry() async {
+    final tripId = _activeTripId;
+    if (tripId == null) {
+      return;
+    }
+    await _startLoad(tripId);
+  }
+
+  Future<void> _startLoad(String tripId) {
+    _autoRetries = 0;
+    return _listen(tripId, isAutoRetry: false);
+  }
+
+  Future<void> _listen(String tripId, {required bool isAutoRetry}) async {
+    _abandonPendingLoads();
+    final generation = _loadGeneration;
     _activeTripId = tripId;
     // Emit before the first await: TripCubit has already emitted the new trip,
     // and listeners must not pair it with the previous trip's days meanwhile.
-    _safeEmit(const LoadingItineraryState());
+    // An auto retry stays on the same trip, so it keeps a shown itinerary.
+    if (!isAutoRetry || state is! LoadedItineraryState) {
+      _safeEmit(const LoadingItineraryState());
+    }
     await _itinerarySubscription?.cancel();
     _itinerarySubscription = null;
 
     final cached = await _repository.loadFromCache(tripId);
-    if (cached != null && _activeTripId == tripId && state is! LoadedItineraryState) {
+    if (isClosed || generation != _loadGeneration) {
+      return;
+    }
+    if (cached != null && state is! LoadedItineraryState) {
       _safeEmit(LoadedItineraryState(itinerary: cached, canEdit: _canEdit));
     }
 
@@ -83,25 +131,31 @@ class ItineraryCubit extends Cubit<ItineraryStates> with TripStreamMixin, AuthCl
         .watchItinerary(tripId)
         .listen(
           (itinerary) => _onItinerarySnapshot(tripId, itinerary),
-          onError: (Object error) {
-            _logger.w('Itinerary stream error for $tripId: $error');
-            if (_activeTripId == tripId) {
-              _safeEmit(ErrorItineraryState(error.toString()));
-            }
-          },
+          onError: (Object error) => _onItineraryError(tripId, generation, error),
         );
   }
 
-  /// Re-attaches the itinerary listener for the active trip after a failure.
-  /// The errored subscription is still set, so reset the active id to force a
-  /// fresh load past [loadForTrip]'s early-return guard.
-  Future<void> retry() async {
-    final tripId = _activeTripId;
-    if (tripId == null) {
+  void _onItineraryError(String tripId, int generation, Object error) {
+    _logger.w('Itinerary stream error for $tripId: $error');
+    if (generation != _loadGeneration) {
       return;
     }
-    _activeTripId = null;
-    await loadForTrip(tripId);
+    if (_isTransientDenial(error) && _autoRetries < _maxAutoRetries) {
+      _autoRetries++;
+      _retryTimer = Timer(_retryBackoff * _autoRetries, () => unawaited(_listen(tripId, isAutoRetry: true)));
+      return;
+    }
+    _safeEmit(ErrorItineraryState(error.toString()));
+  }
+
+  // Only the not-yet-committed-trip denial clears up on its own; anything else
+  // (bad data, failed-precondition, ...) would fail the same way again.
+  static bool _isTransientDenial(Object error) => error is FirebaseException && error.code == 'permission-denied';
+
+  void _abandonPendingLoads() {
+    _retryTimer?.cancel();
+    _retryTimer = null;
+    _loadGeneration++;
   }
 
   Future<void> _onItinerarySnapshot(String tripId, ItineraryModel? itinerary) async {
@@ -184,6 +238,7 @@ class ItineraryCubit extends Cubit<ItineraryStates> with TripStreamMixin, AuthCl
   }
 
   void _clear() {
+    _abandonPendingLoads();
     _activeTripId = null;
     _activeTripCreatedBy = null;
     unawaited(_itinerarySubscription?.cancel());
@@ -226,6 +281,7 @@ class ItineraryCubit extends Cubit<ItineraryStates> with TripStreamMixin, AuthCl
     // Not awaited: awaiting the broadcast trip-stream cancel deadlocks inside a
     // `testWidgets` FakeAsync zone (the itinerary golden test), and cancel is
     // effectively immediate for a broadcast subscription anyway.
+    _abandonPendingLoads();
     unawaited(_tripSubscription?.cancel() ?? Future<void>.value());
     unawaited(_itinerarySubscription?.cancel() ?? Future<void>.value());
     return super.close();

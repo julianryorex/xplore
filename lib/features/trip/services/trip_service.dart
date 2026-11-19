@@ -5,6 +5,7 @@ import 'package:xplore/features/auth/services/auth_service.dart';
 import 'package:xplore/features/trip/models/trip_invite.dart';
 import 'package:xplore/features/trip/models/trip_model.dart';
 import 'package:xplore/features/trip/models/trip_preferences.dart';
+import 'package:xplore/features/trip/models/trip_stop.dart';
 import 'package:xplore/features/trip/services/invite_link.dart';
 import 'package:xplore/features/trip/services/invite_results.dart';
 
@@ -29,6 +30,7 @@ class TripService {
     DateTime? endDate,
     String? coverImageUrl,
     TripPreferences? preferences,
+    List<TripStop> stops = const [],
   }) async {
     final doc = _trips.doc();
     final data = <String, dynamic>{
@@ -39,6 +41,7 @@ class TripService {
       if (endDate != null) 'endDate': Timestamp.fromDate(endDate),
       'coverImageUrl': ?coverImageUrl,
       if (preferences != null) 'preferences': preferences.toJson(),
+      if (stops.isNotEmpty) 'stops': [for (final stop in stops) stop.toJson()],
       ..._auditFields(uid, isCreate: true),
     };
 
@@ -55,6 +58,7 @@ class TripService {
       endDate: endDate,
       coverImageUrl: coverImageUrl,
       preferences: preferences,
+      stops: stops,
     );
   }
 

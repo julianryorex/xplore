@@ -19,7 +19,14 @@ service cloud.firestore {
         'coverImageUrl',
         'destination',
         'preferences',
+        'stops',
       ];
+    }
+
+    // Ordered places of a multi-place trip; the client caps them at 8. Rules
+    // cannot iterate a list, so only the type and size are enforced.
+    function optionalStops(data) {
+      return !('stops' in data) || (data.stops is list && data.stops.size() <= 8);
     }
 
     function preferenceFields() {
@@ -77,6 +84,7 @@ service cloud.firestore {
         && optionalString(data, 'coverImageUrl', 2048)
         && optionalString(data, 'destination', 120)
         && optionalPreferences(data)
+        && optionalStops(data)
         && (!('startDate' in data) || !('endDate' in data) || data.startDate == null || data.endDate == null || data.startDate <= data.endDate);
     }
 

@@ -4,7 +4,7 @@ Ranked feature requests for Xplore. **Work top-to-bottom within each tier.**
 
 Legend: **Status** — `backlog` · `ready_for_dev` (full spec written) · `in_progress` · `done` · `wont_do`
 
-> **Next up:** [FEAT-007 Generative trip creation](./requests/FEAT-007-generative-trip-creation.md) — multi-step create flow that ends in a generated itinerary (absorbs FEAT-010, resolves the FEAT-006 content-seed gap).
+> **Next up:** [FEAT-007 Generative trip creation](./requests/FEAT-007-generative-trip-creation.md) — multi-step, multi-place create flow that seeds a stub day skeleton; real itinerary generation is deferred (FEAT-010 was absorbed into it but is not wired; the FEAT-006 content-seed gap is only stubbed).
 
 > **Next up:** [FEAT-006 Production itinerary data layer](./requests/FEAT-006-itinerary-firebase-sync.md) — makes the active trip from FEAT-002 load real cloud itinerary data instead of demo JSON.
 >
@@ -18,7 +18,7 @@ Cannot onboard real groups or operate as a product without these.
 
 | ID | Feature | Revenue | Effort | Status | Request |
 |----|---------|---------|--------|--------|---------|
-| FEAT-007 | Generative trip creation flow | retention | L | `in_progress` | [→](./requests/FEAT-007-generative-trip-creation.md) |
+| FEAT-007 | Trip creation flow (generation deferred) | retention | L | `in_progress` | [→](./requests/FEAT-007-generative-trip-creation.md) |
 | FEAT-005 | Onboarding flow | blocker | M | backlog | [→](./requests/FEAT-005-onboarding.md) |
 | FEAT-006 | Production itinerary data layer | blocker | L | in_progress | [→](./requests/FEAT-006-itinerary-firebase-sync.md) |
 
