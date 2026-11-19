@@ -20,97 +20,104 @@ which is the core promise of an AI travel app and the moment competitors
 
 ## Proposed solution
 
-Replace the sheet with a full-screen, onboarding-style flow ("buckets") that
-ends in a generated itinerary. Ordered broad-commitment → fine-detail:
+Replace the sheet with a full-screen, step-by-step flow that supports **multiple
+places per trip** (e.g. Tokyo, Hakone, Kyoto, Osaka; up to 8) and ends in a
+trip plus an invite screen:
 
-1. **Destination** — single city (phase 1); anchors cover, map center, generation.
-2. **Dates & duration** — exact range OR flexible "~N days"; duration drives length.
-3. **Who's coming** — solo/couple/friends/family + size as a *generation signal*, not an invite gate.
-4. **Vibe & preferences** — interests + pace + budget + free-text "ideal trip".
-5. **Generate + review** — deterministic day skeleton (phase 1); Gemini (phase 2). Read-only review.
-6. **Finishing touches** — name + cover, auto-suggested from destination.
-7. **Invite your crew** — FEAT-003 share link, genuinely skippable.
+1. **Where** — a real Google map with numbered pins and a route line fitted to
+   the places; add places via search over a **hardcoded place catalog**, reorder,
+   swipe to remove with undo.
+2. **When** — exact dates OR a flexible number of nights; nights are allocated per place.
+3. **Who and vibe** — group, group size (a *planning signal*, not an invite gate),
+   interests, pace, free-text notes. Skippable.
+4. **Plan** — a preview built by a hardcoded stub (`buildStubPlan`) and an editable
+   trip name. "Create trip" writes the trip with a `stops` list.
+5. **Invite** — FEAT-003 share link, genuinely skippable.
+
+**Real itinerary generation is deferred.** The in-app Gemini "Generate" step is
+no longer wired into the flow; agentic generation is being built in a separate
+repo. `ItineraryGenerator` / `GeminiItineraryService` still exist in `lib/` but
+are unused. What the Plan step shows and seeds is a stub: one `DailyPlanModel`
+per day with a title from the place's hardcoded day themes, no stops.
 
 **Design principle — solo is first-class.** No group gate, invite is skippable,
-generation works with no group signal, and Home never nags a solo trip to
-invite people. Copy adapts so a solo user is never told they're missing people.
+and Home never nags a solo trip to invite people. Copy adapts so a solo user is
+never told they're missing people.
 
 **Extensibility principle.** The flow is an *ordered list of steps*
-(`CreateTripStep` enum + `TripCreationCubit.steps`), each a self-contained widget
+(`CreateTripStep` enum + `TripCreationState.steps`), each a self-contained widget
 reading/writing a slice of a single flat `TripDraft`. Adding, reordering, or
-splitting a bucket is a change to the list, not a rewrite.
+splitting a step is a change to the list, not a rewrite.
 
-### Phase 1 — flow + deterministic skeleton (no AI) — shipped in this PR
+### Shipped
 
-- `lib/features/trip/models/trip_draft.dart` — flat `TripDraft` + enums.
+- `lib/features/trip/models/trip_draft.dart` — flat `TripDraft` + enums;
+  `trip_stop.dart` (`TripStop`), `nights_allocation.dart`, `trip_plan.dart`.
 - `lib/features/trip/bloc/trip_creation_cubit.dart` + `trip_creation_state.dart`.
-- `lib/features/trip/presentation/create_trip/` — flow page + 7 step bodies.
-- `DeterministicItineraryGenerator` — one `DailyPlanModel` per day, titled
-  "Day N", anchored to the destination, empty stops.
-- `TripCubit.createTripFromDraft(draft, itinerary:)` persists destination /
-  dates / `TripPreferences` and seeds the skeleton via
-  `ItineraryService.seedItinerary(..., dailyPlans:)` (idempotency preserved).
-- `TripModel` gains `destination` + `preferences`; `/create-trip` route.
+- `lib/features/trip/presentation/create_trip/` — flow page, step bodies, route map, place search sheet.
+- `lib/features/trip/services/stub_plan_builder.dart` — the stub plan (no network, no AI).
+- `TripCubit.createTripFromDraft(draft, itinerary:)` persists stops / destination /
+  dates / `TripPreferences` and seeds the stub skeleton via
+  `ItineraryService.seedItinerary(..., dailyPlans:)` (best-effort, idempotency preserved).
+- `TripModel` gains `destination`, `preferences` and `stops`; `/create-trip` route.
 
-### Phase 2 — Gemini engine (absorbs FEAT-010) — shipped in this PR
+### Deferred — real generation
 
-- `GeminiItineraryService implements ItineraryGenerator`: builds a structured
-  prompt from `TripDraft`, calls Gemini with `GEMINI_API_KEY`, parses/validates
-  JSON, and **falls back to the deterministic skeleton** on missing key /
-  network / malformed / empty output. Swapped in via the `ItineraryGenerator`
-  provider behind the same "Generate" UI.
-- Regenerations should later be gated behind FEAT-021 credits.
+Gemini / agentic generation into the created trip is not part of this flow. No
+decision has been made on how it will be wired back in.
 
 ## User stories
 
-- As a traveller, I want to go from a destination to a day-by-day plan in a few
-  taps, so that starting a trip feels effortless.
+- As a traveller, I want to go from a set of places to a trip with dates and a
+  day-by-day outline in a few taps, so that starting a trip feels effortless.
 - As a solo traveller, I want to plan without being pushed to invite anyone, so
   the app feels built for me too.
-- As an organizer, I want a named, populated trip before I share an invite, so
-  the people I invite see something real.
+- As an organizer, I want a named trip with its places and dates before I share an
+  invite, so the people I invite see something real.
 
 ## Acceptance criteria
 
 - [x] Multi-step flow replaces the single-field create sheet.
 - [x] Flow is driven by an ordered step list over a single `TripDraft`.
-- [x] "Generate" produces a day skeleton that seeds the itinerary (no more empty seed).
-- [x] Solo is a no-gate default; invite (bucket 7) is skippable.
-- [x] New `TripModel` fields (destination, preferences, dates) persist on create.
-- [x] Gemini engine behind the same UI with deterministic fallback.
-- [ ] Generated stops resolve real Google `place_id`s (deferred — see open questions).
+- [x] The Plan step builds a **stub** day skeleton that seeds the itinerary (no more empty seed); days have titles but no stops.
+- [x] Solo is a no-gate default; the invite screen is skippable.
+- [x] New `TripModel` fields (destination, preferences, dates, `stops`) persist on create.
+- [x] A trip can have multiple places (1–8), ordered, with nights per place.
+- [ ] Real itinerary generation (Gemini / agentic) in the flow — **not wired; deferred** (built in a separate repo).
+- [ ] Places come from Google Places instead of the hardcoded catalog; generated stops resolve real Google `place_id`s (deferred — see open questions).
 - [ ] Editable/regenerated review (deferred to itinerary CRUD, FEAT-006/FEAT-024).
 
 ## Success metrics
 
-- % of created trips that reach the "Generate" step.
-- % of trips created with a non-empty itinerary (target: ~100% vs ~0% today).
+- % of created trips that reach the Plan step.
+- % of trips created with a seeded day skeleton (target: ~100% vs ~0% before this flow).
 - Solo vs group trip creation completion rates (should be comparable).
 
 ## Dependencies
 
-- FEAT-003 invites (share link, shipped) — reused in bucket 7.
-- FEAT-021 credits — later gate for AI regeneration.
-- Absorbs FEAT-010 (wire Gemini into UI) and resolves FEAT-006 "A2" (content seed).
+- FEAT-003 invites (share link, shipped) — reused on the invite screen.
+- FEAT-021 credits — later gate for AI generation, if it returns to the app.
+- Absorbed FEAT-010 (wire Gemini into UI), which is now deferred with generation; only stubs FEAT-006 "A2" (content seed).
 
 ## Related code
 
 - `lib/features/trip/presentation/create_trip/*` — flow + step bodies
 - `lib/features/trip/bloc/trip_creation_cubit.dart` / `trip_creation_state.dart`
 - `lib/features/trip/models/trip_draft.dart` / `trip_preferences.dart` / `trip_model.dart`
-- `lib/features/trip/services/itinerary_generator.dart` / `gemini_itinerary_service.dart`
+- `lib/features/trip/services/stub_plan_builder.dart` — the plan the flow uses
+- `lib/features/trip/services/itinerary_generator.dart` / `gemini_itinerary_service.dart` — exist but are not wired into the flow
 - `lib/features/trip/bloc/trip_cubit.dart` — `createTripFromDraft`
 - `lib/features/itinerary/services/itinerary_service.dart` — `seedItinerary(dailyPlans:)`
 
 ## Open questions
 
 - **`place_id` strategy.** `LocationPlanModel.placeId` is required/non-null and
-  feeds map/detail screens. Gemini can't invent valid Google ids. Phase 1+2 use
-  empty `place_id`; resolve lazily via Places (cost/latency) or per-stop lookup.
-- Extra preference candidates to consider when buckets split: dietary,
+  feeds map/detail screens. The stub plan has no stops, so none are needed yet;
+  if generation returns, ids must be resolved via Places (cost/latency) or per-stop lookup.
+- Extra preference candidates to consider when steps split: dietary,
   accessibility, season/month, transport mode, accommodation area, energy/
   wake-time, must-sees.
-- Multi-city destinations (phase 1 is single city).
+- Place search is over a hardcoded catalog; whether to move to Google Places is undecided.
 - Cover image is a gradient placeholder; real cover selection is deferred.
 
 ## Notes / history
@@ -119,3 +126,6 @@ splitting a bucket is a change to the list, not a rewrite.
   Bucket order locked with product; competitor research (Wanderlog, Mindtrip,
   Layla, Troupe, Polarsteps, iPlan.ai, Wonderplan) validated the shape and the
   solo-first stance.
+- 2026-11-18: Docs updated to match PR #227: flow rebuilt as four steps plus invite,
+  multi-place (up to 8); in-app Gemini generation removed from the flow (deferred,
+  being built in a separate repo); Plan step uses a hardcoded stub.

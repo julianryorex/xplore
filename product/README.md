@@ -10,7 +10,7 @@ Xplore is a **group-travel companion** for friends and families on a shared trip
 2. **Stay together** — live member locations on a styled Google Map with avatar markers.
 3. **Remember together** — a collaborative photo gallery synced to the cloud.
 
-The app is Flutter + Firebase today, with experimental Gemini AI for itinerary generation. Auth, trip context, and dynamic user IDs are shipped; itinerary data is still demo JSON until FEAT-006 — see [CURRENT_STATE.md](./CURRENT_STATE.md).
+The app is Flutter + Firebase today, with Gemini itinerary-generation code present but not wired into the create flow. Auth, trip context, and dynamic user IDs are shipped; itinerary data is still demo JSON until FEAT-006 — see [CURRENT_STATE.md](./CURRENT_STATE.md).
 
 ## How to use this folder
 

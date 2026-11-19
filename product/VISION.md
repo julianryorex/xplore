@@ -29,7 +29,7 @@
 | "See today's plan at a glance" | Strong UI (carousel + drill-down) | Tied to demo JSON, single trip |
 | "Know where my friends are right now" | Real-time Firebase sync + map markers | Hardcoded user/trip; no invites |
 | "Share trip photos in one place" | Upload + Hive cache + Firebase Storage | No cross-device fetch; no per-trip scoping in UI |
-| "Plan the trip without spreadsheet hell" | Gemini experiment (not in UI) | Not wired to main flow |
+| "Plan the trip without spreadsheet hell" | Gemini experiment (not in UI; removed from the create flow) | Real generation deferred; create flow seeds a stub skeleton |
 | "Join a trip my friend set up" | Not built | Blocker for real usage |
 
 ## Positioning
