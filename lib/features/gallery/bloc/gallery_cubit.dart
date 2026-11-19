@@ -55,6 +55,11 @@ class GalleryCubit extends Cubit<GalleryState> with TripStreamMixin {
   bool _isSavingAll = false;
   Timer? _saveResultTimer;
   Timer? _duplicatesNoticeTimer;
+  Timer? _firstSyncTimer;
+
+  /// How long an empty album is presented as "still syncing" before it is
+  /// shown as it is; the listener can stay silent on a bad connection.
+  static const _firstSyncPatience = Duration(seconds: 8);
 
   /// Firestore rejects longer names, which would make every upload by that member fail.
   static const _maxUploaderNameLength = 40;
@@ -62,7 +67,9 @@ class GalleryCubit extends Cubit<GalleryState> with TripStreamMixin {
   GalleryCubit(this._authService, {GalleryRepository? repo, this._service, this._photoSaver})
     : repository = repo ?? GalleryRepository(),
       super(const GalleryState()) {
-    _tripSubscription = listenToTripState(_onTripStateChanged);
+    // This cubit is created lazily, after Home has shown the trip, so the state
+    // that announced the trip has usually been pushed already.
+    _tripSubscription = listenToTripState(_onTripStateChanged, replayLatest: true);
   }
 
   GalleryService get _galleryService => _service ??= GalleryService();
@@ -230,6 +237,7 @@ class GalleryCubit extends Cubit<GalleryState> with TripStreamMixin {
   Future<void> close() async {
     _saveResultTimer?.cancel();
     _duplicatesNoticeTimer?.cancel();
+    _firstSyncTimer?.cancel();
     await _tripSubscription?.cancel();
     await _remoteSubscription?.cancel();
     return super.close();
@@ -347,6 +355,7 @@ class GalleryCubit extends Cubit<GalleryState> with TripStreamMixin {
   //! -------------------------------------------------------------------------
 
   void _onTripStateChanged(TripState tripState) {
+    if (isClosed) return;
     switch (tripState) {
       case TripLoaded(:final active):
         _activeTripTitle = active.title;
@@ -368,6 +377,7 @@ class GalleryCubit extends Cubit<GalleryState> with TripStreamMixin {
     _activeTripId = tripId;
     _saveResultTimer?.cancel();
     _duplicatesNoticeTimer?.cancel();
+    _firstSyncTimer?.cancel();
     _remoteSubscription?.cancel();
     _remoteSubscription = null;
 
@@ -378,6 +388,9 @@ class GalleryCubit extends Cubit<GalleryState> with TripStreamMixin {
 
     emit(const GalleryState(status: EBlocStatus.loading));
     unawaited(_loadCachedPhotos(tripId));
+    _firstSyncTimer = Timer(_firstSyncPatience, () {
+      if (_isActive(tripId) && !state.hasSyncedWithCloud) emit(state.copyWith(hasSyncedWithCloud: true));
+    });
     _remoteSubscription = _galleryService
         .watchTripImages(tripId)
         .listen(

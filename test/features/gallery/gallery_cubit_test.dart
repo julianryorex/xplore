@@ -13,6 +13,7 @@ import 'package:xplore/features/gallery/services/gallery_service.dart';
 import 'package:xplore/features/gallery/services/photo_content_hash.dart';
 import 'package:xplore/features/gallery/services/photo_save_service.dart';
 import 'package:xplore/features/trip/bloc/trip_state.dart';
+import 'package:xplore/features/trip/bloc/trip_stream_mixin.dart';
 import 'package:xplore/features/trip/models/trip_model.dart';
 
 import '../../helpers/auth_fixtures.dart';
@@ -138,6 +139,8 @@ class _OfflineStorageGalleryCubit extends GalleryCubit {
   }
 }
 
+class _TripStreamHarness with TripStreamMixin {}
+
 const _lisbon = TripModel(id: 'lisbon', title: 'Lisbon', memberIds: ['me'], createdBy: 'me');
 const _tokyo = TripModel(id: 'tokyo', title: 'Tokyo', memberIds: ['me'], createdBy: 'me');
 
@@ -187,12 +190,29 @@ void main() {
   }
 
   setUp(() {
+    _TripStreamHarness().recreateTripStream();
     repo = _FakeGalleryRepository();
     service = _FakeGalleryService();
     build();
   });
 
   tearDown(() => cubit.close());
+
+  // Regression: the cubit is built lazily, after the trip loaded, and used to
+  // wait forever for a trip event that had already been pushed.
+  test('a cubit created after the trip loaded still opens that trip', () async {
+    await cubit.close();
+    repo.seed('lisbon', [_image('cached')]);
+    _TripStreamHarness().pushTripEvent(const TripState.loaded(active: _lisbon, all: [_lisbon]));
+
+    build();
+    await pumpEventQueue();
+    service.pushRemote('lisbon', const []);
+    await pumpEventQueue();
+
+    expect(cubit.state.imageMap.keys, ['cached']);
+    expect(cubit.state.hasSyncedWithCloud, isTrue);
+  });
 
   group('cloud sync', () {
     test('merges remote photos: adds other members\' and completes our own, keeping the local thumbnail', () async {
