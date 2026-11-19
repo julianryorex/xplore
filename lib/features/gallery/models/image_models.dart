@@ -23,6 +23,10 @@ abstract class ImageModel with _$ImageModel {
     /// The uploader's first name at upload time. Stored on the photo because
     /// members cannot read each other's profiles.
     String? uploaderName,
+
+    /// SHA-256 of the original file (see `photoContentHash`), used to skip
+    /// photos already in the trip. `null` for photos added before it existed.
+    String? contentHash,
   }) = _ImageModel;
 }
 

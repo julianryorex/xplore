@@ -7,6 +7,7 @@ import 'package:xplore/constants/typography.dart';
 import 'package:xplore/core/enums.dart';
 import 'package:xplore/features/gallery/bloc/gallery_cubit.dart';
 import 'package:xplore/features/gallery/models/image_models.dart';
+import 'package:xplore/features/gallery/presentation/gallery_days.dart';
 import 'package:xplore/features/gallery/presentation/widgets/uploader_avatar.dart';
 import 'package:xplore/features/home/widgets/home_section_header.dart';
 import 'package:xplore/routes.dart';
@@ -39,6 +40,10 @@ class GalleryStrip extends StatelessWidget {
             ),
           ),
           BlocBuilder<GalleryCubit, GalleryState>(
+            // Skips the save-progress emits the strip doesn't show. `identical` because Freezed's deep map
+            // equality would compare every thumbnail's bytes.
+            buildWhen: (previous, current) =>
+                !identical(previous.imageMap, current.imageMap) || previous.status != current.status,
             builder: (context, state) {
               final photos = state.newestFirst;
               if (photos.isNotEmpty) {
@@ -75,7 +80,7 @@ class _PhotoStrip extends StatelessWidget {
         Padding(
           padding: const EdgeInsets.only(left: 4),
           child: Text(
-            totalCount == 1 ? '1 photo' : '$totalCount photos',
+            photoCountLabel(totalCount),
             style: XploreText.footnote.copyWith(color: XploreColors.secondaryLabel),
           ),
         ),
@@ -104,8 +109,7 @@ class _PhotoTile extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final uploader = PhotoUploader.of(photo, currentUid: currentUid);
-    final isMine = currentUid != null && photo.uploaderUid == currentUid;
-    final byline = isMine ? 'Your photo' : 'Photo by ${uploader.label}';
+    final byline = uploader.isCurrentUser ? 'Your photo' : 'Photo by ${uploader.label}';
     // excludeSemantics drops the GestureDetector's tap action, so the
     // Semantics node carries its own onTap for screen readers.
     return Semantics(

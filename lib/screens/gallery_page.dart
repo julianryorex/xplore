@@ -1,11 +1,9 @@
-import 'dart:async';
 import 'dart:math' as math;
 
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:xplore/constants/constants.dart';
 import 'package:xplore/constants/typography.dart';
-import 'package:xplore/core/enums.dart';
 import 'package:xplore/core/glass.dart';
 import 'package:xplore/features/gallery/bloc/gallery_cubit.dart';
 import 'package:xplore/features/gallery/models/image_models.dart';
@@ -27,28 +25,15 @@ import 'package:xplore/routes.dart';
 /// The trip's shared album, told as a day-by-day story: newest day first, each
 /// day a mosaic led by one large photo, with floating actions and a single
 /// status bar for uploads and Save-all runs.
-class GalleryPage extends StatefulWidget {
+class GalleryPage extends StatelessWidget {
   const GalleryPage({super.key});
 
-  @override
-  State<GalleryPage> createState() => _GalleryPageState();
-}
-
-class _GalleryPageState extends State<GalleryPage> {
   static const _sideInset = paddingUnit * 1.5;
   static const _headerHeight = 62.0;
   static const _statusGap = 12.0;
 
   // Space the status bar may take, reserved so the last row can scroll clear of it.
   static const _statusClearance = 92.0;
-
-  Timer? _dismissSaveTimer;
-
-  @override
-  void dispose() {
-    _dismissSaveTimer?.cancel();
-    super.dispose();
-  }
 
   @override
   Widget build(BuildContext context) {
@@ -76,7 +61,8 @@ class _GalleryPageState extends State<GalleryPage> {
     final bottomInset = math.max(viewPadding.bottom, paddingUnit * 1.5);
 
     final photos = state.newestFirst;
-    final isFirstSync = state.status == EBlocStatus.loading && photos.isEmpty;
+    // An empty local cache says nothing until the cloud has answered once.
+    final isFirstSync = photos.isEmpty && !state.hasSyncedWithCloud;
     final isEmpty = photos.isEmpty && !isFirstSync;
     final status = AlbumStatus.of(state);
     final bottomClearance =
@@ -163,7 +149,8 @@ class _GalleryPageState extends State<GalleryPage> {
               key: ValueKey(day.date),
               day: day,
               overline: dayOverline(day.date, today: today, tripStart: trip?.startDate),
-              leadOnLeft: i.isEven,
+              // Counted from the oldest day so a new day doesn't flip every existing mosaic.
+              leadOnLeft: (days.length - 1 - i).isEven,
               currentUid: cubit.currentUid,
               onOpen: (index) => _openFocus(context, photos, index),
               onRetry: (image) => cubit.retryUpload(image.id),
@@ -185,23 +172,12 @@ class _GalleryPageState extends State<GalleryPage> {
     ];
   }
 
+  // A finished run clears itself in the cubit; only a denial needs the page.
   void _onSaveProgressChanged(BuildContext context, PhotoSaveProgress? progress, String albumName) {
-    _dismissSaveTimer?.cancel();
-    if (progress == null) return;
-    final cubit = context.read<GalleryCubit>();
-
-    switch (progress.phase) {
-      case EPhotoSavePhase.denied:
-        // Clear it straight away so the sheet appears once per Save-all press.
-        cubit.dismissSaveProgress();
-        showPhotosAccessSheet(context, albumName: albumName);
-      case EPhotoSavePhase.done:
-        // A partial result stays up longer: it asks the user to act.
-        final linger = progress.failed == 0 ? const Duration(seconds: 5) : const Duration(seconds: 10);
-        _dismissSaveTimer = Timer(linger, cubit.dismissSaveProgress);
-      case EPhotoSavePhase.saving:
-        break;
-    }
+    if (progress?.phase != EPhotoSavePhase.denied) return;
+    // Clear it straight away so the sheet appears once per Save-all press.
+    context.read<GalleryCubit>().dismissSaveProgress();
+    showPhotosAccessSheet(context, albumName: albumName);
   }
 }
 

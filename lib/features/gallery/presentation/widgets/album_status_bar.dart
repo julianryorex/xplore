@@ -7,7 +7,8 @@ import 'package:xplore/features/gallery/models/image_models.dart';
 import 'package:xplore/features/gallery/presentation/widgets/album_status_ring.dart';
 
 /// The one glass bar above the action bar that reports the album's transient
-/// state: a Save-all run, failed uploads, or uploads in progress, in that order.
+/// state: a Save-all run, skipped duplicates, failed uploads, or uploads in
+/// progress, in that order.
 class AlbumStatusBar extends StatelessWidget {
   const AlbumStatusBar({
     required this.status,
@@ -89,7 +90,7 @@ class AlbumStatusBar extends StatelessWidget {
 }
 
 /// The kinds of message the status bar can carry.
-enum AlbumStatusKind { saving, savePartial, saveDone, uploadsFailed, uploading }
+enum AlbumStatusKind { saving, savePartial, saveDone, duplicatesSkipped, uploadsFailed, uploading }
 
 /// The status bar's content, resolved from the gallery state by priority.
 @immutable
@@ -120,9 +121,7 @@ class AlbumStatus {
           return AlbumStatus(
             kind: AlbumStatusKind.savePartial,
             title: '${save.failed} couldn\'t be saved',
-            subtitle: save.saved == 0
-                ? 'Check your connection and try again'
-                : '${save.saved} are in your Photos album',
+            subtitle: save.saved == 0 ? 'Check your connection and try again' : _savedSoFar(save),
           );
         case EPhotoSavePhase.done:
           return AlbumStatus(
@@ -138,6 +137,16 @@ class AlbumStatus {
         case EPhotoSavePhase.denied:
           break;
       }
+    }
+
+    // Short-lived, so it goes ahead of the upload statuses it would otherwise never outlast.
+    final duplicates = state.duplicatesSkipped;
+    if (duplicates > 0) {
+      return AlbumStatus(
+        kind: AlbumStatusKind.duplicatesSkipped,
+        title: duplicates == 1 ? '1 photo was already in the album' : '$duplicates photos were already in the album',
+        subtitle: duplicates == 1 ? 'It wasn\'t added again' : 'They weren\'t added again',
+      );
     }
 
     final images = state.imageMap.values;
@@ -165,12 +174,22 @@ class AlbumStatus {
   }
 }
 
+// The saved part of a partial run, e.g. "1 is in “Amalfi Coast”" or "3 are in your Photos library".
+String _savedSoFar(PhotoSaveProgress save) {
+  final verb = save.saved == 1 ? 'is' : 'are';
+  final where = save.album == null ? 'your Photos library' : '“${save.album}”';
+  return '${save.saved} $verb in $where';
+}
+
 class _StatusIcon extends StatelessWidget {
   const _StatusIcon({required this.kind});
 
   final AlbumStatusKind kind;
 
   static const _size = 36.0;
+
+  // A lighter red than XploreColors.error, so the icon stays legible on its own red tint.
+  static const _errorOnTint = Color(0xFFFF6B61);
 
   @override
   Widget build(BuildContext context) {
@@ -179,8 +198,13 @@ class _StatusIcon extends StatelessWidget {
     final (Color fill, Color foreground, IconData icon) = switch (kind) {
       AlbumStatusKind.saving => (XploreColors.accentSoft, XploreColors.accent, Icons.download_rounded),
       AlbumStatusKind.saveDone => (XploreColors.accent, XploreColors.onAccent, Icons.check_rounded),
-      AlbumStatusKind.savePartial => (const Color(0x2EFFC400), XploreColors.warning, Icons.priority_high_rounded),
-      _ => (const Color(0x33FF453A), const Color(0xFFFF6B61), Icons.priority_high_rounded),
+      AlbumStatusKind.duplicatesSkipped => (XploreColors.raised, XploreColors.white, Icons.photo_library_outlined),
+      AlbumStatusKind.savePartial => (
+        XploreColors.warning.withValues(alpha: 0.18),
+        XploreColors.warning,
+        Icons.priority_high_rounded,
+      ),
+      _ => (XploreColors.error.withValues(alpha: 0.2), _errorOnTint, Icons.priority_high_rounded),
     };
 
     return Container(

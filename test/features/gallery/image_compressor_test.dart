@@ -75,4 +75,48 @@ void main() {
       expect(await compressGallerySyncThumbnailAsync(garbage), isNull);
     });
   });
+
+  group('isAcceptableSyncThumbnail', () {
+    test('accepts a JPEG within the sync thumbnail bounds', () {
+      expect(
+        isAcceptableSyncThumbnail(img.encodeJpg(img.Image(width: kGallerySyncThumbnailMaxEdge, height: 10))),
+        isTrue,
+      );
+    });
+
+    test('rejects non-JPEG and undecodable bytes', () {
+      expect(isAcceptableSyncThumbnail(img.encodePng(img.Image(width: 8, height: 8))), isFalse);
+      expect(isAcceptableSyncThumbnail(Uint8List.fromList([0xff, 0xd8, 0xff, 0xc0, 0, 1])), isFalse);
+    });
+
+    test('rejects a small file that declares huge dimensions, without decoding its pixels', () {
+      final bomb = img.encodeJpg(img.Image(width: 8, height: 8));
+      // Rewrite the SOF0 frame header (FF C0, length, precision, height, width) to 30000x30000.
+      final sof = List.generate(bomb.length - 1, (i) => i).firstWhere((i) => bomb[i] == 0xff && bomb[i + 1] == 0xc0);
+      for (final offset in [sof + 5, sof + 7]) {
+        bomb[offset] = 30000 >> 8;
+        bomb[offset + 1] = 30000 & 0xff;
+      }
+
+      expect(isAcceptableSyncThumbnail(bomb), isFalse);
+    });
+  });
+
+  group('readPhotoTakenAt', () {
+    Uint8List jpegTakenAt(String? exifDate) {
+      final image = img.Image(width: 4, height: 4);
+      if (exifDate != null) image.exif.exifIfd['DateTimeOriginal'] = img.IfdValueAscii(exifDate);
+      return img.encodeJpg(image);
+    }
+
+    test('reads the capture time from EXIF', () {
+      expect(readPhotoTakenAt(jpegTakenAt('2025:09:16 18:42:07')), DateTime(2025, 9, 16, 18, 42, 7));
+    });
+
+    test('is null for photos without a usable capture time', () {
+      expect(readPhotoTakenAt(jpegTakenAt(null)), isNull);
+      expect(readPhotoTakenAt(jpegTakenAt('0000:00:00 00:00:00')), isNull);
+      expect(readPhotoTakenAt(Uint8List.fromList([1, 2, 3])), isNull);
+    });
+  });
 }

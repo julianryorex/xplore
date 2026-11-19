@@ -14,12 +14,23 @@ abstract class GalleryState with _$GalleryState {
 
     /// Ids of the trip's photos already saved to the Photos app from this device.
     @Default({}) Set<String> savedToPhotosIds,
+
+    /// Whether the active trip's photos have arrived from the cloud at least
+    /// once (or the attempt failed). Until then an empty album may just be unsynced.
+    @Default(false) bool hasSyncedWithCloud,
+
+    /// How many photos of the last pick were left out because the trip already
+    /// has them. Cleared again after a few seconds.
+    @Default(0) int duplicatesSkipped,
   }) = _GalleryState;
 
-  /// Uploaded photos that "Save all to Photos" would still add.
-  int get unsavedCount => imageMap.values
+  /// Uploaded photos not yet saved to the Photos app from this device, newest
+  /// first: what "Save all to Photos" would add.
+  List<ImageModel> get unsavedPhotos => newestFirst
       .where((image) => image.isUploading == EUploadStatus.complete && !savedToPhotosIds.contains(image.id))
-      .length;
+      .toList();
+
+  int get unsavedCount => unsavedPhotos.length;
 
   /// The trip's photos ordered newest first, the order every gallery surface shows.
   List<ImageModel> get newestFirst => imageMap.values.toList()..sort((a, b) => b.createdAt.compareTo(a.createdAt));

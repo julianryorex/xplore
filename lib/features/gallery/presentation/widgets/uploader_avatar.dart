@@ -1,6 +1,10 @@
+import 'dart:typed_data';
+
 import 'package:flutter/material.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:xplore/constants/constants.dart';
 import 'package:xplore/features/gallery/models/image_models.dart';
+import 'package:xplore/features/profile/bloc/profile_cubit.dart';
 
 /// Who added a photo, as the gallery shows it: a short label and a stable tint.
 ///
@@ -8,13 +12,13 @@ import 'package:xplore/features/gallery/models/image_models.dart';
 /// photo itself carries (uploader uid and first name) rather than profile data.
 @immutable
 class PhotoUploader {
-  const PhotoUploader({required this.uid, required this.label, required this.tint});
+  const PhotoUploader({required this.uid, required this.label, required this.tint, this.isCurrentUser = false});
 
   /// Resolves the uploader of [image]; [currentUid] is the signed-in member.
   factory PhotoUploader.of(ImageModel image, {required String? currentUid}) {
     final uid = image.uploaderUid;
     if (uid != null && uid == currentUid) {
-      return PhotoUploader(uid: uid, label: 'You', tint: XploreColors.accent);
+      return PhotoUploader(uid: uid, label: 'You', tint: XploreColors.accent, isCurrentUser: true);
     }
     final name = image.uploaderName?.trim() ?? '';
     return PhotoUploader(uid: uid, label: name.isEmpty ? 'Member' : name, tint: _tintFor(uid));
@@ -23,6 +27,9 @@ class PhotoUploader {
   final String? uid;
   final String label;
   final Color tint;
+
+  /// Whether the signed-in member added the photo.
+  final bool isCurrentUser;
 
   String get initial => label.characters.first.toUpperCase();
 
@@ -35,11 +42,14 @@ class PhotoUploader {
     return _memberTints[hash % _memberTints.length];
   }
 
+  // The name is stamped on each photo at upload time and can change between uploads, so the uid decides
+  // identity; the label only does for legacy photos that carry no uid.
   @override
-  bool operator ==(Object other) => other is PhotoUploader && other.uid == uid && other.label == label;
+  bool operator ==(Object other) =>
+      other is PhotoUploader && (uid != null ? other.uid == uid : other.uid == null && other.label == label);
 
   @override
-  int get hashCode => Object.hash(uid, label);
+  int get hashCode => uid != null ? uid.hashCode : label.hashCode;
 }
 
 /// The distinct uploaders of [images], in first-appearance order.
@@ -59,27 +69,54 @@ class UploaderAvatar extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final ownPicture = uploader.isCurrentUser ? _ownProfilePicture(context) : null;
+
     return Container(
       width: size,
       height: size,
       alignment: Alignment.center,
-      decoration: BoxDecoration(
-        shape: BoxShape.circle,
-        color: uploader.tint,
-        border: borderColor == null ? null : Border.all(color: borderColor!, width: 2),
-      ),
+      clipBehavior: Clip.antiAlias,
+      foregroundDecoration: borderColor == null
+          ? null
+          : BoxDecoration(
+              shape: BoxShape.circle,
+              border: Border.all(color: borderColor!, width: 2),
+            ),
+      decoration: BoxDecoration(shape: BoxShape.circle, color: uploader.tint),
       child: ExcludeSemantics(
-        child: Text(
-          uploader.initial,
-          style: TextStyle(
-            fontSize: size * 0.42,
-            height: 1,
-            fontWeight: FontWeight.w700,
-            color: const Color(0xFF111111),
-          ),
-        ),
+        child: ownPicture != null
+            ? Image.memory(
+                ownPicture,
+                width: size,
+                height: size,
+                fit: BoxFit.cover,
+                cacheWidth: (size * MediaQuery.devicePixelRatioOf(context)).round(),
+                gaplessPlayback: true,
+              )
+            : Text(
+                uploader.initial,
+                // Sized to the fixed circle; it is decorative, so it must not grow with Dynamic Type and overflow.
+                textScaler: TextScaler.noScaling,
+                style: TextStyle(
+                  fontSize: size * 0.42,
+                  height: 1,
+                  fontWeight: FontWeight.w700,
+                  color: const Color(0xFF111111),
+                ),
+              ),
       ),
     );
+  }
+
+  /// The signed-in member's own profile picture, if they set one. Other
+  /// members' pictures are not readable, so they keep their tinted initial.
+  Uint8List? _ownProfilePicture(BuildContext context) {
+    try {
+      return context.select<ProfileCubit, Uint8List?>((cubit) => cubit.state.profilePicture);
+    } on ProviderNotFoundException {
+      // Gallery widgets are also rendered without the profile cubit (widget tests).
+      return null;
+    }
   }
 }
 

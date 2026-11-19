@@ -41,7 +41,7 @@ List<GalleryDay> groupGalleryDays(List<ImageModel> newestFirst) {
 String? dayOverline(DateTime day, {required DateTime today, DateTime? tripStart}) {
   final parts = <String>[];
   if (tripStart != null) {
-    final offset = _daysBetween(_localDay(tripStart), day);
+    final offset = _daysBetween(tripCalendarDate(tripStart), day);
     if (offset >= 0) parts.add('DAY ${offset + 1}');
   }
   final ago = _daysBetween(day, _localDay(today));
@@ -54,13 +54,30 @@ String? dayOverline(DateTime day, {required DateTime today, DateTime? tripStart}
 String photoCountLabel(int count) => '$count ${count == 1 ? 'photo' : 'photos'}';
 
 /// A day's heading, e.g. "Tue 16 Sep".
-String dayHeading(DateTime day) => '${_weekdays[day.weekday - 1]} ${day.day} ${_months[day.month - 1]}';
+String dayHeading(DateTime day) => '${weekdayAbbreviation(day.weekday)} ${day.day} ${monthAbbreviation(day.month)}';
+
+/// English three-letter weekday for a [DateTime.weekday] value, e.g. "Tue".
+String weekdayAbbreviation(int weekday) => _weekdays[weekday - 1];
+
+/// English three-letter month for a [DateTime.month] value, e.g. "Sep".
+String monthAbbreviation(int month) => _months[month - 1];
+
+/// The calendar date a trip date stands for, independent of the viewer's time zone.
+///
+/// Trip dates are stored as local midnight on the creator's device, so reading
+/// them back in another zone can land on the previous or next day. Rounding the
+/// instant to the nearest UTC midnight (biased by an hour) recovers the creator's
+/// date for every offset from UTC−10 to UTC+13; only UTC−11 and UTC+14 miss.
+DateTime tripCalendarDate(DateTime tripDate) {
+  final shifted = tripDate.toUtc().add(const Duration(hours: 13));
+  return DateTime(shifted.year, shifted.month, shifted.day);
+}
 
 /// The span of days the album covers, e.g. "16 Sep", "12–16 Sep" or "30 Aug – 2 Sep".
 String albumDateRange(DateTime oldest, DateTime newest) {
   final from = _localDay(oldest);
   final to = _localDay(newest);
-  String dayMonth(DateTime d) => '${d.day} ${_months[d.month - 1]}';
+  String dayMonth(DateTime d) => '${d.day} ${monthAbbreviation(d.month)}';
 
   if (from == to) return dayMonth(to);
   if (from.year != to.year) return '${dayMonth(from)} ${from.year} – ${dayMonth(to)} ${to.year}';
