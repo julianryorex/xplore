@@ -5,6 +5,7 @@ import 'dart:typed_data';
 import 'package:firebase_auth_mocks/firebase_auth_mocks.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:image/image.dart' as img;
+import 'package:image_picker/image_picker.dart';
 import 'package:xplore/features/gallery/bloc/gallery_cubit.dart';
 import 'package:xplore/features/gallery/models/image_models.dart';
 import 'package:xplore/features/gallery/repository/gallery_repository.dart';
@@ -15,53 +16,70 @@ import 'package:xplore/features/trip/models/trip_model.dart';
 
 import '../../helpers/auth_fixtures.dart';
 
-/// Repository that skips Hive so the cubit can be constructed in a unit test.
-class _EmptyGalleryRepository extends GalleryRepository {
-  @override
-  Future<Map<String, ImageModel>> loadImgFromCache() async => {};
-}
-
-/// In-memory stand-in for the Hive + file cache.
+/// In-memory stand-in for the Hive + file cache, keyed by trip like the real one.
 class _FakeGalleryRepository extends GalleryRepository {
-  _FakeGalleryRepository({Map<String, ImageModel>? cached}) : metadata = {...?cached};
+  final Map<String, Map<String, ImageModel>> metadata = {};
+  final Map<String, Set<String>> savedToPhotos = {};
 
-  final Map<String, ImageModel> metadata;
-  final Set<String> savedToPhotos = {};
-
-  /// Ids whose full-resolution original is "on disk".
+  /// `<tripId>/<imageId>` of every full-resolution original "on disk".
   final Set<String> fullRes = {};
 
-  @override
-  void setTrip(String? tripId) {}
+  /// `<tripId>/<imageId>` of originals handed back to the purgeable cache after upload.
+  final List<String> released = [];
+
+  void seed(String tripId, List<ImageModel> images, {Set<String> withOriginals = const {}}) {
+    metadata[tripId] = {for (final image in images) image.id: image};
+    fullRes.addAll(withOriginals.map((id) => '$tripId/$id'));
+  }
 
   @override
-  Future<Map<String, ImageModel>> loadImgFromCache() async => {...metadata};
+  Future<Map<String, ImageModel>> loadImgFromCache(String tripId) async => {...?metadata[tripId]};
 
   @override
-  Future<void> cacheMetadata(ImageModel imageModel) async => metadata[imageModel.id] = imageModel;
+  Future<void> cacheMetadata(String tripId, ImageModel imageModel) async =>
+      metadata.putIfAbsent(tripId, () => {})[imageModel.id] = imageModel;
 
   @override
-  Future<File?> fullResFile(String id) async => fullRes.contains(id) ? File('$id.jpg') : null;
+  Future<File?> fullResFile(String tripId, String id) async => fullRes.contains('$tripId/$id') ? File('$id.jpg') : null;
 
   @override
-  Future<File?> fetchAndCacheFullRes(String id, String url) async {
+  Future<File> cacheFullRes(String tripId, String id, File source) async {
+    fullRes.add('$tripId/$id');
+    return File('$id.jpg');
+  }
+
+  @override
+  Future<File> fetchAndCacheFullRes(String tripId, String id, String url) async {
     if (url.contains('broken')) throw const HttpException('Download failed');
     return File('$id.jpg');
   }
 
   @override
-  Future<Set<String>> loadSavedPhotoIds() async => {...savedToPhotos};
+  Future<void> releaseUploadedOriginal(String tripId, String id) async => released.add('$tripId/$id');
 
   @override
-  Future<void> markPhotoSaved(String id) async => savedToPhotos.add(id);
+  Future<void> closeTrip(String tripId) async {}
+
+  @override
+  Future<Set<String>> loadSavedPhotoIds(String tripId) async => {...?savedToPhotos[tripId]};
+
+  @override
+  Future<void> markPhotoSaved(String tripId, String id) async => savedToPhotos.putIfAbsent(tripId, () => {}).add(id);
 }
 
 class _FakeGalleryService implements GalleryService {
-  final remoteImages = StreamController<List<ImageModel>>.broadcast();
-  final List<String> writtenImageIds = [];
+  final Map<String, StreamController<List<ImageModel>>> _remote = {};
+
+  /// `<tripId>/<imageId>` of every published metadata doc.
+  final List<String> published = [];
+
+  void pushRemote(String tripId, List<ImageModel> images) => _controller(tripId).add(images);
+
+  StreamController<List<ImageModel>> _controller(String tripId) =>
+      _remote.putIfAbsent(tripId, StreamController<List<ImageModel>>.broadcast);
 
   @override
-  Stream<List<ImageModel>> watchTripImages(String tripId) => remoteImages.stream;
+  Stream<List<ImageModel>> watchTripImages(String tripId) => _controller(tripId).stream;
 
   @override
   Future<void> writeImageMetadata({
@@ -73,20 +91,30 @@ class _FakeGalleryService implements GalleryService {
     required String storagePath,
     required Uint8List thumb,
     String? uploaderName,
-  }) async => writtenImageIds.add(imageId);
+  }) async => published.add('$tripId/$imageId');
 }
 
 class _FakePhotoSaveService implements PhotoSaveService {
   _FakePhotoSaveService(this.access);
 
   final EPhotoLibraryAccess access;
-  final Map<String, String?> albumBySavedPath = {};
+
+  /// When set, [requestAccess] waits on it, like a permission prompt left open.
+  Completer<void>? prompt;
+  final List<String> savedPaths = [];
+  String? lastAlbum;
 
   @override
-  Future<EPhotoLibraryAccess> requestAccess() async => access;
+  Future<EPhotoLibraryAccess> requestAccess() async {
+    await prompt?.future;
+    return access;
+  }
 
   @override
-  Future<void> saveImage(File file, {String? album}) async => albumBySavedPath[file.path] = album;
+  Future<void> saveImage(File file, {String? album}) async {
+    savedPaths.add(file.path);
+    lastAlbum = album;
+  }
 
   @override
   Future<void> openPhotosApp() async {}
@@ -96,11 +124,20 @@ class _FakePhotoSaveService implements PhotoSaveService {
 class _OfflineStorageGalleryCubit extends GalleryCubit {
   _OfflineStorageGalleryCubit(super.authService, {super.repo, super.service, super.photoSaver});
 
+  /// When set, uploads wait on it, like a slow network.
+  Completer<void>? network;
+  final List<String> uploadedPaths = [];
+
   @override
-  Future<String> uploadImage(File imageFile, String imageName) async => 'https://storage.test/$imageName';
+  Future<String> uploadImage(File imageFile, String storagePath) async {
+    await network?.future;
+    uploadedPaths.add(storagePath);
+    return 'https://storage.test/$storagePath';
+  }
 }
 
-const _trip = TripModel(id: 'trip-1', title: 'Lisbon', memberIds: ['me'], createdBy: 'me');
+const _lisbon = TripModel(id: 'lisbon', title: 'Lisbon', memberIds: ['me'], createdBy: 'me');
+const _tokyo = TripModel(id: 'tokyo', title: 'Tokyo', memberIds: ['me'], createdBy: 'me');
 
 final Uint8List _jpeg = img.encodeJpg(img.Image(width: 8, height: 8));
 
@@ -114,153 +151,278 @@ ImageModel _image(String id, {EUploadStatus status = EUploadStatus.complete, Str
   );
 }
 
-/// Lets the cubit's un-awaited async work (cache load, listener, uploads) settle.
-Future<void> _settle() => Future<void>.delayed(const Duration(milliseconds: 20));
+/// Waits for the cubit's un-awaited work (thumbnail isolates, uploads) to reach [condition].
+Future<void> _until(bool Function() condition) async {
+  final deadline = DateTime.now().add(const Duration(seconds: 10));
+  while (!condition()) {
+    if (DateTime.now().isAfter(deadline)) fail('Condition was not reached in time.');
+    await Future<void>.delayed(const Duration(milliseconds: 5));
+  }
+}
 
 void main() {
   TestWidgetsFlutterBinding.ensureInitialized();
 
-  group('GalleryCubit.uploadImage', () {
-    // FEAT-004: the uploader path is uid-scoped, so an unauthenticated upload
-    // must fail fast rather than fall back to a hardcoded id.
-    test('errors out when the user is not authenticated', () async {
-      final cubit = GalleryCubit(fakeAuthService(signedIn: false), repo: _EmptyGalleryRepository());
+  late _FakeGalleryRepository repo;
+  late _FakeGalleryService service;
+  late _OfflineStorageGalleryCubit cubit;
 
-      await expectLater(cubit.uploadImage(File('unused.jpg'), 'image-1'), throwsA(isA<StateError>()));
+  Future<void> open(TripModel trip) async {
+    cubit.pushTripEvent(TripState.loaded(active: trip, all: const [_lisbon, _tokyo]));
+    await pumpEventQueue();
+  }
 
-      await cubit.close();
-    });
+  void build({bool signedIn = true, PhotoSaveService? photoSaver}) {
+    cubit = _OfflineStorageGalleryCubit(
+      fakeAuthService(
+        signedIn: signedIn,
+        user: MockUser(uid: 'me', displayName: 'Mara Lindqvist'),
+      ),
+      repo: repo,
+      service: service,
+      photoSaver: photoSaver,
+    );
+  }
 
-    // FEAT-014: uploads are strictly trip-scoped (gallery/{tripId}/{uid}/...),
-    // so with no active trip the upload must fail fast instead of falling back
-    // to the removed `ph4kd` demo id.
-    test('errors out when there is no active trip', () async {
-      final cubit = GalleryCubit(fakeAuthService(signedIn: true), repo: _EmptyGalleryRepository());
-
-      await expectLater(cubit.uploadImage(File('unused.jpg'), 'image-1'), throwsA(isA<StateError>()));
-
-      await cubit.close();
-    });
+  setUp(() {
+    repo = _FakeGalleryRepository();
+    service = _FakeGalleryService();
+    build();
   });
 
-  group('GalleryCubit on an active trip', () {
-    late _FakeGalleryService service;
+  tearDown(() => cubit.close());
 
-    Future<GalleryCubit> openTrip(_FakeGalleryRepository repo, {PhotoSaveService? photoSaver}) async {
-      service = _FakeGalleryService();
-      final cubit = _OfflineStorageGalleryCubit(
-        fakeAuthService(signedIn: true, user: MockUser(uid: 'me')),
-        repo: repo,
-        service: service,
-        photoSaver: photoSaver,
-      );
-      cubit.pushTripEvent(const TripState.loaded(active: _trip, all: [_trip]));
-      await _settle();
-      return cubit;
-    }
-
+  group('cloud sync', () {
     test('merges remote photos: adds other members\' and completes our own, keeping the local thumbnail', () async {
       final localThumbnail = Uint8List.fromList([1, 2, 3]);
-      final repo = _FakeGalleryRepository(
-        cached: {'mine': _image('mine', status: EUploadStatus.failed, thumbnail: localThumbnail)},
-      );
-      final cubit = await openTrip(repo);
+      repo.seed('lisbon', [_image('mine', status: EUploadStatus.failed, thumbnail: localThumbnail)]);
+      await open(_lisbon);
+      expect(cubit.state.hasSyncedWithCloud, isFalse);
 
-      service.remoteImages.add([_image('mine'), _image('theirs')]);
-      await _settle();
+      service.pushRemote('lisbon', [_image('mine'), _image('theirs')]);
+      await pumpEventQueue();
 
       final images = cubit.state.imageMap;
       expect(images.keys, unorderedEquals(['mine', 'theirs']));
       expect(images['mine']!.isUploading, EUploadStatus.complete);
       expect(images['mine']!.downloadUrl, isNotNull);
       expect(images['mine']!.lowResImage, localThumbnail);
+      expect(cubit.state.hasSyncedWithCloud, isTrue);
       // Remote photos are cached so the gallery is populated offline next launch.
-      expect(repo.metadata.keys, containsAll(['mine', 'theirs']));
+      expect(repo.metadata['lisbon']!.keys, containsAll(['mine', 'theirs']));
+    });
 
-      await cubit.close();
+    test('switching trips shows only the new trip\'s photos', () async {
+      repo.seed('lisbon', [_image('lisbon-photo')]);
+      repo.seed('tokyo', [_image('tokyo-photo')]);
+      await open(_lisbon);
+
+      await open(_tokyo);
+      // A late snapshot for the trip that was left must not leak into the one on screen.
+      service.pushRemote('lisbon', [_image('late-lisbon-photo')]);
+      await pumpEventQueue();
+
+      expect(cubit.state.imageMap.keys, ['tokyo-photo']);
+    });
+  });
+
+  group('uploading', () {
+    late Directory tempDir;
+    late XFile picked;
+
+    setUp(() async {
+      tempDir = await Directory.systemTemp.createTemp('gallery_cubit_test');
+      final file = File('${tempDir.path}/picked.jpg');
+      await file.writeAsBytes(_jpeg);
+      picked = XFile(file.path);
+    });
+
+    tearDown(() => tempDir.delete(recursive: true));
+
+    test('an added photo shows at once with its uploader, then uploads and is published', () async {
+      await open(_lisbon);
+      cubit.network = Completer<void>();
+
+      await cubit.addPhotos('lisbon', [picked]);
+
+      final added = cubit.state.imageMap.values.single;
+      expect(added.isUploading, EUploadStatus.uploading);
+      expect(added.uploaderUid, 'me');
+      expect(added.uploaderName, 'Mara');
+      expect(repo.fullRes, {'lisbon/${added.id}'});
+
+      cubit.network!.complete();
+      await _until(() => cubit.state.imageMap[added.id]!.isUploading == EUploadStatus.complete);
+
+      expect(cubit.uploadedPaths, ['gallery/lisbon/me/${added.id}']);
+      expect(service.published, ['lisbon/${added.id}']);
+      expect(repo.released, ['lisbon/${added.id}']);
+    });
+
+    // Regression: photos used to follow whichever trip was active when each await resumed.
+    test('photos picked for one trip stay in that trip when another becomes active', () async {
+      await open(_lisbon);
+      await open(_tokyo);
+
+      await cubit.addPhotos('lisbon', [picked]);
+      await _until(() => service.published.isNotEmpty);
+
+      final id = repo.metadata['lisbon']!.keys.single;
+      expect(cubit.state.imageMap, isEmpty);
+      expect(repo.metadata['tokyo'], isNull);
+      expect(repo.fullRes, {'lisbon/$id'});
+      expect(cubit.uploadedPaths, ['gallery/lisbon/me/$id']);
+      expect(service.published, ['lisbon/$id']);
+      expect(repo.metadata['lisbon']![id]!.isUploading, EUploadStatus.complete);
+    });
+
+    test('an upload that finishes after a trip switch completes in its own trip', () async {
+      repo.seed('lisbon', [_image('stuck', status: EUploadStatus.failed)], withOriginals: {'stuck'});
+      await open(_lisbon);
+      cubit.network = Completer<void>();
+      final retry = cubit.retryUpload('stuck');
+      await pumpEventQueue();
+
+      await open(_tokyo);
+      cubit.network!.complete();
+      await retry;
+
+      expect(cubit.state.imageMap, isEmpty);
+      expect(repo.metadata['lisbon']!['stuck']!.isUploading, EUploadStatus.complete);
+
+      // Coming back shows it as uploaded.
+      await open(_lisbon);
+      expect(cubit.state.imageMap['stuck']!.isUploading, EUploadStatus.complete);
     });
 
     test('an upload interrupted by an app restart is shown as failed so it can be retried', () async {
-      final repo = _FakeGalleryRepository(cached: {'stuck': _image('stuck', status: EUploadStatus.uploading)});
-      final cubit = await openTrip(repo);
+      repo.seed('lisbon', [_image('stuck', status: EUploadStatus.uploading)]);
+
+      await open(_lisbon);
 
       expect(cubit.state.imageMap['stuck']!.isUploading, EUploadStatus.failed);
-
-      await cubit.close();
     });
 
     test('retryUpload re-uploads from the cached original and publishes the photo', () async {
-      final repo = _FakeGalleryRepository(cached: {'stuck': _image('stuck', status: EUploadStatus.failed)})
-        ..fullRes.add('stuck');
-      final cubit = await openTrip(repo);
+      repo.seed('lisbon', [_image('stuck', status: EUploadStatus.failed)], withOriginals: {'stuck'});
+      await open(_lisbon);
 
       await cubit.retryUpload('stuck');
 
-      expect(service.writtenImageIds, ['stuck']);
+      expect(service.published, ['lisbon/stuck']);
       expect(cubit.state.imageMap['stuck']!.isUploading, EUploadStatus.complete);
-      expect(repo.metadata['stuck']!.downloadUrl, 'https://storage.test/stuck');
-
-      await cubit.close();
+      expect(repo.metadata['lisbon']!['stuck']!.downloadUrl, 'https://storage.test/gallery/lisbon/me/stuck');
     });
 
     test('retryUpload keeps the photo failed when its original is gone', () async {
-      final repo = _FakeGalleryRepository(cached: {'stuck': _image('stuck', status: EUploadStatus.failed)});
-      final cubit = await openTrip(repo);
+      repo.seed('lisbon', [_image('stuck', status: EUploadStatus.failed)]);
+      await open(_lisbon);
 
       await cubit.retryUpload('stuck');
 
-      expect(service.writtenImageIds, isEmpty);
+      expect(service.published, isEmpty);
       expect(cubit.state.imageMap['stuck']!.isUploading, EUploadStatus.failed);
-
-      await cubit.close();
     });
 
-    test('saveAllToPhotos saves only new, uploaded photos into the trip album and counts failures', () async {
-      final repo = _FakeGalleryRepository(
-        cached: {
-          'new': _image('new'),
-          'already-saved': _image('already-saved'),
-          'undownloadable': _image('undownloadable', url: 'https://storage.test/broken'),
-          'still-uploading': _image('still-uploading', status: EUploadStatus.failed),
-        },
-      )..savedToPhotos.add('already-saved');
-      final saver = _FakePhotoSaveService(EPhotoLibraryAccess.album);
-      final cubit = await openTrip(repo, photoSaver: saver);
+    // The Storage path is uid-scoped, so a signed-out upload must fail rather than guess an owner.
+    test('nothing is uploaded while signed out', () async {
+      await cubit.close();
+      build(signedIn: false);
+      repo.seed('lisbon', [_image('stuck', status: EUploadStatus.failed)], withOriginals: {'stuck'});
+      await open(_lisbon);
+
+      await cubit.retryUpload('stuck');
+
+      expect(cubit.uploadedPaths, isEmpty);
+      expect(service.published, isEmpty);
+      expect(cubit.state.imageMap['stuck']!.isUploading, EUploadStatus.failed);
+    });
+  });
+
+  group('saveAllToPhotos', () {
+    late _FakePhotoSaveService saver;
+
+    Future<void> openWith(EPhotoLibraryAccess access, List<ImageModel> images, {Set<String> saved = const {}}) async {
+      await cubit.close();
+      saver = _FakePhotoSaveService(access);
+      build(photoSaver: saver);
+      repo.seed('lisbon', images);
+      repo.savedToPhotos['lisbon'] = {...saved};
+      await open(_lisbon);
+    }
+
+    test('saves only new, uploaded photos into the trip album and counts failures', () async {
+      await openWith(
+        EPhotoLibraryAccess.album,
+        [
+          _image('new'),
+          _image('already-saved'),
+          _image('undownloadable', url: 'https://storage.test/broken'),
+          _image('not-uploaded', status: EUploadStatus.failed),
+        ],
+        saved: {'already-saved'},
+      );
 
       await cubit.saveAllToPhotos();
 
-      expect(saver.albumBySavedPath, {'new.jpg': 'Xplore – Lisbon'});
+      expect(saver.savedPaths, ['new.jpg']);
+      expect(saver.lastAlbum, 'Xplore – Lisbon');
       expect(
         cubit.state.saveProgress,
         const PhotoSaveProgress(phase: EPhotoSavePhase.done, total: 2, saved: 1, failed: 1, album: 'Xplore – Lisbon'),
       );
       // The failed photo stays unsaved, so the next run picks it up again.
-      expect(repo.savedToPhotos, {'already-saved', 'new'});
-
-      await cubit.close();
+      expect(repo.savedToPhotos['lisbon'], {'already-saved', 'new'});
+      expect(cubit.state.unsavedPhotos.map((image) => image.id), ['undownloadable']);
     });
 
-    test('saveAllToPhotos saves loose photos when only add-only access is granted', () async {
-      final saver = _FakePhotoSaveService(EPhotoLibraryAccess.addOnly);
-      final cubit = await openTrip(_FakeGalleryRepository(cached: {'a': _image('a')}), photoSaver: saver);
+    test('saves loose photos when only add-only access is granted', () async {
+      await openWith(EPhotoLibraryAccess.addOnly, [_image('a')]);
 
       await cubit.saveAllToPhotos();
 
-      expect(saver.albumBySavedPath, {'a.jpg': null});
-
-      await cubit.close();
+      expect(saver.savedPaths, ['a.jpg']);
+      expect(saver.lastAlbum, isNull);
     });
 
-    test('saveAllToPhotos saves nothing and reports it when photo access is denied', () async {
-      final saver = _FakePhotoSaveService(EPhotoLibraryAccess.denied);
-      final cubit = await openTrip(_FakeGalleryRepository(cached: {'a': _image('a')}), photoSaver: saver);
+    test('saves nothing and reports it when photo access is denied', () async {
+      await openWith(EPhotoLibraryAccess.denied, [_image('a')]);
 
       await cubit.saveAllToPhotos();
 
-      expect(saver.albumBySavedPath, isEmpty);
+      expect(saver.savedPaths, isEmpty);
       expect(cubit.state.saveProgress?.phase, EPhotoSavePhase.denied);
+    });
 
-      await cubit.close();
+    test('a second tap while a run is starting does not save every photo twice', () async {
+      await openWith(EPhotoLibraryAccess.album, [_image('a'), _image('b')]);
+      saver.prompt = Completer<void>();
+
+      final first = cubit.saveAllToPhotos();
+      final second = cubit.saveAllToPhotos();
+      saver.prompt!.complete();
+      await Future.wait([first, second]);
+
+      expect(saver.savedPaths, hasLength(2));
+    });
+
+    test('a trip switch during the permission prompt abandons the run', () async {
+      await openWith(EPhotoLibraryAccess.album, [_image('a')]);
+      saver.prompt = Completer<void>();
+      final run = cubit.saveAllToPhotos();
+
+      await open(_tokyo);
+      saver.prompt!.complete();
+      await run;
+
+      expect(saver.savedPaths, isEmpty);
+      expect(cubit.state.saveProgress, isNull);
+      // Save all still works on the trip now on screen.
+      repo.seed('tokyo', [_image('t')]);
+      await open(_lisbon);
+      await open(_tokyo);
+      await cubit.saveAllToPhotos();
+      expect(saver.savedPaths, ['t.jpg']);
     });
   });
 }

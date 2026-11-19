@@ -18,21 +18,30 @@ final _pixel = base64Decode(
 
 /// A [GalleryCubit] whose original-photo and save calls are controlled by the test.
 class _FakeGalleryCubit extends Cubit<GalleryState> implements GalleryCubit {
-  _FakeGalleryCubit() : super(const GalleryState());
+  _FakeGalleryCubit({this.original}) : super(const GalleryState());
 
-  final saveResult = Completer<bool>();
+  /// What [fetchFullResFile] returns; `null` behaves like being offline.
+  final File? original;
+  final fetchedIds = <String>[];
+  final _saveResults = <String, Completer<bool>>{};
   var saveCalls = 0;
+
+  /// Completes the save of photo [id].
+  Completer<bool> saveResult(String id) => _saveResults.putIfAbsent(id, Completer.new);
 
   @override
   String? get currentUid => 'me';
 
   @override
-  Future<File?> fetchFullResFile(String id) async => null;
+  Future<File?> fetchFullResFile(String id) async {
+    fetchedIds.add(id);
+    return original;
+  }
 
   @override
   Future<bool> savePhotoToPhotos(String id) {
     saveCalls++;
-    return saveResult.future;
+    return saveResult(id).future;
   }
 
   @override
@@ -48,8 +57,18 @@ ImageModel _photo(String id, {String? uploaderUid, String? uploaderName}) => Ima
   uploaderName: uploaderName,
 );
 
-Future<_FakeGalleryCubit> _pumpViewer(WidgetTester tester) async {
-  final cubit = _FakeGalleryCubit();
+/// A tiny real file standing in for a downloaded original.
+File _originalFile() {
+  final dir = Directory.systemTemp.createTempSync('focus_view_test');
+  addTearDown(() => dir.deleteSync(recursive: true));
+  return File('${dir.path}/original.png')..writeAsBytesSync(_pixel);
+}
+
+Future<void> _swipeToNextPhoto(WidgetTester tester) =>
+    tester.drag(find.byType(PhotoViewGallery), const Offset(-600, 0));
+
+Future<_FakeGalleryCubit> _pumpViewer(WidgetTester tester, {File? original}) async {
+  final cubit = _FakeGalleryCubit(original: original);
   addTearDown(cubit.close);
   await tester.pumpWidget(
     BlocProvider<GalleryCubit>.value(
@@ -78,15 +97,33 @@ void main() {
     expect(find.text('2 of 3'), findsOneWidget);
     expect(find.text('Mara'), findsOneWidget);
 
-    await tester.drag(find.byType(PhotoViewGallery), const Offset(-600, 0));
+    await _swipeToNextPhoto(tester);
     await tester.pumpAndSettle();
 
     expect(find.text('3 of 3'), findsOneWidget);
     expect(find.text('Member'), findsOneWidget);
+    await tester.pump(const Duration(seconds: 1));
+  });
+
+  testWidgets('originals load only for pages the user settles on', (tester) async {
+    final cubit = await _pumpViewer(tester);
+    expect(cubit.fetchedIds, ['b']);
+
+    // Passing through photo c without stopping must not download it.
+    await _swipeToNextPhoto(tester);
+    await tester.drag(find.byType(PhotoViewGallery), const Offset(600, 0));
+    await tester.pumpAndSettle();
+    await tester.pump(const Duration(seconds: 1));
+    expect(cubit.fetchedIds, isNot(contains('c')));
+
+    await _swipeToNextPhoto(tester);
+    await tester.pumpAndSettle();
+    await tester.pump(const Duration(seconds: 1));
+    expect(cubit.fetchedIds.last, 'c');
   });
 
   testWidgets('Save ignores repeat taps while running, then confirms', (tester) async {
-    final cubit = await _pumpViewer(tester);
+    final cubit = await _pumpViewer(tester, original: _originalFile());
 
     await tester.tap(find.bySemanticsLabel('Save to Photos'));
     await tester.pump();
@@ -95,13 +132,58 @@ void main() {
 
     expect(find.byType(CircularProgressIndicator), findsOneWidget);
 
-    cubit.saveResult.complete(true);
+    cubit.saveResult('b').complete(true);
     await tester.pump();
     expect(find.text('Saved to Photos'), findsOneWidget);
     expect(cubit.saveCalls, 1);
 
     await tester.pump(const Duration(seconds: 3));
     expect(find.text('Saved to Photos'), findsNothing);
+  });
+
+  testWidgets('Save says the photo is unavailable, not blocked, when the original can’t load', (tester) async {
+    final cubit = await _pumpViewer(tester);
+
+    await tester.tap(find.bySemanticsLabel('Save to Photos'));
+    await tester.pump();
+
+    expect(find.textContaining('Couldn’t load the full-quality photo'), findsOneWidget);
+    expect(find.textContaining('photo access'), findsNothing);
+    expect(cubit.saveCalls, 0);
+    await tester.pump(const Duration(seconds: 3));
+  });
+
+  testWidgets('Save blames photo access only when the original was available', (tester) async {
+    final cubit = await _pumpViewer(tester, original: _originalFile());
+
+    await tester.tap(find.bySemanticsLabel('Save to Photos'));
+    await tester.pump();
+    cubit.saveResult('b').complete(false);
+    await tester.pump();
+
+    expect(find.textContaining('Check photo access in Settings'), findsOneWidget);
+    await tester.pump(const Duration(seconds: 3));
+  });
+
+  testWidgets('a running Save stays with its photo after swiping away', (tester) async {
+    final cubit = await _pumpViewer(tester, original: _originalFile());
+
+    await tester.tap(find.bySemanticsLabel('Save to Photos'));
+    await tester.pump();
+    await _swipeToNextPhoto(tester);
+    await tester.pumpAndSettle();
+
+    // Photo c's Save is idle and usable while b's save is still running.
+    expect(find.byType(CircularProgressIndicator), findsNothing);
+    await tester.tap(find.bySemanticsLabel('Save to Photos'));
+    await tester.pump();
+    expect(cubit.saveCalls, 2);
+
+    // b's confirmation must not appear over c.
+    cubit.saveResult('b').complete(true);
+    await tester.pump();
+    expect(find.text('Saved to Photos'), findsNothing);
+    await tester.pump(const Duration(seconds: 3));
   });
 
   testWidgets('Share explains instead of sharing the thumbnail when the original is unavailable', (tester) async {

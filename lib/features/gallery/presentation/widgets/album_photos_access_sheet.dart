@@ -28,7 +28,8 @@ class _PhotosAccessSheet extends StatelessWidget {
     return SafeArea(
       top: false,
       minimum: const EdgeInsets.only(bottom: 34),
-      child: Padding(
+      // Scrolls so large Dynamic Type sizes can't push "Got it" off screen.
+      child: SingleChildScrollView(
         padding: const EdgeInsets.fromLTRB(24, 10, 24, 0),
         child: Column(
           mainAxisSize: MainAxisSize.min,

@@ -17,7 +17,7 @@ Snapshot of what exists in `lib/` vs. what product assumes. Update this doc when
 | Google Map + neon style | ✅ | `MapCanvas`, `assets/maps/GoogleMapNeon.json` |
 | Live location sync | ✅ | Firebase RTDB at `locations/{tripId}`; interval configurable via `.env` |
 | Avatar map markers | ✅ | Profile photo → widget → PNG → Hive CE + Storage |
-| Gallery pick / upload / zoom | ✅ | Optimistic UI with retry; shared across members via Firestore metadata (FEAT-011, rules deploy pending); full-res cached as files; Save all to Photos; pure-Dart thumbnail compression ([FEAT-043](./requests/done/FEAT-043-image-compression.md)) |
+| Gallery pick / upload / zoom | ✅ | Optimistic UI with retry; shared across members via Firestore metadata (FEAT-011); full-res cached as files; Save all to Photos; pure-Dart thumbnail compression ([FEAT-043](./requests/done/FEAT-043-image-compression.md)) |
 | Profile photo | ✅ Local | Saved to app documents; liquid-glass Edit Profile UI (PR #88); cloud sync is FEAT-015 |
 | Notifications screen | ✅ UI shell | Home header routes to liquid-glass feed with sample data (PR #86); FCM / push delivery is FEAT-012 |
 | Trip load error UX | ✅ | Liquid-glass error banner when `TripCubit` fails (PR #85) |
@@ -48,7 +48,7 @@ Also outstanding:
 - Seeded days carry **no stops** (so no `place_id`s); real generation and Places enrichment are deferred. The create flow's place search runs over a **hardcoded place catalog**, not Google Places.
 - Mock onboarding placeholder only → **FEAT-005**
 - Trip invites / join flow shipped (FEAT-003, PR #96); only universal-link **production delivery** (AASA hosting + iOS Associated Domains on `xplore.olympuslabs.ai`) remains, deferred to launch + >100 users → GitHub #99
-- Gallery Storage rules updated to gate `gallery/{tripId}/**` by trip membership (FEAT-014); rules **deploy** (terraform/console) still pending
+- Gallery Storage rules are owner-scoped (`gallery/{tripId}/{uid}/{imageId}` writable only by `uid`): Storage rules cannot read the named `xplore-app` database, so trip membership is enforced on the Firestore photo doc instead
 - Profile name / avatar not synced to cloud → **FEAT-015**
 - Push notifications not wired (screen exists; no FCM) → **FEAT-012**
 - GitHub auth issues still Apple-titled despite Google shipping → reconcile via Issue Filer
@@ -60,7 +60,7 @@ Also outstanding:
 | Itinerary editing CRUD | Read path only; organizer UI deferred (FEAT-006 / FEAT-024) |
 | Multi-trip switcher | Create-trip works; list/switch UI deferred (FEAT-002 gap) |
 | Gemini AI in UI | Not wired. `ItineraryGenerator` / `GeminiItineraryService` still exist in `lib/` but the create flow no longer calls them; agentic generation is being built outside this repo. Credits gating (FEAT-021) and `place_id` enrichment deferred |
-| Gallery cloud fetch | Built (FEAT-011); needs the `galleries/{tripId}/images` Firestore rules deployed before it works against production |
+| Gallery cloud fetch | Built (FEAT-011) and rules deployed; not yet exercised end to end on devices |
 | Push notifications (FCM) | `NotificationsPage` uses local sample data; no backend |
 | Background location | TODOs in `LocationCubit` |
 | Android / web runtime | iOS/macOS Firebase config only |

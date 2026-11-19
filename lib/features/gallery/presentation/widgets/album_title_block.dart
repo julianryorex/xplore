@@ -42,8 +42,8 @@ class AlbumTitleBlock extends StatelessWidget {
           ),
         ),
         const SizedBox(height: 10),
-        SizedBox(
-          height: 24,
+        ConstrainedBox(
+          constraints: const BoxConstraints(minHeight: 24),
           child: Row(
             children: [
               if (isSyncing) ...[

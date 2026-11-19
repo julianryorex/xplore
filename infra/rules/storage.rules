@@ -3,18 +3,27 @@ rules_version = '2';
 service firebase.storage {
   match /b/{bucket}/o {
 
-    // Gallery objects are trip-scoped: gallery/{tripId}/{uid}/**.
-    // Only members of trips/{tripId} (membership lives in the Firestore
-    // `memberIds` array) may read the prefix, and a member may only write
-    // under their own uid segment.
-    match /gallery/{tripId}/{uid}/{allPaths=**} {
-      function isTripMember() {
-        return request.auth != null
-          && request.auth.uid in firestore.get(/databases/(default)/documents/trips/$(tripId)).data.memberIds;
+    // Gallery originals live at gallery/{tripId}/{uid}/{imageId}.
+    //
+    // Trip membership cannot be checked here: Storage rules can only read the
+    // (default) Firestore database, and this project's data lives in the named
+    // `xplore-app` database, so a firestore.get() on trips/{tripId} always fails
+    // and denied every upload. Access is therefore owner-scoped:
+    //  - a signed-in user may write only under their own uid segment;
+    //  - only the uploader reads through the SDK. Other members fetch the
+    //    original via the tokenized download URL stored on the photo's Firestore
+    //    doc, and that doc is readable by trip members only (firestore.rules).
+    // A non-member can thus park files under their own uid in any trip's prefix,
+    // but nothing references them, so no member is ever shown them.
+    match /gallery/{tripId}/{uid}/{imageId} {
+      function isOwner() {
+        return request.auth != null && request.auth.uid == uid;
       }
 
-      allow read: if isTripMember();
-      allow write: if isTripMember() && request.auth.uid == uid;
+      allow read: if isOwner();
+      // Update covers a retried upload of the same photo. Originals are never
+      // deleted by clients. 100 MB bounds what one object can cost.
+      allow create, update: if isOwner() && request.resource.size <= 100 * 1024 * 1024;
     }
 
     // Profile avatars (FEAT-015): a user writes only their own avatar. Reads are

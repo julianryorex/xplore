@@ -8,13 +8,13 @@ import 'package:xplore/features/gallery/models/image_models.dart';
 /// photo itself carries (uploader uid and first name) rather than profile data.
 @immutable
 class PhotoUploader {
-  const PhotoUploader({required this.uid, required this.label, required this.tint});
+  const PhotoUploader({required this.uid, required this.label, required this.tint, this.isCurrentUser = false});
 
   /// Resolves the uploader of [image]; [currentUid] is the signed-in member.
   factory PhotoUploader.of(ImageModel image, {required String? currentUid}) {
     final uid = image.uploaderUid;
     if (uid != null && uid == currentUid) {
-      return PhotoUploader(uid: uid, label: 'You', tint: XploreColors.accent);
+      return PhotoUploader(uid: uid, label: 'You', tint: XploreColors.accent, isCurrentUser: true);
     }
     final name = image.uploaderName?.trim() ?? '';
     return PhotoUploader(uid: uid, label: name.isEmpty ? 'Member' : name, tint: _tintFor(uid));
@@ -23,6 +23,9 @@ class PhotoUploader {
   final String? uid;
   final String label;
   final Color tint;
+
+  /// Whether the signed-in member added the photo.
+  final bool isCurrentUser;
 
   String get initial => label.characters.first.toUpperCase();
 
@@ -35,11 +38,14 @@ class PhotoUploader {
     return _memberTints[hash % _memberTints.length];
   }
 
+  // The name is stamped on each photo at upload time and can change between uploads, so the uid decides
+  // identity; the label only does for legacy photos that carry no uid.
   @override
-  bool operator ==(Object other) => other is PhotoUploader && other.uid == uid && other.label == label;
+  bool operator ==(Object other) =>
+      other is PhotoUploader && (uid != null ? other.uid == uid : other.uid == null && other.label == label);
 
   @override
-  int get hashCode => Object.hash(uid, label);
+  int get hashCode => uid != null ? uid.hashCode : label.hashCode;
 }
 
 /// The distinct uploaders of [images], in first-appearance order.
@@ -71,6 +77,8 @@ class UploaderAvatar extends StatelessWidget {
       child: ExcludeSemantics(
         child: Text(
           uploader.initial,
+          // Sized to the fixed circle; it is decorative, so it must not grow with Dynamic Type and overflow.
+          textScaler: TextScaler.noScaling,
           style: TextStyle(
             fontSize: size * 0.42,
             height: 1,
