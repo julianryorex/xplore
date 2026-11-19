@@ -1,4 +1,4 @@
-.PHONY: clean get init gen format check-format analyze verify test test-gold delete-gold test-cov cov reboot build-ios build-ios-testflight build-mac deploy-ios redeploy-ios prep-ipad prep-mac pub-reset
+.PHONY: clean clean-artifacts get init gen format check-format analyze verify test test-gold delete-gold test-cov cov reboot build-ios build-ios-testflight build-mac deploy-ios redeploy-ios prep-ipad prep-mac pub-reset
 
 FVM ?= fvm
 FLUTTER := $(FVM) flutter
@@ -8,6 +8,12 @@ DART_FORMAT_DIRS := lib test
 clean:
 	$(FLUTTER) clean
 	rm -rf lib/generated
+
+# Free disk space from Xcode/Flutter build output (DerivedData, build/, caches,
+# old device symbols). Run after a PR merges. ARGS: --dry-run, --erase-simulators,
+# --old-runtimes, --all (see scripts/clean-build-artifacts.sh --help).
+clean-artifacts:
+	@scripts/clean-build-artifacts.sh $(ARGS)
 
 get:
 	@$(FLUTTER) --version
