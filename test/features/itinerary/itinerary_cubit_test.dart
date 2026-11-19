@@ -25,17 +25,34 @@ import '../../helpers/auth_fixtures.dart';
 
 class _TripStreamHarness with TripStreamMixin {}
 
-/// Fails the first listen the way Firestore does for a trip the server has not committed yet.
-class _DeniedOnceItineraryService extends ItineraryService {
-  _DeniedOnceItineraryService(FakeFirebaseFirestore firestore) : super(firestore: firestore);
+/// Records every listen and lets each test script what the n-th listen (1-based, per trip) returns.
+class _ScriptedItineraryService extends ItineraryService {
+  _ScriptedItineraryService(FakeFirebaseFirestore firestore, this._onListen) : super(firestore: firestore);
 
-  int listens = 0;
+  final Stream<ItineraryModel?> Function(String tripId, int listen) _onListen;
+  final listens = <String>[];
 
   @override
   Stream<ItineraryModel?> watchItinerary(String tripId) {
-    listens++;
-    return listens == 1 ? Stream.error(Exception('permission-denied')) : super.watchItinerary(tripId);
+    listens.add(tripId);
+    return _onListen(tripId, listens.where((id) => id == tripId).length);
   }
+}
+
+/// What Firestore raises for a trip the server has not committed yet.
+FirebaseException _denied() => FirebaseException(plugin: 'cloud_firestore', code: 'permission-denied');
+
+Future<void> _seedItinerary(FakeFirebaseFirestore firestore, String tripId) {
+  return firestore.collection('itineraries').doc(tripId).set({
+    'invitees': ['user-1'],
+    'daily_plans': [_dayPlan(title: 'Day of $tripId')],
+    'pins': <dynamic>[],
+    'last_updated': Timestamp.fromDate(DateTime.utc(2023, 6, 15, 8, 30)),
+  });
+}
+
+void _activate(String tripId) {
+  _TripStreamHarness().pushTripEvent(TripState.loaded(active: _trip(tripId), all: [_trip(tripId)]));
 }
 
 TripModel _trip(String id, {List<String> memberIds = const ['user-1']}) {
@@ -183,26 +200,112 @@ void main() {
       expect((await reloaded).itinerary.id, 'trip-1');
     });
 
-    test('a listen denied while the trip is still being committed is retried', () async {
-      await firestore.collection('itineraries').doc('trip-1').set({
-        'invitees': ['user-1'],
-        'daily_plans': [_dayPlan(title: 'SkyTree Day')],
-        'pins': <dynamic>[],
-        'last_updated': Timestamp.fromDate(DateTime.utc(2023, 6, 15, 8, 30)),
+    group('auto retry', () {
+      ItineraryCubit buildScriptedCubit(ItineraryService scripted, {Duration backoff = Duration.zero}) {
+        final cubit = ItineraryCubit(scripted, fakeAuthService(), ItineraryRepository(), backoff);
+        addTearDown(cubit.close);
+        return cubit;
+      }
+
+      test('a listen denied while the trip is still being committed is retried', () async {
+        await _seedItinerary(firestore, 'trip-1');
+        final flaky = _ScriptedItineraryService(
+          firestore,
+          (tripId, listen) => listen == 1 ? Stream.error(_denied()) : service.watchItinerary(tripId),
+        );
+        final cubit = buildScriptedCubit(flaky);
+        final states = <ItineraryStates>[];
+        final subscription = cubit.stream.listen(states.add);
+        addTearDown(subscription.cancel);
+        final loaded = _waitFor<LoadedItineraryState>(cubit);
+
+        _activate('trip-1');
+
+        expect((await loaded).itinerary.dailyPlans.single.title, 'Day of trip-1');
+        expect(flaky.listens, ['trip-1', 'trip-1']);
+        expect(states.whereType<ErrorItineraryState>(), isEmpty);
       });
-      final flaky = _DeniedOnceItineraryService(firestore);
-      final cubit = ItineraryCubit(flaky, fakeAuthService(), ItineraryRepository(), Duration.zero);
-      addTearDown(cubit.close);
-      final states = <ItineraryStates>[];
-      final subscription = cubit.stream.listen(states.add);
-      addTearDown(subscription.cancel);
-      final loaded = _waitFor<LoadedItineraryState>(cubit);
 
-      _TripStreamHarness().pushTripEvent(TripState.loaded(active: _trip('trip-1'), all: [_trip('trip-1')]));
+      test('a cached snapshot before each denial does not refill the retry budget', () async {
+        const cachedCopy = ItineraryModel(id: 'trip-1', invitees: [], dailyPlans: [], pins: [], lastUpdated: null);
+        final denied = _ScriptedItineraryService(
+          firestore,
+          (_, _) => Stream.multi((controller) {
+            controller
+              ..add(cachedCopy)
+              ..addError(_denied());
+          }),
+        );
+        final cubit = buildScriptedCubit(denied);
+        final states = <ItineraryStates>[];
+        final subscription = cubit.stream.listen(states.add);
+        addTearDown(subscription.cancel);
+        final error = _waitFor<ErrorItineraryState>(cubit);
 
-      expect((await loaded).itinerary.dailyPlans.single.title, 'SkyTree Day');
-      expect(flaky.listens, 2);
-      expect(states.whereType<ErrorItineraryState>(), isEmpty);
+        _activate('trip-1');
+        await error;
+        await Future<void>.delayed(const Duration(milliseconds: 50));
+
+        expect(denied.listens, hasLength(3));
+        // The shown cached copy is not replaced by Loading on an auto retry.
+        expect(states.skipWhile((s) => s is! LoadedItineraryState).whereType<LoadingItineraryState>(), isEmpty);
+      });
+
+      test('a non-transient error surfaces at once without retrying', () async {
+        final broken = _ScriptedItineraryService(
+          firestore,
+          (_, _) => Stream.error(FirebaseException(plugin: 'cloud_firestore', code: 'failed-precondition')),
+        );
+        final cubit = buildScriptedCubit(broken);
+        final error = _waitFor<ErrorItineraryState>(cubit);
+
+        _activate('trip-1');
+        await error;
+        await Future<void>.delayed(const Duration(milliseconds: 50));
+
+        expect(broken.listens, ['trip-1']);
+      });
+
+      test('switching trips during the backoff cancels the pending retry', () async {
+        await _seedItinerary(firestore, 'trip-a');
+        await _seedItinerary(firestore, 'trip-b');
+        final scripted = _ScriptedItineraryService(firestore, (tripId, listen) {
+          final deniedFirstListen = tripId == 'trip-a' && listen == 1;
+          return deniedFirstListen ? Stream.error(_denied()) : service.watchItinerary(tripId);
+        });
+        final cubit = buildScriptedCubit(scripted, backoff: const Duration(milliseconds: 100));
+
+        _activate('trip-a');
+        await Future<void>.delayed(const Duration(milliseconds: 20));
+        final loadedB = _waitFor<LoadedItineraryState>(cubit, where: (s) => s.itinerary.id == 'trip-b');
+        _activate('trip-b');
+        await loadedB;
+        final loadedA = _waitFor<LoadedItineraryState>(cubit, where: (s) => s.itinerary.id == 'trip-a');
+        _activate('trip-a');
+        await loadedA;
+
+        final states = <ItineraryStates>[];
+        final subscription = cubit.stream.listen(states.add);
+        addTearDown(subscription.cancel);
+        await Future<void>.delayed(const Duration(milliseconds: 200));
+
+        expect(scripted.listens, ['trip-a', 'trip-b', 'trip-a']);
+        expect(states, isEmpty);
+        expect((cubit.state as LoadedItineraryState).itinerary.id, 'trip-a');
+      });
+
+      test('closing during the backoff stops the pending retry', () async {
+        final denied = _ScriptedItineraryService(firestore, (_, _) => Stream.error(_denied()));
+        final cubit = buildScriptedCubit(denied, backoff: const Duration(milliseconds: 50));
+
+        _activate('trip-1');
+        await Future<void>.delayed(const Duration(milliseconds: 20));
+        await cubit.close();
+        await Future<void>.delayed(const Duration(milliseconds: 100));
+
+        expect(denied.listens, ['trip-1']);
+        expect(cubit.state, isA<LoadingItineraryState>());
+      });
     });
 
     test('retry is a no-op when no trip is active', () async {
