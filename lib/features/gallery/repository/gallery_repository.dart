@@ -143,6 +143,21 @@ class GalleryRepository {
     return _useBox(_savedToPhotosBoxName(tripId), (box) => box.put(id, true));
   }
 
+  /// Forgets which of [tripId]'s photos were saved to the Photos app, so they can all be saved again.
+  Future<void> clearSavedPhotoIds(String tripId) {
+    return _useBox(_savedToPhotosBoxName(tripId), (box) => box.clear());
+  }
+
+  /// Removes everything this device holds for photo [id] of [tripId]: its
+  /// metadata, its saved-to-Photos mark and its full-resolution files.
+  Future<void> deletePhoto(String tripId, String id) async {
+    await _useBox(_metadataBoxName(tripId), (box) => box.delete(id));
+    await _useBox(_savedToPhotosBoxName(tripId), (box) => box.delete(id));
+    for (final file in [await _durableFile(tripId, id), await _cacheFile(tripId, id)]) {
+      if (await file.exists()) await file.delete();
+    }
+  }
+
   /// Releases the memory held by [tripId]'s Hive boxes; call it when the user leaves the trip.
   /// Boxes still in use are left open, and any later call for the trip simply reopens them.
   Future<void> closeTrip(String tripId) async {

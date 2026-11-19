@@ -61,6 +61,7 @@ class _GalleryFocusViewState extends State<GalleryFocusView> {
   // follow the user onto the next photo.
   final _savingIds = <String>{};
   final _sharingIds = <String>{};
+  final _deletingIds = <String>{};
 
   String? _notice;
   Timer? _noticeTimer;
@@ -154,6 +155,39 @@ class _GalleryFocusViewState extends State<GalleryFocusView> {
     }
   }
 
+  Future<void> _deleteCurrentPhoto() async {
+    final id = _currentImage.id;
+    final confirmed =
+        await showDialog<bool>(
+          context: context,
+          builder: (dialogContext) => AlertDialog(
+            title: const Text('Delete this photo?'),
+            content: const Text('It will be removed from the album for everyone on the trip. This can’t be undone.'),
+            actions: [
+              TextButton(onPressed: () => Navigator.of(dialogContext).pop(false), child: const Text('Cancel')),
+              TextButton(
+                onPressed: () => Navigator.of(dialogContext).pop(true),
+                child: Text('Delete', style: TextStyle(color: XploreColors.error)),
+              ),
+            ],
+          ),
+        ) ??
+        false;
+    if (!confirmed || !mounted) return;
+
+    setState(() => _deletingIds.add(id));
+    final deleted = await _cubit.deletePhoto(id);
+    if (!mounted) return;
+    setState(() => _deletingIds.remove(id));
+
+    if (deleted) {
+      // The viewer pages through a snapshot of the album, which now holds a photo that no longer exists.
+      Navigator.pop(context);
+    } else {
+      _showNotice('Couldn’t delete the photo. Try again when you’re online.');
+    }
+  }
+
   GalleryCubit get _cubit => context.read<GalleryCubit>();
 
   static const _unavailableNotice = 'Couldn’t load the full-quality photo. Try again when you’re online.';
@@ -196,7 +230,12 @@ class _GalleryFocusViewState extends State<GalleryFocusView> {
                         top: padding.top + 16,
                         left: _chromeInset,
                         right: _chromeInset,
-                        child: _TopBar(position: _currentIndex + 1, total: widget.images.length),
+                        child: _TopBar(
+                          position: _currentIndex + 1,
+                          total: widget.images.length,
+                          onDelete: _cubit.canDeletePhoto(_currentImage.id) ? _deleteCurrentPhoto : null,
+                          deleting: _deletingIds.contains(_currentImage.id),
+                        ),
                       ),
                       if (loadingOriginal && _notice == null)
                         Positioned(
@@ -311,10 +350,14 @@ class _Scrims extends StatelessWidget {
 }
 
 class _TopBar extends StatelessWidget {
-  const _TopBar({required this.position, required this.total});
+  const _TopBar({required this.position, required this.total, required this.onDelete, required this.deleting});
 
   final int position;
   final int total;
+
+  /// Null when the photo on screen is not the signed-in member's to delete.
+  final VoidCallback? onDelete;
+  final bool deleting;
 
   @override
   Widget build(BuildContext context) {
@@ -345,8 +388,23 @@ class _TopBar extends StatelessWidget {
             ),
           ),
         ),
-        // Balances the close button so the counter stays centred on screen.
-        const SizedBox(width: minTouchTarget),
+        // Without a delete button the slot still balances the close button, so the counter stays centred.
+        if (onDelete == null)
+          const SizedBox(width: minTouchTarget)
+        else
+          IgnorePointer(
+            ignoring: deleting,
+            child: Opacity(
+              opacity: deleting ? 0.5 : 1,
+              child: GlassIconButton(
+                size: minTouchTarget,
+                iconSize: headerIconSize,
+                icon: CupertinoIcons.trash,
+                tooltip: 'Delete photo',
+                onTap: onDelete!,
+              ),
+            ),
+          ),
       ],
     );
   }

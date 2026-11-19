@@ -63,6 +63,16 @@ class _FakeGalleryRepository extends GalleryRepository {
   Future<void> closeTrip(String tripId) async {}
 
   @override
+  Future<void> clearSavedPhotoIds(String tripId) async => savedToPhotos.remove(tripId);
+
+  @override
+  Future<void> deletePhoto(String tripId, String id) async {
+    metadata[tripId]?.remove(id);
+    savedToPhotos[tripId]?.remove(id);
+    fullRes.remove('$tripId/$id');
+  }
+
+  @override
   Future<Set<String>> loadSavedPhotoIds(String tripId) async => {...?savedToPhotos[tripId]};
 
   @override
@@ -95,6 +105,16 @@ class _FakeGalleryService implements GalleryService {
     String? uploaderName,
     String? contentHash,
   }) async => published.add('$tripId/$imageId');
+
+  /// When set, deleting a doc fails, like being offline.
+  bool deleteFails = false;
+  final List<String> deleted = [];
+
+  @override
+  Future<void> deleteImageMetadata({required String tripId, required String imageId}) async {
+    if (deleteFails) throw StateError('offline');
+    deleted.add('$tripId/$imageId');
+  }
 }
 
 class _FakePhotoSaveService implements PhotoSaveService {
@@ -137,6 +157,11 @@ class _OfflineStorageGalleryCubit extends GalleryCubit {
     uploadedPaths.add(storagePath);
     return 'https://storage.test/$storagePath';
   }
+
+  final List<String> deletedPaths = [];
+
+  @override
+  Future<void> deleteStoredImage(String storagePath) async => deletedPaths.add(storagePath);
 }
 
 class _TripStreamHarness with TripStreamMixin {}
@@ -146,8 +171,15 @@ const _tokyo = TripModel(id: 'tokyo', title: 'Tokyo', memberIds: ['me'], created
 
 final Uint8List _jpeg = img.encodeJpg(img.Image(width: 8, height: 8));
 
-ImageModel _image(String id, {EUploadStatus status = EUploadStatus.complete, String? url, Uint8List? thumbnail}) {
+ImageModel _image(
+  String id, {
+  EUploadStatus status = EUploadStatus.complete,
+  String? url,
+  Uint8List? thumbnail,
+  String? uploaderUid,
+}) {
   return ImageModel(
+    uploaderUid: uploaderUid,
     id: id,
     createdAt: DateTime(2026, 1, 1),
     lowResImage: thumbnail ?? _jpeg,
@@ -207,7 +239,7 @@ void main() {
 
     build();
     await pumpEventQueue();
-    service.pushRemote('lisbon', const []);
+    service.pushRemote('lisbon', [_image('cached')]);
     await pumpEventQueue();
 
     expect(cubit.state.imageMap.keys, ['cached']);
@@ -386,6 +418,69 @@ void main() {
     });
   });
 
+  group('deleting', () {
+    test('the uploader deletes a photo for everyone: doc, stored original and local copy', () async {
+      repo.seed('lisbon', [_image('mine', uploaderUid: 'me'), _image('theirs', uploaderUid: 'someone')]);
+      await open(_lisbon);
+
+      expect(await cubit.deletePhoto('mine'), isTrue);
+
+      expect(service.deleted, ['lisbon/mine']);
+      expect(cubit.deletedPaths, ['gallery/lisbon/me/mine']);
+      expect(cubit.state.imageMap.keys, ['theirs']);
+      expect(repo.metadata['lisbon']!.keys, ['theirs']);
+    });
+
+    test('another member\'s photo cannot be deleted', () async {
+      repo.seed('lisbon', [_image('theirs', uploaderUid: 'someone')]);
+      await open(_lisbon);
+
+      expect(cubit.canDeletePhoto('theirs'), isFalse);
+      expect(await cubit.deletePhoto('theirs'), isFalse);
+      expect(service.deleted, isEmpty);
+      expect(cubit.state.imageMap.keys, ['theirs']);
+    });
+
+    test('a photo stays when it could not be deleted in the cloud', () async {
+      repo.seed('lisbon', [_image('mine', uploaderUid: 'me')]);
+      await open(_lisbon);
+      service.deleteFails = true;
+
+      expect(await cubit.deletePhoto('mine'), isFalse);
+
+      expect(cubit.deletedPaths, isEmpty);
+      expect(cubit.state.imageMap.keys, ['mine']);
+    });
+
+    test('a photo deleted by its uploader disappears from other members\' albums', () async {
+      repo.seed('lisbon', [_image('kept'), _image('removed'), _image('unsent', status: EUploadStatus.failed)]);
+      await open(_lisbon);
+
+      service.pushRemote('lisbon', [_image('kept')]);
+      await pumpEventQueue();
+
+      // A photo that never reached the cloud is not "deleted" just because the cloud doesn't list it.
+      expect(cubit.state.imageMap.keys, unorderedEquals(['kept', 'unsent']));
+      expect(repo.metadata['lisbon']!.keys, unorderedEquals(['kept', 'unsent']));
+    });
+
+    test('a photo just uploaded is not dropped by a snapshot taken before it was published', () async {
+      repo.seed('lisbon', [_image('stuck', status: EUploadStatus.failed)], withOriginals: {'stuck'});
+      await open(_lisbon);
+      await cubit.retryUpload('stuck');
+
+      service.pushRemote('lisbon', const []);
+      await pumpEventQueue();
+      expect(cubit.state.imageMap.keys, ['stuck']);
+
+      // Once the cloud has reported it, its absence does mean it was deleted.
+      service.pushRemote('lisbon', [_image('stuck')]);
+      service.pushRemote('lisbon', const []);
+      await pumpEventQueue();
+      expect(cubit.state.imageMap, isEmpty);
+    });
+  });
+
   group('saveAllToPhotos', () {
     late _FakePhotoSaveService saver;
 
@@ -439,6 +534,17 @@ void main() {
 
       expect(saver.savedPaths, isEmpty);
       expect(cubit.state.saveProgress?.phase, EPhotoSavePhase.denied);
+    });
+
+    test('saving again re-saves photos already marked as saved', () async {
+      await openWith(EPhotoLibraryAccess.album, [_image('a'), _image('b')], saved: {'a', 'b'});
+      await cubit.saveAllToPhotos();
+      expect(saver.savedPaths, isEmpty);
+
+      await cubit.saveAllToPhotos(includeAlreadySaved: true);
+
+      expect(saver.savedPaths, unorderedEquals(['a.jpg', 'b.jpg']));
+      expect(cubit.state.unsavedCount, 0);
     });
 
     test('a second tap while a run is starting does not save every photo twice', () async {

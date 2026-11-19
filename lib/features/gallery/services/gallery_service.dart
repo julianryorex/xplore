@@ -83,6 +83,11 @@ class GalleryService {
     });
   }
 
+  /// Removes a photo's metadata doc, which takes it out of every member's album.
+  /// The rules only allow this for the member who uploaded it.
+  Future<void> deleteImageMetadata({required String tripId, required String imageId}) =>
+      _images(tripId).doc(imageId).delete();
+
   // `uploadedAt` is deliberately not read: it is only the ordering key, and it
   // is null on a just-written doc until the server timestamp resolves.
   ImageModel? _imageFromDoc(String tripId, QueryDocumentSnapshot<Map<String, dynamic>> doc) {

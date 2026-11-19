@@ -54,7 +54,9 @@ change.
 2. Merge by image id: a local item still `uploading`/`failed` wins over its own remote echo;
    a remote id not seen locally is added from the doc; a remote `complete` for our own upload
    adopts its `downloadUrl` and keeps the richer local bytes.
-3. Photos are append-only. Deletion is out of scope (separate request).
+3. A photo can be deleted only by the member who uploaded it: the doc goes first, then the
+   Storage original. Other members' devices drop any uploaded photo the listener no longer
+   lists.
 4. Cancel the listener on trip switch and in `close()`.
 
 ### Build order
@@ -136,3 +138,7 @@ Steps 1–4 are one PR (cloud listing, thumbnails, de-dupe); step 5 is a second 
   for `gallery/{tripId}/{uid}/{imageId}` became owner-scoped, because Storage rules can only
   read the `(default)` Firestore database and trips live in `xplore-app`; members reach other
   members' originals through the download URL on the member-only Firestore doc.
+- 2026-11-19 (delete and re-save): uploaders can delete their own photos from the viewer
+  (rules allow `delete` on the doc for its `uploaderUid` and on the Storage object for its
+  owner). "Save all" offers to save the whole album again once everything is marked saved,
+  because the app cannot tell that an album was removed in Photos.
