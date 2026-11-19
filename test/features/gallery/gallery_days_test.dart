@@ -63,6 +63,17 @@ void main() {
       expect(dayOverline(DateTime(2025, 9, 1), today: today), isNull);
     });
 
+    test('numbers days by the trip\'s calendar start date, whatever zone created it', () {
+      // 16 Sep picked in Zurich (UTC+2) and in New York (UTC−4); either way Day 1 is 16 Sep.
+      final fromZurich = DateTime.utc(2025, 9, 15, 22);
+      final fromNewYork = DateTime.utc(2025, 9, 16, 4);
+      for (final start in [fromZurich, fromNewYork]) {
+        expect(dayOverline(DateTime(2025, 9, 16), today: today, tripStart: start), 'DAY 1 · TODAY');
+      }
+      expect(tripCalendarDate(DateTime.utc(2025, 9, 15, 11)), DateTime(2025, 9, 16), reason: 'UTC+13');
+      expect(tripCalendarDate(DateTime.utc(2025, 9, 16, 10)), DateTime(2025, 9, 16), reason: 'UTC−10');
+    });
+
     test('counts whole days across a daylight-saving change', () {
       // Europe and the US both change clocks in late October / early November.
       final autumnStart = DateTime(2025, 10, 20);

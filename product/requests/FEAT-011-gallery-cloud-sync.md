@@ -24,9 +24,10 @@ Storage and is fetched lazily when a photo is opened.
 ```
 galleries/{tripId}/images/{imageId} = {
   uploaderUid:  string,      // == request.auth.uid at create
+  uploaderName: string?,     // uploader's first name; members can't read each other's profiles
   createdAt:    timestamp,   // original photo time (ImageModel.createdAt)
   uploadedAt:   timestamp,   // serverTimestamp(); ordering key
-  fullUrl:      string,      // Storage download URL of the full-res original
+  fullUrl:      string,      // Storage download URL of this photo's own object (rules enforce it)
   storagePath:  string,      // gallery/{tripId}/{uid}/{imageId}
   thumb:        bytes,       // small inline JPEG, ~10–40 KB
 }
@@ -46,9 +47,9 @@ change.
 
 ### Sync rules
 
-1. The snapshot listener is the only thing that writes gallery metadata to Hive and the only
-   thing that marks a remote photo `complete`; uploads write Storage + the doc and let the
-   listener echo it back.
+1. A remote doc only exists once its upload fully succeeded, so the listener always marks a
+   photo `complete`. The uploader also marks its own photo `complete` when the doc write
+   returns, without waiting for the echo.
 2. Merge by image id: a local item still `uploading`/`failed` wins over its own remote echo;
    a remote id not seen locally is added from the doc; a remote `complete` for our own upload
    adopts its `downloadUrl` and keeps the richer local bytes.
@@ -84,10 +85,10 @@ Steps 1–4 are one PR (cloud listing, thumbnails, de-dupe); step 5 is a second 
 
 ## Acceptance criteria
 
-- [ ] Implement cloud listing in `GalleryRepository`
-- [ ] Download thumbnails on trip open; lazy-fetch full res on focus view
-- [ ] De-dupe by image ID with local uploads in progress
-- [ ] Handle failed upload retry on `failed` tiles in the gallery grid
+- [x] Cloud listing (`GalleryService.watchTripImages`, a Firestore listener rather than a Storage listing)
+- [x] Thumbnails arrive inline on trip open; full res is fetched lazily in the focus view
+- [x] De-dupe by image ID with local uploads in progress
+- [x] Failed upload retry on `failed` tiles in the gallery grid
 
 ## Success metrics
 
@@ -110,8 +111,8 @@ Steps 1–4 are one PR (cloud listing, thumbnails, de-dupe); step 5 is a second 
 ## Open questions
 
 - Does `maxEdge 384 / q50` stay well under the doc cap on real photos? Tune if not.
-- Add `uploaderUid` to `ImageModel` now (cheap, enables attribution) or later? Appending it
-  means a new field at the end of the hand-written Hive adapter.
+- Photos uploaded by app versions before this feature have no metadata doc, so other members
+  never see them. Backfill, or accept?
 - Paginate the listener for very large galleries? Defer unless trips routinely pass a few
   hundred photos.
 
@@ -125,6 +126,12 @@ Steps 1–4 are one PR (cloud listing, thumbnails, de-dupe); step 5 is a second 
   the plan above: full-res originals are cached as files under
   `<app support>/gallery/{tripId}/{imageId}.jpg` instead of a Hive box (a regular box loads
   every original into memory), and a remote doc always marks a photo `complete`, since the
-  doc only exists once the upload succeeded. `ImageModel` gained `uploaderUid`. Also adds
-  "Save all to Photos" (album `Xplore – <trip>`, via `gal`). Rules **deploy** and the
-  gallery UI redesign are still open.
+  doc only exists once the upload succeeded. `ImageModel` gained `uploaderUid` and
+  `uploaderName`. Also adds "Save all to Photos" (album `Xplore – <trip>`, via `gal`) and the
+  day-by-day gallery redesign. Firestore rules deployed the same day.
+- 2026-11-19 (review fixes): every gallery operation now carries its trip id explicitly, so
+  work that finishes after a trip switch stays in its own trip. Downloaded originals moved to
+  the caches directory; originals awaiting upload stay in durable storage. The Storage rule
+  for `gallery/{tripId}/{uid}/{imageId}` became owner-scoped, because Storage rules can only
+  read the `(default)` Firestore database and trips live in `xplore-app`; members reach other
+  members' originals through the download URL on the member-only Firestore doc.

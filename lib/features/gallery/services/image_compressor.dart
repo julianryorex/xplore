@@ -106,3 +106,46 @@ Future<Uint8List?> compressGallerySyncThumbnailAsync(Uint8List bytes) async {
   );
   return thumb.lengthInBytes <= kGallerySyncThumbnailMaxBytes ? thumb : null;
 }
+
+/// Whether [bytes] is a sync thumbnail that is safe to decode: a JPEG within
+/// [kGallerySyncThumbnailMaxBytes] whose declared size fits [kGallerySyncThumbnailMaxEdge].
+///
+/// Another member wrote these bytes and the rules can only bound their length, so a
+/// tiny file declaring huge dimensions would otherwise exhaust memory when painted.
+bool isAcceptableSyncThumbnail(Uint8List bytes) {
+  if (bytes.lengthInBytes > kGallerySyncThumbnailMaxBytes) return false;
+  try {
+    // startDecode only parses the headers; it allocates no pixel buffers.
+    final info = img.JpegDecoder().startDecode(bytes);
+    return info != null &&
+        info.width > 0 &&
+        info.height > 0 &&
+        info.width <= kGallerySyncThumbnailMaxEdge &&
+        info.height <= kGallerySyncThumbnailMaxEdge;
+  } catch (_) {
+    return false;
+  }
+}
+
+/// When the photo in [bytes] was taken, read from its EXIF data, or `null` when
+/// it carries none.
+///
+/// The picker hands over a temporary copy whose file dates are the moment of
+/// picking, so EXIF is the only record of the day a photo belongs to. EXIF has
+/// no time zone; the value is read as device-local time.
+DateTime? readPhotoTakenAt(Uint8List bytes) {
+  try {
+    final exif = img.decodeJpgExif(bytes);
+    final taken = exif?.exifIfd['DateTimeOriginal']?.toString() ?? exif?.imageIfd['DateTime']?.toString();
+    // EXIF dates look like "2026:09:16 18:42:07".
+    final match = RegExp(r'^(\d{4}):(\d{2}):(\d{2}) (\d{2}):(\d{2}):(\d{2})').firstMatch(taken ?? '');
+    if (match == null) return null;
+
+    final parts = [for (var i = 1; i <= 6; i++) int.parse(match.group(i)!)];
+    // Cameras without a set clock write all zeros.
+    if (parts[0] == 0 || parts[1] == 0 || parts[2] == 0) return null;
+    return DateTime(parts[0], parts[1], parts[2], parts[3], parts[4], parts[5]);
+  } catch (_) {
+    return null;
+  }
+}

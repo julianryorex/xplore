@@ -28,7 +28,7 @@ class _FixedTripCubit extends Cubit<TripState> implements TripCubit {
 /// Repository that skips Hive so the gallery cubit can be built in a test.
 class _EmptyGalleryRepository extends GalleryRepository {
   @override
-  Future<Map<String, ImageModel>> loadImgFromCache() async => {};
+  Future<Map<String, ImageModel>> loadImgFromCache(String tripId) async => {};
 }
 
 Future<void> _pumpHome(WidgetTester tester, TripState tripState) async {

@@ -56,7 +56,8 @@ class _FixedTripCubit extends Cubit<TripState> implements TripCubit {
 ImageModel _photo(String id, DateTime createdAt, {EUploadStatus status = EUploadStatus.complete}) =>
     ImageModel(id: id, createdAt: createdAt, lowResImage: _pixel, isUploading: status, uploaderUid: 'me');
 
-GalleryState _album(List<ImageModel> photos) => GalleryState(imageMap: {for (final photo in photos) photo.id: photo});
+GalleryState _album(List<ImageModel> photos) =>
+    GalleryState(imageMap: {for (final photo in photos) photo.id: photo}, hasSyncedWithCloud: true);
 
 Future<({_FakeGalleryCubit cubit, List<Object?> openedWith})> _pumpGallery(
   WidgetTester tester,
@@ -153,13 +154,15 @@ void main() {
     expect(find.text('Xplore can\'t save to Photos'), findsNothing);
   });
 
-  testWidgets('renders the empty album, first sync and a save run', (tester) async {
-    final harness = await _pumpGallery(tester, const GalleryState());
+  testWidgets('renders first sync, the empty album and a save run', (tester) async {
+    // The local cache has loaded empty, but the cloud hasn't answered yet.
+    final harness = await _pumpGallery(tester, const GalleryState(status: EBlocStatus.loaded));
+    expect(find.text('Syncing the album…'), findsOneWidget);
+    expect(find.text('Start the shared album'), findsNothing);
+
+    await harness.cubit.show(tester, const GalleryState(hasSyncedWithCloud: true));
     expect(find.text('Start the shared album'), findsOneWidget);
     expect(find.text('2 others will see them'), findsOneWidget);
-
-    await harness.cubit.show(tester, const GalleryState(status: EBlocStatus.loading));
-    expect(find.text('Syncing the album…'), findsOneWidget);
 
     await harness.cubit.show(
       tester,

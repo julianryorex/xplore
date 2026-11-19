@@ -14,12 +14,21 @@ import 'package:xplore/constants/typography.dart';
 import 'package:xplore/core/glass.dart';
 import 'package:xplore/features/gallery/bloc/gallery_cubit.dart';
 import 'package:xplore/features/gallery/models/image_models.dart';
+import 'package:xplore/features/gallery/presentation/gallery_days.dart';
 import 'package:xplore/features/gallery/presentation/widgets/uploader_avatar.dart';
 import 'package:xplore/features/trip/presentation/trip_invite_sharer.dart';
 
 const _chromeInset = 18.0;
 const _chromeFade = Duration(milliseconds: 250);
 const _noticeDuration = Duration(milliseconds: 2500);
+
+/// How long a page must stay on screen before its original is downloaded, so a fling through the
+/// album doesn't start a multi-MB download for every photo it passes.
+const _settleDelay = Duration(milliseconds: 300);
+
+/// Originals are decoded at most this many times the screen's physical size: enough detail at the
+/// 2x maximum zoom, a fraction of a full-sensor decode's memory.
+const _maxDecodeScale = 2.0;
 
 /// Full-screen, swipeable photo viewer with pinch zoom. Tapping the photo
 /// toggles the floating chrome: close, counter, uploader, Save and Share.
@@ -41,17 +50,21 @@ class _GalleryFocusViewState extends State<GalleryFocusView> {
   late int _currentIndex;
   var _chromeVisible = true;
 
-  /// Originals already on disk, by photo id. Only paths are held here; the
-  /// decoded pixels live in Flutter's bounded image cache.
+  /// Originals already on disk, by photo id. Only paths are held here; the pixels are decoded at
+  /// screen size into Flutter's image cache.
   final _fullResFiles = <String, File>{};
 
-  /// Fetches in flight, by photo id, so a Share tap during loading reuses the running download.
+  /// Fetches in flight, by photo id, so a Save or Share tap during loading reuses the running download.
   final _pendingFetches = <String, Future<File?>>{};
 
-  var _saving = false;
-  var _sharing = false;
+  // Busy state is per photo: paging stays enabled while an action runs, and the spinner must not
+  // follow the user onto the next photo.
+  final _savingIds = <String>{};
+  final _sharingIds = <String>{};
+
   String? _notice;
   Timer? _noticeTimer;
+  Timer? _settleTimer;
 
   ImageModel get _currentImage => widget.images[_currentIndex];
 
@@ -66,13 +79,17 @@ class _GalleryFocusViewState extends State<GalleryFocusView> {
   @override
   void dispose() {
     _noticeTimer?.cancel();
+    _settleTimer?.cancel();
     _pageController.dispose();
     super.dispose();
   }
 
   void _onPageChanged(int index) {
     setState(() => _currentIndex = index);
-    _loadFullRes(widget.images[index].id);
+    _settleTimer?.cancel();
+    _settleTimer = Timer(_settleDelay, () {
+      if (mounted && _currentIndex == index) _loadFullRes(widget.images[index].id);
+    });
   }
 
   /// The original of photo [id] (downloaded first if another member added it),
@@ -84,7 +101,7 @@ class _GalleryFocusViewState extends State<GalleryFocusView> {
   }
 
   Future<File?> _fetchFullRes(String id) async {
-    final file = await context.read<GalleryCubit>().fetchFullResFile(id);
+    final file = await _cubit.fetchFullResFile(id);
     _pendingFetches.remove(id);
     if (mounted) {
       setState(() {
@@ -95,23 +112,39 @@ class _GalleryFocusViewState extends State<GalleryFocusView> {
   }
 
   Future<void> _saveCurrentPhoto() async {
-    setState(() => _saving = true);
-    final saved = await context.read<GalleryCubit>().savePhotoToPhotos(_currentImage.id);
+    final id = _currentImage.id;
+    setState(() => _savingIds.add(id));
+    // Resolving the original here first tells "offline" apart from "no photo access", which the
+    // cubit's save reports alike, and reuses the download already running for this page.
+    final file = await _loadFullRes(id);
+    final saved = file != null && await _cubit.savePhotoToPhotos(id);
     if (!mounted) return;
-    setState(() => _saving = false);
-    if (saved) HapticFeedback.lightImpact();
-    _showNotice(saved ? 'Saved to Photos' : 'Couldn’t save. Check photo access in Settings.');
+    setState(() => _savingIds.remove(id));
+
+    if (file == null) {
+      _showNotice(_unavailableNotice);
+    } else if (!saved) {
+      _showNotice('Couldn’t save. Check photo access in Settings.');
+    } else if (_currentImage.id == id) {
+      // A confirmation over a different photo would read as that photo being saved.
+      HapticFeedback.lightImpact();
+      _showNotice('Saved to Photos');
+    }
   }
 
   Future<void> _shareCurrentPhoto(Rect? origin) async {
-    setState(() => _sharing = true);
-    final file = await _loadFullRes(_currentImage.id);
+    final id = _currentImage.id;
+    setState(() => _sharingIds.add(id));
+    final file = await _loadFullRes(id);
     if (!mounted) return;
-    setState(() => _sharing = false);
+    setState(() => _sharingIds.remove(id));
 
+    // The user swiped away while the original downloaded; opening the sheet now would share a photo
+    // that is no longer on screen.
+    if (_currentImage.id != id) return;
     // Sharing the thumbnail would quietly send a low-quality copy, so say why nothing happened instead.
     if (file == null) {
-      _showNotice('Couldn’t load the full-quality photo. Try again when you’re online.');
+      _showNotice(_unavailableNotice);
       return;
     }
     try {
@@ -120,6 +153,10 @@ class _GalleryFocusViewState extends State<GalleryFocusView> {
       if (mounted) _showNotice('Couldn’t open the share sheet. Please try again.');
     }
   }
+
+  GalleryCubit get _cubit => context.read<GalleryCubit>();
+
+  static const _unavailableNotice = 'Couldn’t load the full-quality photo. Try again when you’re online.';
 
   void _showNotice(String message) {
     _noticeTimer?.cancel();
@@ -134,7 +171,7 @@ class _GalleryFocusViewState extends State<GalleryFocusView> {
     final padding = MediaQuery.viewPaddingOf(context);
     final bottomOffset = math.max(padding.bottom, 16.0);
     final image = _currentImage;
-    final uploader = PhotoUploader.of(image, currentUid: context.read<GalleryCubit>().currentUid);
+    final uploader = PhotoUploader.of(image, currentUid: _cubit.currentUid);
     final loadingOriginal = _pendingFetches.containsKey(image.id);
     // The status chip sits a fixed distance above the bottom row, over the lower edge of a typical photo.
     final chipBottom = bottomOffset + minTouchTarget + 100;
@@ -175,8 +212,8 @@ class _GalleryFocusViewState extends State<GalleryFocusView> {
                         child: _BottomBar(
                           uploader: uploader,
                           takenAt: image.createdAt,
-                          saving: _saving,
-                          sharing: _sharing,
+                          saving: _savingIds.contains(image.id),
+                          sharing: _sharingIds.contains(image.id),
                           onSave: _saveCurrentPhoto,
                           onShare: _shareCurrentPhoto,
                         ),
@@ -201,6 +238,8 @@ class _GalleryFocusViewState extends State<GalleryFocusView> {
   }
 
   Widget _buildPager() {
+    final decodeBound =
+        (MediaQuery.sizeOf(context).longestSide * MediaQuery.devicePixelRatioOf(context) * _maxDecodeScale).round();
     return PhotoViewGallery.builder(
       pageController: _pageController,
       onPageChanged: _onPageChanged,
@@ -214,7 +253,10 @@ class _GalleryFocusViewState extends State<GalleryFocusView> {
         final image = widget.images[index];
         final original = _fullResFiles[image.id];
         return PhotoViewGalleryPageOptions(
-          imageProvider: original != null ? FileImage(original) : MemoryImage(image.lowResImage) as ImageProvider,
+          imageProvider: original != null
+              // Display only: Save and Share still send the untouched original file.
+              ? ResizeImage(FileImage(original), width: decodeBound, height: decodeBound, policy: ResizeImagePolicy.fit)
+              : MemoryImage(image.lowResImage) as ImageProvider,
           initialScale: PhotoViewComputedScale.contained,
           minScale: PhotoViewComputedScale.contained,
           maxScale: PhotoViewComputedScale.contained * 2,
@@ -442,7 +484,7 @@ class _StatusChip extends StatelessWidget {
   }
 }
 
-/// The 32pt-tall translucent capsule shared by the counter and status chips.
+/// The translucent capsule shared by the counter and status chips: 32pt tall, growing with large text.
 class _GlassPill extends StatelessWidget {
   const _GlassPill({required this.padding, required this.child});
 
@@ -451,13 +493,13 @@ class _GlassPill extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return SizedBox(
-      height: 32,
+    return ConstrainedBox(
+      constraints: const BoxConstraints(minHeight: 32),
       child: GlassSurface(
         strong: true,
         borderRadius: radiusMd,
         padding: padding,
-        child: Align(widthFactor: 1, child: child),
+        child: Align(widthFactor: 1, heightFactor: 1, child: child),
       ),
     );
   }
@@ -482,13 +524,9 @@ class _Spinner extends StatelessWidget {
   }
 }
 
-const _weekdays = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
-const _months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
-
-/// "Tue 16 Sep · 18:42" in device-local time, with the year added when it is not the current one.
 String _formatTakenAt(DateTime takenAt) {
   final local = takenAt.toLocal();
   final year = local.year == DateTime.now().year ? '' : ' ${local.year}';
   final time = '${local.hour.toString().padLeft(2, '0')}:${local.minute.toString().padLeft(2, '0')}';
-  return '${_weekdays[local.weekday - 1]} ${local.day} ${_months[local.month - 1]}$year · $time';
+  return '${dayHeading(local)}$year · $time';
 }

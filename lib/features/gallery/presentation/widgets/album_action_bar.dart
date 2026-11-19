@@ -97,6 +97,8 @@ class _SaveAllButton extends StatelessWidget {
   final int unsavedCount;
   final VoidCallback onPressed;
 
+  static const _disabledForeground = Color(0xFF77777D);
+
   @override
   Widget build(BuildContext context) {
     final enabled = mode != SaveAllMode.unavailable && mode != SaveAllMode.saving;
@@ -125,12 +127,12 @@ class _SaveAllButton extends StatelessWidget {
       SaveAllMode.unavailable => (
         'Save all',
         'Save all to Photos, unavailable until photos finish syncing',
-        const Icon(Icons.download_rounded, size: 20, color: Color(0xFF77777D)),
+        const Icon(Icons.download_rounded, size: 20, color: _disabledForeground),
       ),
     };
 
     final foreground = switch (mode) {
-      SaveAllMode.unavailable => const Color(0xFF77777D),
+      SaveAllMode.unavailable => _disabledForeground,
       SaveAllMode.saving => XploreColors.secondaryLabel,
       SaveAllMode.allSaved => XploreColors.inactiveControl,
       _ => XploreColors.white,

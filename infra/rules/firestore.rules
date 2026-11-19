@@ -220,6 +220,16 @@ service cloud.firestore {
       return 262144;
     }
 
+    // The download URL getDownloadURL() returns for this photo's own Storage object
+    // (the object path is percent-encoded; the iOS SDK spells out the :443 port).
+    // Every member's device downloads fullUrl, so it may not point anywhere else.
+    // Mirrors isGalleryDownloadUrl in gallery_download_url.dart; the bucket
+    // mirrors storageBucket in firebase_options.dart.
+    function galleryDownloadUrlPattern(tripId, imageId) {
+      return 'https://firebasestorage[.]googleapis[.]com(:443)?/v0/b/xplore-a7012[.]appspot[.]com/o/gallery%2F'
+        + tripId + '%2F' + request.auth.uid + '%2F' + imageId + '[?]alt=media&token=[A-Za-z0-9-]+';
+    }
+
     function validGalleryImageCreate(data, tripId, imageId) {
       // uploaderName is optional: members can't read each other's profiles, so
       // the uploader's first name rides on the photo for attribution.
@@ -229,9 +239,11 @@ service cloud.firestore {
         && (!('uploaderName' in data) || (data.uploaderName is string && data.uploaderName.size() <= 60))
         && data.createdAt is timestamp
         && data.uploadedAt == request.time
+        // imageId is spliced into the fullUrl regex, so keep it to UUID characters.
+        && imageId.matches('[A-Za-z0-9-]+')
         && data.fullUrl is string
-        && data.fullUrl.size() > 0
         && data.fullUrl.size() <= 2048
+        && data.fullUrl.matches(galleryDownloadUrlPattern(tripId, imageId))
         && data.storagePath == 'gallery/' + tripId + '/' + request.auth.uid + '/' + imageId
         && data.thumb is bytes
         && data.thumb.size() > 0
