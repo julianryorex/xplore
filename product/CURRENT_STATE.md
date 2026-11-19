@@ -17,7 +17,7 @@ Snapshot of what exists in `lib/` vs. what product assumes. Update this doc when
 | Google Map + neon style | ✅ | `MapCanvas`, `assets/maps/GoogleMapNeon.json` |
 | Live location sync | ✅ | Firebase RTDB at `locations/{tripId}`; interval configurable via `.env` |
 | Avatar map markers | ✅ | Profile photo → widget → PNG → Hive CE + Storage |
-| Gallery pick / upload / zoom | ✅ | Optimistic UI; pure-Dart thumbnail compression ([FEAT-043](./requests/done/FEAT-043-image-compression.md)) |
+| Gallery pick / upload / zoom | ✅ | Optimistic UI with retry; shared across members via Firestore metadata (FEAT-011, rules deploy pending); full-res cached as files; Save all to Photos; pure-Dart thumbnail compression ([FEAT-043](./requests/done/FEAT-043-image-compression.md)) |
 | Profile photo | ✅ Local | Saved to app documents; liquid-glass Edit Profile UI (PR #88); cloud sync is FEAT-015 |
 | Notifications screen | ✅ UI shell | Home header routes to liquid-glass feed with sample data (PR #86); FCM / push delivery is FEAT-012 |
 | Trip load error UX | ✅ | Liquid-glass error banner when `TripCubit` fails (PR #85) |
@@ -60,7 +60,7 @@ Also outstanding:
 | Itinerary editing CRUD | Read path only; organizer UI deferred (FEAT-006 / FEAT-024) |
 | Multi-trip switcher | Create-trip works; list/switch UI deferred (FEAT-002 gap) |
 | Gemini AI in UI | Not wired. `ItineraryGenerator` / `GeminiItineraryService` still exist in `lib/` but the create flow no longer calls them; agentic generation is being built outside this repo. Credits gating (FEAT-021) and `place_id` enrichment deferred |
-| Gallery cloud fetch | `GalleryRepository` TODO: Firebase Storage fetch; cache-only on new device |
+| Gallery cloud fetch | Built (FEAT-011); needs the `galleries/{tripId}/images` Firestore rules deployed before it works against production |
 | Push notifications (FCM) | `NotificationsPage` uses local sample data; no backend |
 | Background location | TODOs in `LocationCubit` |
 | Android / web runtime | iOS/macOS Firebase config only |

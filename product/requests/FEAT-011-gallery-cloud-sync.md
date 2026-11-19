@@ -4,7 +4,7 @@
 |-------|-------|
 | **ID** | FEAT-011 |
 | **Priority** | P1 |
-| **Status** | `ready_for_dev` |
+| **Status** | `in_progress` |
 | **Revenue impact** | retention |
 | **Effort** | M |
 | **Owner** | — |
@@ -120,3 +120,11 @@ Steps 1–4 are one PR (cloud listing, thumbnails, de-dupe); step 5 is a second 
 - 2025-06-22: Created
 - 2026-11-17: Replaced the Storage-listing approach with Firestore metadata + inline
   thumbnails, added sync rules and build order. Ready for development.
+- 2026-11-19: Built on `julius/photos-revamp`: `GalleryService`, listener + merge in
+  `GalleryCubit`, sync thumbnail, Firestore rules, retry on failed tiles. Two changes from
+  the plan above: full-res originals are cached as files under
+  `<app support>/gallery/{tripId}/{imageId}.jpg` instead of a Hive box (a regular box loads
+  every original into memory), and a remote doc always marks a photo `complete`, since the
+  doc only exists once the upload succeeded. `ImageModel` gained `uploaderUid`. Also adds
+  "Save all to Photos" (album `Xplore – <trip>`, via `gal`). Rules **deploy** and the
+  gallery UI redesign are still open.

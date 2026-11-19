@@ -15,6 +15,14 @@ abstract class ImageModel with _$ImageModel {
     required Uint8List lowResImage,
     required EUploadStatus isUploading,
     String? downloadUrl,
+
+    /// Firebase UID of the member who added the photo. `null` for photos cached
+    /// before attribution existed.
+    String? uploaderUid,
+
+    /// The uploader's first name at upload time. Stored on the photo because
+    /// members cannot read each other's profiles.
+    String? uploaderName,
   }) = _ImageModel;
 }
 

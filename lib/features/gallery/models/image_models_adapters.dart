@@ -24,13 +24,16 @@ class ImageModelAdapter extends TypeAdapter<ImageModel> {
       lowResImage: fields[2] as Uint8List,
       isUploading: fields[3] as EUploadStatus,
       downloadUrl: fields[4] as String?,
+      // Absent in records written before attribution was added.
+      uploaderUid: fields[5] as String?,
+      uploaderName: fields[6] as String?,
     );
   }
 
   @override
   void write(BinaryWriter writer, ImageModel obj) {
     writer
-      ..writeByte(5)
+      ..writeByte(7)
       ..writeByte(0)
       ..write(obj.id)
       ..writeByte(1)
@@ -40,7 +43,11 @@ class ImageModelAdapter extends TypeAdapter<ImageModel> {
       ..writeByte(3)
       ..write(obj.isUploading)
       ..writeByte(4)
-      ..write(obj.downloadUrl);
+      ..write(obj.downloadUrl)
+      ..writeByte(5)
+      ..write(obj.uploaderUid)
+      ..writeByte(6)
+      ..write(obj.uploaderName);
   }
 
   @override
