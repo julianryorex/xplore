@@ -41,13 +41,20 @@ void main() {
     };
   }
 
-  Future<void> write(String tripId, String imageId, {String uploaderUid = 'user-1', String? uploaderName}) {
+  Future<void> write(
+    String tripId,
+    String imageId, {
+    String uploaderUid = 'user-1',
+    String? uploaderName,
+    String? contentHash,
+  }) {
     final storagePath = 'gallery/$tripId/$uploaderUid/$imageId';
     return service.writeImageMetadata(
       tripId: tripId,
       imageId: imageId,
       uploaderUid: uploaderUid,
       uploaderName: uploaderName,
+      contentHash: contentHash,
       createdAt: DateTime.utc(2026, 5, 1, 12),
       fullUrl: downloadUrl(storagePath),
       storagePath: storagePath,
@@ -79,6 +86,12 @@ void main() {
       expect(image.downloadUrl, downloadUrl('gallery/trip-1/user-7/img-1'));
       expect(image.uploaderUid, 'user-7');
       expect(image.uploaderName, 'Ana');
+    });
+
+    test('carries the content hash so other devices can spot a duplicate', () async {
+      await write('trip-1', 'img-1', contentHash: 'a' * 64);
+
+      expect((await service.watchTripImages('trip-1').first).single.contentHash, 'a' * 64);
     });
 
     test('omits uploaderName when there is none', () async {

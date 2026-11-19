@@ -55,6 +55,7 @@ class GalleryService {
     required String storagePath,
     required Uint8List thumb,
     String? uploaderName,
+    String? contentHash,
   }) async {
     final doc = _images(tripId).doc(imageId);
     // A transaction (not get-then-set) so two concurrent retries can't both
@@ -72,6 +73,7 @@ class GalleryService {
       transaction.set(doc, <String, dynamic>{
         'uploaderUid': uploaderUid,
         'uploaderName': ?uploaderName,
+        'contentHash': ?contentHash,
         'createdAt': Timestamp.fromDate(createdAt),
         'uploadedAt': FieldValue.serverTimestamp(),
         'fullUrl': fullUrl,
@@ -91,6 +93,7 @@ class GalleryService {
     final storagePath = data['storagePath'];
     final uploaderUid = data['uploaderUid'];
     final uploaderName = data['uploaderName'];
+    final contentHash = data['contentHash'];
 
     if (createdAt is! Timestamp ||
         thumb is! Blob ||
@@ -117,6 +120,7 @@ class GalleryService {
       downloadUrl: fullUrl,
       uploaderUid: uploaderUid,
       uploaderName: uploaderName is String ? uploaderName : null,
+      contentHash: contentHash is String ? contentHash : null,
     );
   }
 }

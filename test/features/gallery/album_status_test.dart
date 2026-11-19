@@ -32,6 +32,12 @@ void main() {
       expect(status.progress, 0.25);
     });
 
+    test('skipped duplicates are reported ahead of upload progress', () {
+      final status = AlbumStatus.of(_album(mixed).copyWith(duplicatesSkipped: 2))!;
+      expect(status.kind, AlbumStatusKind.duplicatesSkipped);
+      expect(status.title, '2 photos were already in the album');
+    });
+
     test('failed uploads outrank uploads in progress', () {
       final status = AlbumStatus.of(_album(mixed))!;
       expect(status.kind, AlbumStatusKind.uploadsFailed);

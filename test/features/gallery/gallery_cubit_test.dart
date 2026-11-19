@@ -10,6 +10,7 @@ import 'package:xplore/features/gallery/bloc/gallery_cubit.dart';
 import 'package:xplore/features/gallery/models/image_models.dart';
 import 'package:xplore/features/gallery/repository/gallery_repository.dart';
 import 'package:xplore/features/gallery/services/gallery_service.dart';
+import 'package:xplore/features/gallery/services/photo_content_hash.dart';
 import 'package:xplore/features/gallery/services/photo_save_service.dart';
 import 'package:xplore/features/trip/bloc/trip_state.dart';
 import 'package:xplore/features/trip/models/trip_model.dart';
@@ -91,6 +92,7 @@ class _FakeGalleryService implements GalleryService {
     required String storagePath,
     required Uint8List thumb,
     String? uploaderName,
+    String? contentHash,
   }) async => published.add('$tripId/$imageId');
 }
 
@@ -257,6 +259,31 @@ void main() {
       expect(cubit.uploadedPaths, ['gallery/lisbon/me/${added.id}']);
       expect(service.published, ['lisbon/${added.id}']);
       expect(repo.released, ['lisbon/${added.id}']);
+    });
+
+    test('a photo the trip already has is skipped and reported, not added again', () async {
+      await open(_lisbon);
+      await cubit.addPhotos('lisbon', [picked]);
+      await _until(() => service.published.length == 1);
+
+      // The same file twice more: once against the album, once within the pick.
+      await cubit.addPhotos('lisbon', [picked, picked]);
+
+      expect(cubit.state.imageMap, hasLength(1));
+      expect(cubit.state.duplicatesSkipped, 2);
+      expect(service.published, hasLength(1));
+    });
+
+    test('a photo another member already added is skipped too', () async {
+      await open(_lisbon);
+      final theirs = _image('theirs').copyWith(contentHash: photoContentHash(_jpeg));
+      service.pushRemote('lisbon', [theirs]);
+      await pumpEventQueue();
+
+      await cubit.addPhotos('lisbon', [picked]);
+
+      expect(cubit.state.imageMap.keys, ['theirs']);
+      expect(cubit.state.duplicatesSkipped, 1);
     });
 
     // Regression: photos used to follow whichever trip was active when each await resumed.

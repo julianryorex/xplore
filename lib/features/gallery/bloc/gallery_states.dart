@@ -18,6 +18,10 @@ abstract class GalleryState with _$GalleryState {
     /// Whether the active trip's photos have arrived from the cloud at least
     /// once (or the attempt failed). Until then an empty album may just be unsynced.
     @Default(false) bool hasSyncedWithCloud,
+
+    /// How many photos of the last pick were left out because the trip already
+    /// has them. Cleared again after a few seconds.
+    @Default(0) int duplicatesSkipped,
   }) = _GalleryState;
 
   /// Uploaded photos not yet saved to the Photos app from this device, newest

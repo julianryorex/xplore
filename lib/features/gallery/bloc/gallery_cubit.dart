@@ -13,6 +13,7 @@ import 'package:xplore/features/gallery/models/image_models.dart';
 import 'package:xplore/features/gallery/repository/gallery_repository.dart';
 import 'package:xplore/features/gallery/services/gallery_service.dart';
 import 'package:xplore/features/gallery/services/image_compressor.dart';
+import 'package:xplore/features/gallery/services/photo_content_hash.dart';
 import 'package:xplore/features/gallery/services/photo_save_service.dart';
 import 'package:xplore/features/trip/bloc/trip_state.dart';
 import 'package:xplore/features/trip/bloc/trip_stream_mixin.dart';
@@ -53,6 +54,7 @@ class GalleryCubit extends Cubit<GalleryState> with TripStreamMixin {
   // permission prompt, which would let a second tap start a parallel run.
   bool _isSavingAll = false;
   Timer? _saveResultTimer;
+  Timer? _duplicatesNoticeTimer;
 
   /// Firestore rejects longer names, which would make every upload by that member fail.
   static const _maxUploaderNameLength = 40;
@@ -93,15 +95,23 @@ class GalleryCubit extends Cubit<GalleryState> with TripStreamMixin {
 
   /// Adds [photos] to [tripId]'s gallery. Each appears immediately from a local
   /// thumbnail while its full-resolution original uploads in the background.
+  /// Photos the trip already has (same file contents) are skipped.
   @visibleForTesting
   Future<void> addPhotos(String tripId, List<XFile> photos) async {
+    // One pass over the album per pick; each photo is then a constant-time lookup.
+    final knownHashes = await _contentHashes(tripId);
+    var duplicates = 0;
+
     for (final photo in photos) {
       try {
-        await _addLocalPhoto(tripId, File(photo.path));
+        final added = await _addLocalPhoto(tripId, File(photo.path), knownHashes);
+        if (!added) duplicates++;
       } catch (err) {
         _logger.w('Could not add ${photo.name} to the gallery: $err');
       }
     }
+
+    if (duplicates > 0 && _isActive(tripId)) _showDuplicatesNotice(duplicates);
   }
 
   /// The full-resolution original of photo [id] as a local file, downloading
@@ -219,6 +229,7 @@ class GalleryCubit extends Cubit<GalleryState> with TripStreamMixin {
   @override
   Future<void> close() async {
     _saveResultTimer?.cancel();
+    _duplicatesNoticeTimer?.cancel();
     await _tripSubscription?.cancel();
     await _remoteSubscription?.cancel();
     return super.close();
@@ -228,8 +239,13 @@ class GalleryCubit extends Cubit<GalleryState> with TripStreamMixin {
   //! Uploading
   //! -------------------------------------------------------------------------
 
-  Future<void> _addLocalPhoto(String tripId, File pickedFile) async {
+  /// Returns false when the trip already has this exact file, in which case nothing is added.
+  Future<bool> _addLocalPhoto(String tripId, File pickedFile, Set<String> knownHashes) async {
     final originalBytes = await pickedFile.readAsBytes();
+    final contentHash = await photoContentHashAsync(originalBytes);
+    // `add` also catches the same photo picked twice in one go.
+    if (!knownHashes.add(contentHash)) return false;
+
     final image = ImageModel(
       id: const Uuid().v4(),
       // The file's own dates are when it was picked, which would file every photo under its upload day.
@@ -238,6 +254,7 @@ class GalleryCubit extends Cubit<GalleryState> with TripStreamMixin {
       lowResImage: await compressGalleryThumbnailAsync(originalBytes),
       uploaderUid: currentUid,
       uploaderName: _uploaderName,
+      contentHash: contentHash,
     );
 
     // Copy the original before the photo becomes visible: the picker's file is
@@ -245,6 +262,23 @@ class GalleryCubit extends Cubit<GalleryState> with TripStreamMixin {
     await repository.cacheFullRes(tripId, image.id, pickedFile);
     await _storeImage(tripId, image);
     unawaited(_upload(tripId, image));
+    return true;
+  }
+
+  /// Content hashes of every photo [tripId] is known to have on this device.
+  Future<Set<String>> _contentHashes(String tripId) async {
+    // The visible state includes other members' photos from the live listener;
+    // a trip that is not on screen only has what was cached.
+    final images = _isActive(tripId) ? state.imageMap.values : (await repository.loadImgFromCache(tripId)).values;
+    return {for (final image in images) ?image.contentHash};
+  }
+
+  void _showDuplicatesNotice(int duplicates) {
+    _duplicatesNoticeTimer?.cancel();
+    emit(state.copyWith(duplicatesSkipped: duplicates));
+    _duplicatesNoticeTimer = Timer(const Duration(seconds: 5), () {
+      if (!isClosed) emit(state.copyWith(duplicatesSkipped: 0));
+    });
   }
 
   /// Uploads the cached original of [image] and publishes its metadata doc so
@@ -271,6 +305,7 @@ class GalleryCubit extends Cubit<GalleryState> with TripStreamMixin {
         imageId: id,
         uploaderUid: uid,
         uploaderName: image.uploaderName,
+        contentHash: image.contentHash,
         createdAt: image.createdAt,
         fullUrl: downloadUrl,
         storagePath: storagePath,
@@ -332,6 +367,7 @@ class GalleryCubit extends Cubit<GalleryState> with TripStreamMixin {
     if (previousTripId != null) unawaited(repository.closeTrip(previousTripId));
     _activeTripId = tripId;
     _saveResultTimer?.cancel();
+    _duplicatesNoticeTimer?.cancel();
     _remoteSubscription?.cancel();
     _remoteSubscription = null;
 

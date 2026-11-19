@@ -25,6 +25,7 @@ Storage and is fetched lazily when a photo is opened.
 galleries/{tripId}/images/{imageId} = {
   uploaderUid:  string,      // == request.auth.uid at create
   uploaderName: string?,     // uploader's first name; members can't read each other's profiles
+  contentHash:  string?,     // SHA-256 of the original; clients skip a photo the trip already has
   createdAt:    timestamp,   // original photo time (ImageModel.createdAt)
   uploadedAt:   timestamp,   // serverTimestamp(); ordering key
   fullUrl:      string,      // Storage download URL of this photo's own object (rules enforce it)

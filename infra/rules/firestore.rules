@@ -233,10 +233,13 @@ service cloud.firestore {
     function validGalleryImageCreate(data, tripId, imageId) {
       // uploaderName is optional: members can't read each other's profiles, so
       // the uploader's first name rides on the photo for attribution.
-      return data.keys().hasOnly(galleryImageFields().concat(['uploaderName']))
+      // contentHash is optional too: the SHA-256 of the original, which lets
+      // clients skip a photo that is already in the trip.
+      return data.keys().hasOnly(galleryImageFields().concat(['uploaderName', 'contentHash']))
         && data.keys().hasAll(galleryImageFields())
         && data.uploaderUid == request.auth.uid
         && (!('uploaderName' in data) || (data.uploaderName is string && data.uploaderName.size() <= 60))
+        && (!('contentHash' in data) || (data.contentHash is string && data.contentHash.matches('[0-9a-f]{64}')))
         && data.createdAt is timestamp
         && data.uploadedAt == request.time
         // imageId is spliced into the fullUrl regex, so keep it to UUID characters.

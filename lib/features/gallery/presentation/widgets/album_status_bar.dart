@@ -7,7 +7,8 @@ import 'package:xplore/features/gallery/models/image_models.dart';
 import 'package:xplore/features/gallery/presentation/widgets/album_status_ring.dart';
 
 /// The one glass bar above the action bar that reports the album's transient
-/// state: a Save-all run, failed uploads, or uploads in progress, in that order.
+/// state: a Save-all run, skipped duplicates, failed uploads, or uploads in
+/// progress, in that order.
 class AlbumStatusBar extends StatelessWidget {
   const AlbumStatusBar({
     required this.status,
@@ -89,7 +90,7 @@ class AlbumStatusBar extends StatelessWidget {
 }
 
 /// The kinds of message the status bar can carry.
-enum AlbumStatusKind { saving, savePartial, saveDone, uploadsFailed, uploading }
+enum AlbumStatusKind { saving, savePartial, saveDone, duplicatesSkipped, uploadsFailed, uploading }
 
 /// The status bar's content, resolved from the gallery state by priority.
 @immutable
@@ -136,6 +137,16 @@ class AlbumStatus {
         case EPhotoSavePhase.denied:
           break;
       }
+    }
+
+    // Short-lived, so it goes ahead of the upload statuses it would otherwise never outlast.
+    final duplicates = state.duplicatesSkipped;
+    if (duplicates > 0) {
+      return AlbumStatus(
+        kind: AlbumStatusKind.duplicatesSkipped,
+        title: duplicates == 1 ? '1 photo was already in the album' : '$duplicates photos were already in the album',
+        subtitle: duplicates == 1 ? 'It wasn\'t added again' : 'They weren\'t added again',
+      );
     }
 
     final images = state.imageMap.values;
@@ -187,6 +198,7 @@ class _StatusIcon extends StatelessWidget {
     final (Color fill, Color foreground, IconData icon) = switch (kind) {
       AlbumStatusKind.saving => (XploreColors.accentSoft, XploreColors.accent, Icons.download_rounded),
       AlbumStatusKind.saveDone => (XploreColors.accent, XploreColors.onAccent, Icons.check_rounded),
+      AlbumStatusKind.duplicatesSkipped => (XploreColors.raised, XploreColors.white, Icons.photo_library_outlined),
       AlbumStatusKind.savePartial => (
         XploreColors.warning.withValues(alpha: 0.18),
         XploreColors.warning,
