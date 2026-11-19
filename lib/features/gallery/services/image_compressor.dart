@@ -6,7 +6,9 @@ import 'package:image/image.dart' as img;
 /// We deliberately keep the full-resolution original untouched (it is what
 /// uploads to Firebase Storage so other members see the full-detail photo).
 /// This only produces the smaller `lowResImage` that is cached in Hive and
-/// rendered in the local gallery grid for fast, low-memory display.
+/// rendered in the local gallery grid for fast, low-memory display, plus a
+/// much smaller sync thumbnail that is inlined in the photo's Firestore
+/// metadata doc so other members' grids paint without a download (FEAT-011).
 ///
 /// Implemented with the pure-Dart [`image`](https://pub.dev/packages/image)
 /// package instead of `flutter_image_compress` so there is no native plugin to
@@ -19,6 +21,16 @@ const int kGalleryThumbnailMaxEdge = 1080;
 
 /// JPEG quality (0–100) for the cached gallery thumbnail.
 const int kGalleryThumbnailQuality = 70;
+
+/// Longest-edge (px) cap for the sync thumbnail inlined in Firestore.
+const int kGallerySyncThumbnailMaxEdge = 384;
+
+/// JPEG quality (0–100) for the sync thumbnail inlined in Firestore.
+const int kGallerySyncThumbnailQuality = 50;
+
+/// Byte budget for the sync thumbnail. Keeps the doc far below Firestore's
+/// 1 MiB cap and must match the `thumb.size()` bound in `firestore.rules`.
+const int kGallerySyncThumbnailMaxBytes = 256 * 1024;
 
 /// Arguments for [compressGalleryThumbnail], packaged so the work can be run on
 /// a background isolate via [compute] (which passes a single argument).
@@ -80,4 +92,17 @@ Future<Uint8List> compressGalleryThumbnailAsync(
   } catch (_) {
     return bytes;
   }
+}
+
+/// Produces the small JPEG inlined in a photo's Firestore metadata doc.
+///
+/// Returns `null` when the result would exceed [kGallerySyncThumbnailMaxBytes]
+/// (e.g. an undecodable source returned as-is), since the rules would reject it.
+Future<Uint8List?> compressGallerySyncThumbnailAsync(Uint8List bytes) async {
+  final thumb = await compressGalleryThumbnailAsync(
+    bytes,
+    maxEdge: kGallerySyncThumbnailMaxEdge,
+    quality: kGallerySyncThumbnailQuality,
+  );
+  return thumb.lengthInBytes <= kGallerySyncThumbnailMaxBytes ? thumb : null;
 }

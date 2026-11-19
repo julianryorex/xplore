@@ -28,6 +28,10 @@
 	<string>MainMenu</string>
 	<key>NSPrincipalClass</key>
 	<string>NSApplication</string>
+	<key>NSPhotoLibraryAddUsageDescription</key>
+	<string>Xplore saves your trip photos to your Photos library when you choose Save all to Photos.</string>
+	<key>NSPhotoLibraryUsageDescription</key>
+	<string>Xplore saves your trip photos into an album named after the trip in your Photos library.</string>
 	<key>NSLocationUsageDescription</key>
 	<string>This app requires access to locations when open.</string>
 	<key>GIDClientID</key>

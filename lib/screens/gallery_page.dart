@@ -1,102 +1,207 @@
+import 'dart:async';
+import 'dart:math' as math;
+
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:xplore/constants/constants.dart';
-import 'package:xplore/constants/extensions.dart';
 import 'package:xplore/constants/typography.dart';
-import 'package:xplore/core/ambient_background.dart';
 import 'package:xplore/core/enums.dart';
 import 'package:xplore/core/glass.dart';
-import 'package:xplore/core/header.dart';
 import 'package:xplore/features/gallery/bloc/gallery_cubit.dart';
 import 'package:xplore/features/gallery/models/image_models.dart';
+import 'package:xplore/features/gallery/presentation/gallery_days.dart';
+import 'package:xplore/features/gallery/presentation/widgets/album_action_bar.dart';
+import 'package:xplore/features/gallery/presentation/widgets/album_day_section.dart';
+import 'package:xplore/features/gallery/presentation/widgets/album_empty_state.dart';
+import 'package:xplore/features/gallery/presentation/widgets/album_photos_access_sheet.dart';
+import 'package:xplore/features/gallery/presentation/widgets/album_skeleton.dart';
+import 'package:xplore/features/gallery/presentation/widgets/album_status_bar.dart';
+import 'package:xplore/features/gallery/presentation/widgets/album_title_block.dart';
+import 'package:xplore/features/gallery/presentation/widgets/uploader_avatar.dart';
+import 'package:xplore/features/gallery/services/photo_save_service.dart';
+import 'package:xplore/features/trip/bloc/trip_cubit.dart';
+import 'package:xplore/features/trip/bloc/trip_state.dart';
+import 'package:xplore/features/trip/models/trip_model.dart';
 import 'package:xplore/routes.dart';
 
-/// The Trip Gallery — a premium "album cover" layout.
-///
-/// A large hero cover with a glass overlay (title, photo count, upload action),
-/// followed by a compact grid of the remaining photos. Built on the shared
-/// liquid-glass primitives (`AmbientBackground`, `GlassSurface`,
-/// `GlassIconButton`).
-class GalleryPage extends StatelessWidget {
+/// The trip's shared album, told as a day-by-day story: newest day first, each
+/// day a mosaic led by one large photo, with floating actions and a single
+/// status bar for uploads and Save-all runs.
+class GalleryPage extends StatefulWidget {
   const GalleryPage({super.key});
 
   @override
+  State<GalleryPage> createState() => _GalleryPageState();
+}
+
+class _GalleryPageState extends State<GalleryPage> {
+  static const _sideInset = paddingUnit * 1.5;
+  static const _headerHeight = 62.0;
+  static const _statusGap = 12.0;
+
+  // Space the status bar may take, reserved so the last row can scroll clear of it.
+  static const _statusClearance = 92.0;
+
+  Timer? _dismissSaveTimer;
+
+  @override
+  void dispose() {
+    _dismissSaveTimer?.cancel();
+    super.dispose();
+  }
+
+  @override
   Widget build(BuildContext context) {
-    final viewPadding = MediaQuery.viewPaddingOf(context);
-    final topInset = viewPadding.top;
-    const headerTopGap = paddingUnit * 0.75;
-    final bottomClearance = viewPadding.bottom + paddingUnit * 2;
-    final heroHeight = MediaQuery.sizeOf(context).height * 0.46;
+    final trip = context.select<TripCubit, TripModel?>(
+      (cubit) => switch (cubit.state) {
+        TripLoaded(:final active) => active,
+        _ => null,
+      },
+    );
+    final albumName = tripAlbumName(trip?.title ?? '');
 
     return Scaffold(
-      backgroundColor: XploreColors.primaryBg,
-      body: AmbientBackground(
-        child: BlocBuilder<GalleryCubit, GalleryState>(
-          builder: (context, state) {
-            final isLoading = state.status == EBlocStatus.loading;
-            final images = state.imageMap.values.toList();
-            final cover = _coverImage(images);
-            final rest = cover == null ? <ImageModel>[] : images.where((img) => img.id != cover.id).toList();
-
-            return Stack(
-              children: [
-                AnimatedOpacity(
-                  opacity: isLoading ? 0.3 : 1,
-                  duration: const Duration(milliseconds: 200),
-                  child: SingleChildScrollView(
-                    padding: EdgeInsets.only(bottom: bottomClearance),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        _Hero(
-                          cover: cover,
-                          height: heroHeight,
-                          total: images.length,
-                          onUpload: () => context.read<GalleryCubit>().uploadToGallery(),
-                          onTapCover: cover == null ? null : () => _openFocus(context, images, images.indexOf(cover)),
-                        ),
-                        Padding(
-                          padding: const EdgeInsets.fromLTRB(paddingUnit * 1.5, paddingUnit * 2, paddingUnit * 1.5, 0),
-                          child: images.isEmpty
-                              ? const _GalleryEmptyState()
-                              : _CompactGrid(
-                                  images: rest,
-                                  onTapImage: (image) => _openFocus(context, images, images.indexOf(image)),
-                                ),
-                        ),
-                      ],
-                    ),
-                  ),
-                ),
-                if (isLoading) const Center(child: CircularProgressIndicator()),
-                // Floating glass back control over the hero.
-                Positioned(
-                  top: topInset + headerTopGap,
-                  left: 0,
-                  right: 0,
-                  child: Header(
-                    leadingWidget: GlassIconButton(
-                      size: 44,
-                      iconSize: 22,
-                      icon: Icons.arrow_back_rounded,
-                      tooltip: 'Back',
-                      onTap: () => Navigator.pop(context),
-                    ),
-                  ),
-                ),
-              ],
-            );
-          },
-        ),
+      backgroundColor: XploreColors.background,
+      body: BlocConsumer<GalleryCubit, GalleryState>(
+        listenWhen: (previous, current) => previous.saveProgress != current.saveProgress,
+        listener: (context, state) => _onSaveProgressChanged(context, state.saveProgress, albumName),
+        builder: (context, state) => _buildAlbum(context, state, trip, albumName),
       ),
     );
   }
 
-  /// Prefer a fully-uploaded image for the cover; otherwise fall back to the
-  /// first available image.
-  ImageModel? _coverImage(List<ImageModel> images) {
-    if (images.isEmpty) return null;
-    return images.firstWhere((img) => img.isUploading == EUploadStatus.complete, orElse: () => images.first);
+  Widget _buildAlbum(BuildContext context, GalleryState state, TripModel? trip, String albumName) {
+    final cubit = context.read<GalleryCubit>();
+    final viewPadding = MediaQuery.viewPaddingOf(context);
+    final bottomInset = math.max(viewPadding.bottom, paddingUnit * 1.5);
+
+    final photos = state.newestFirst;
+    final isFirstSync = state.status == EBlocStatus.loading && photos.isEmpty;
+    final isEmpty = photos.isEmpty && !isFirstSync;
+    final status = AlbumStatus.of(state);
+    final bottomClearance =
+        bottomInset + albumActionBarHeight + paddingUnit * 2 + (status == null ? 0 : _statusClearance);
+
+    return Stack(
+      children: [
+        CustomScrollView(
+          slivers: [
+            SliverPadding(
+              padding: EdgeInsets.fromLTRB(_sideInset, viewPadding.top + _headerHeight + 8, _sideInset, 0),
+              sliver: SliverToBoxAdapter(
+                child: AlbumTitleBlock(
+                  tripTitle: trip?.title ?? '',
+                  photoCount: photos.length,
+                  uploaders: distinctUploaders(photos, currentUid: cubit.currentUid),
+                  isSyncing: isFirstSync,
+                ),
+              ),
+            ),
+            if (isFirstSync)
+              const SliverPadding(
+                padding: EdgeInsets.symmetric(horizontal: _sideInset),
+                sliver: SliverToBoxAdapter(child: AlbumSkeleton()),
+              )
+            else if (isEmpty)
+              SliverToBoxAdapter(
+                child: AlbumEmptyState(memberCount: trip?.memberIds.length ?? 1, onAddPhotos: cubit.uploadToGallery),
+              )
+            else
+              ..._albumSlivers(context, state, photos, trip),
+            SliverPadding(padding: EdgeInsets.only(bottom: isEmpty ? bottomInset : bottomClearance)),
+          ],
+        ),
+        Positioned(
+          top: viewPadding.top + (_headerHeight - headerIconButtonSize) / 2,
+          left: _sideInset,
+          child: GlassIconButton(icon: Icons.arrow_back_rounded, tooltip: 'Back', onTap: () => Navigator.pop(context)),
+        ),
+        if (!isEmpty) ...[
+          _BottomFade(height: status == null ? 168 : 230),
+          Positioned(
+            left: _sideInset,
+            right: _sideInset,
+            bottom: bottomInset,
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                AlbumStatusBar(
+                  status: status,
+                  onRetryUploads: cubit.retryFailedUploads,
+                  onSaveAgain: cubit.saveAllToPhotos,
+                  onOpenPhotos: cubit.openPhotosApp,
+                ),
+                if (status != null) const SizedBox(height: _statusGap),
+                AlbumActionBar(
+                  saveMode: SaveAllMode.of(state, isFirstSync: isFirstSync),
+                  unsavedCount: state.unsavedCount,
+                  onAddPhotos: cubit.uploadToGallery,
+                  onSaveAll: cubit.saveAllToPhotos,
+                ),
+              ],
+            ),
+          ),
+        ],
+      ],
+    );
+  }
+
+  List<Widget> _albumSlivers(BuildContext context, GalleryState state, List<ImageModel> photos, TripModel? trip) {
+    final cubit = context.read<GalleryCubit>();
+    final days = groupGalleryDays(photos);
+    final today = DateTime.now();
+
+    return [
+      SliverPadding(
+        padding: const EdgeInsets.symmetric(horizontal: _sideInset),
+        // Built lazily per day: only the days near the viewport decode thumbnails.
+        sliver: SliverList.builder(
+          itemCount: days.length,
+          itemBuilder: (context, i) {
+            final day = days[i];
+            return AlbumDaySection(
+              key: ValueKey(day.date),
+              day: day,
+              overline: dayOverline(day.date, today: today, tripStart: trip?.startDate),
+              leadOnLeft: i.isEven,
+              currentUid: cubit.currentUid,
+              onOpen: (index) => _openFocus(context, photos, index),
+              onRetry: (image) => cubit.retryUpload(image.id),
+            );
+          },
+        ),
+      ),
+      SliverToBoxAdapter(
+        child: Padding(
+          padding: const EdgeInsets.fromLTRB(_sideInset, albumDayTopGap, _sideInset, 0),
+          child: Text(
+            '${photoCountLabel(photos.length)} · ${albumDateRange(photos.last.createdAt, photos.first.createdAt)} '
+            '· end of album',
+            textAlign: TextAlign.center,
+            style: XploreText.caption.copyWith(color: XploreColors.secondaryLabel),
+          ),
+        ),
+      ),
+    ];
+  }
+
+  void _onSaveProgressChanged(BuildContext context, PhotoSaveProgress? progress, String albumName) {
+    _dismissSaveTimer?.cancel();
+    if (progress == null) return;
+    final cubit = context.read<GalleryCubit>();
+
+    switch (progress.phase) {
+      case EPhotoSavePhase.denied:
+        // Clear it straight away so the sheet appears once per Save-all press.
+        cubit.dismissSaveProgress();
+        showPhotosAccessSheet(context, albumName: albumName);
+      case EPhotoSavePhase.done:
+        // A partial result stays up longer: it asks the user to act.
+        final linger = progress.failed == 0 ? const Duration(seconds: 5) : const Duration(seconds: 10);
+        _dismissSaveTimer = Timer(linger, cubit.dismissSaveProgress);
+      case EPhotoSavePhase.saving:
+        break;
+    }
   }
 }
 
@@ -104,180 +209,28 @@ void _openFocus(BuildContext context, List<ImageModel> gallery, int index) {
   Navigator.pushNamed(context, Paths.galleryFocusView, arguments: {'gallery': gallery, 'initialIndex': index});
 }
 
-class _Hero extends StatelessWidget {
-  final ImageModel? cover;
+class _BottomFade extends StatelessWidget {
+  const _BottomFade({required this.height});
+
   final double height;
-  final int total;
-  final VoidCallback onUpload;
-  final VoidCallback? onTapCover;
-
-  const _Hero({
-    required this.cover,
-    required this.height,
-    required this.total,
-    required this.onUpload,
-    required this.onTapCover,
-  });
 
   @override
   Widget build(BuildContext context) {
-    return GestureDetector(
-      onTap: onTapCover,
-      child: SizedBox(
-        height: height,
-        width: double.infinity,
-        child: Stack(
-          fit: StackFit.expand,
-          children: [
-            if (cover != null)
-              Image.memory(cover!.lowResImage, fit: BoxFit.cover)
-            else
-              DecoratedBox(decoration: BoxDecoration(color: XploreColors.surfaceElevated)),
-            // Legibility gradient from the bottom for the overlay text.
-            IgnorePointer(
-              child: DecoratedBox(
-                decoration: BoxDecoration(
-                  gradient: LinearGradient(
-                    begin: Alignment.bottomCenter,
-                    end: Alignment.topCenter,
-                    colors: [
-                      XploreColors.primaryBg,
-                      XploreColors.primaryBg.withValues(alpha: 0.2),
-                      XploreColors.black.withValues(alpha: 0.25),
-                    ],
-                    stops: const [0, 0.55, 1],
-                  ),
-                ),
-              ),
-            ),
-            Positioned(
-              left: paddingUnit * 1.5,
-              right: paddingUnit * 1.5,
-              bottom: paddingUnit * 1.5,
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    'Trip Gallery',
-                    style: context.pText.headlineMedium?.copyWith(
-                      color: XploreColors.white,
-                      letterSpacing: -0.4,
-                      fontWeight: FontWeight.w700,
-                    ),
-                  ),
-                  const SizedBox(height: 2),
-                  Text(
-                    total == 0 ? 'No photos yet' : '$total ${total == 1 ? 'photo' : 'photos'}',
-                    style: context.pText.bodyMedium?.copyWith(color: XploreColors.mutedText),
-                  ),
-                  const SizedBox(height: paddingUnit * 1.25),
-                  GlassSurface(
-                    strong: true,
-                    borderRadius: radiusLg,
-                    padding: const EdgeInsets.symmetric(horizontal: paddingUnit * 1.25, vertical: paddingUnit * 0.75),
-                    onTap: onUpload,
-                    child: Row(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        Icon(Icons.add_a_photo_outlined, size: 18, color: XploreColors.white),
-                        const SizedBox(width: paddingUnit * 0.75),
-                        Text('Add photos', style: XploreText.footnoteStrong.copyWith(color: XploreColors.white)),
-                      ],
-                    ),
-                  ),
-                ],
-              ),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-}
-
-class _CompactGrid extends StatelessWidget {
-  final List<ImageModel> images;
-  final void Function(ImageModel image) onTapImage;
-
-  const _CompactGrid({required this.images, required this.onTapImage});
-
-  @override
-  Widget build(BuildContext context) {
-    if (images.isEmpty) return const SizedBox.shrink();
-
-    return GridView.builder(
-      shrinkWrap: true,
-      physics: const NeverScrollableScrollPhysics(),
-      padding: EdgeInsets.zero,
-      itemCount: images.length,
-      gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-        crossAxisCount: 3,
-        mainAxisSpacing: paddingUnit * 0.5,
-        crossAxisSpacing: paddingUnit * 0.5,
-      ),
-      itemBuilder: (context, i) {
-        final image = images[i];
-        final isUploading =
-            image.isUploading == EUploadStatus.uploading || image.isUploading == EUploadStatus.notStarted;
-
-        return GestureDetector(
-          onTap: isUploading ? null : () => onTapImage(image),
-          child: ClipRRect(
-            borderRadius: BorderRadius.circular(radiusSm),
-            child: Stack(
-              fit: StackFit.expand,
-              children: [
-                DecoratedBox(
-                  decoration: BoxDecoration(color: XploreColors.surfaceElevated),
-                  child: Opacity(
-                    opacity: isUploading ? 0.4 : 1,
-                    child: Image.memory(image.lowResImage, fit: BoxFit.cover),
-                  ),
-                ),
-                if (isUploading)
-                  Center(
-                    child: SizedBox(
-                      height: 22,
-                      width: 22,
-                      child: CircularProgressIndicator(strokeWidth: 2.5, color: XploreColors.alternate),
-                    ),
-                  ),
-                IgnorePointer(
-                  child: DecoratedBox(
-                    decoration: BoxDecoration(
-                      borderRadius: BorderRadius.circular(radiusSm),
-                      border: Border.all(color: XploreColors.glassBorder),
-                    ),
-                  ),
-                ),
-              ],
+    return Positioned(
+      left: 0,
+      right: 0,
+      bottom: 0,
+      height: height,
+      child: const IgnorePointer(
+        child: DecoratedBox(
+          decoration: BoxDecoration(
+            gradient: LinearGradient(
+              begin: Alignment.topCenter,
+              end: Alignment.bottomCenter,
+              colors: [Color(0x00000000), Color(0xC7000000), XploreColors.background],
+              stops: [0, 0.55, 1],
             ),
           ),
-        );
-      },
-    );
-  }
-}
-
-class _GalleryEmptyState extends StatelessWidget {
-  const _GalleryEmptyState();
-
-  @override
-  Widget build(BuildContext context) {
-    return Padding(
-      padding: const EdgeInsets.only(top: paddingUnit * 6, right: paddingUnit * 3, left: paddingUnit * 3),
-      child: Center(
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Icon(Icons.photo_library_outlined, size: 40, color: XploreColors.subtleText),
-            const SizedBox(height: paddingUnit),
-            Text(
-              'Start uploading photos to share with others!',
-              textAlign: TextAlign.center,
-              style: context.pText.bodyMedium?.copyWith(color: XploreColors.mutedText),
-            ),
-          ],
         ),
       ),
     );

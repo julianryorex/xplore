@@ -210,6 +210,34 @@ service cloud.firestore {
         && request.resource.data.revoked == false;
     }
 
+    function galleryImageFields() {
+      return ['uploaderUid', 'createdAt', 'uploadedAt', 'fullUrl', 'storagePath', 'thumb'];
+    }
+
+    // 256 KiB keeps the doc far below Firestore's 1 MiB cap; mirrors
+    // kGallerySyncThumbnailMaxBytes in image_compressor.dart.
+    function maxGalleryThumbBytes() {
+      return 262144;
+    }
+
+    function validGalleryImageCreate(data, tripId, imageId) {
+      // uploaderName is optional: members can't read each other's profiles, so
+      // the uploader's first name rides on the photo for attribution.
+      return data.keys().hasOnly(galleryImageFields().concat(['uploaderName']))
+        && data.keys().hasAll(galleryImageFields())
+        && data.uploaderUid == request.auth.uid
+        && (!('uploaderName' in data) || (data.uploaderName is string && data.uploaderName.size() <= 60))
+        && data.createdAt is timestamp
+        && data.uploadedAt == request.time
+        && data.fullUrl is string
+        && data.fullUrl.size() > 0
+        && data.fullUrl.size() <= 2048
+        && data.storagePath == 'gallery/' + tripId + '/' + request.auth.uid + '/' + imageId
+        && data.thumb is bytes
+        && data.thumb.size() > 0
+        && data.thumb.size() <= maxGalleryThumbBytes();
+    }
+
     match /users/{uid} {
       allow read, write: if isSignedIn() && request.auth.uid == uid;
     }
@@ -270,6 +298,17 @@ service cloud.firestore {
         && validItinerarySeed(request.resource.data);
 
       allow update: if validItineraryUpdate(tripId);
+    }
+
+    // Shared trip gallery metadata (FEAT-011): one doc per photo with a small
+    // inline JPEG so members' grids paint from one listener; the full-res
+    // original lives in Storage at `storagePath`. Photos are append-only:
+    // re-uploads are client no-ops and deletion is a separate request.
+    match /galleries/{tripId}/images/{imageId} {
+      allow read: if isTripMember(tripId);
+
+      allow create: if isTripMember(tripId)
+        && validGalleryImageCreate(request.resource.data, tripId, imageId);
     }
 
     match /{document=**} {

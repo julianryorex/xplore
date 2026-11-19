@@ -56,4 +56,23 @@ void main() {
 
     expect(result, same(garbage));
   });
+
+  group('compressGallerySyncThumbnailAsync', () {
+    test('shrinks a full-size camera photo well under the Firestore doc cap', () async {
+      final original = await loadAsset('assets/placeholders/skating.JPG');
+
+      final thumb = await compressGallerySyncThumbnailAsync(original);
+
+      expect(thumb, isNotNull);
+      final decoded = img.decodeImage(thumb!)!;
+      expect(decoded.width >= decoded.height ? decoded.width : decoded.height, kGallerySyncThumbnailMaxEdge);
+      expect(thumb.lengthInBytes, lessThan(100 * 1024));
+    });
+
+    test('returns null instead of an oversized undecodable payload', () async {
+      final garbage = Uint8List(kGallerySyncThumbnailMaxBytes + 1);
+
+      expect(await compressGallerySyncThumbnailAsync(garbage), isNull);
+    });
+  });
 }
