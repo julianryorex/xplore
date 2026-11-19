@@ -493,13 +493,15 @@ class _GlassPill extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return ConstrainedBox(
-      constraints: const BoxConstraints(minHeight: 32),
-      child: GlassSurface(
-        strong: true,
-        borderRadius: radiusMd,
-        padding: padding,
-        child: Align(widthFactor: 1, heightFactor: 1, child: child),
+    return GlassSurface(
+      strong: true,
+      borderRadius: radiusMd,
+      padding: padding,
+      // The minimum height sits inside the surface so the content is centred
+      // in it; outside, the surface grew but its content stayed at the top.
+      child: ConstrainedBox(
+        constraints: const BoxConstraints(minHeight: 32),
+        child: Center(widthFactor: 1, heightFactor: 1, child: child),
       ),
     );
   }
