@@ -1,9 +1,11 @@
 import 'dart:math' as math;
 
+import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:xplore/constants/constants.dart';
 import 'package:xplore/constants/typography.dart';
+import 'package:xplore/core/confirm_dialog.dart';
 import 'package:xplore/core/glass.dart';
 import 'package:xplore/features/gallery/bloc/gallery_cubit.dart';
 import 'package:xplore/features/gallery/models/image_models.dart';
@@ -138,22 +140,15 @@ class GalleryPage extends StatelessWidget {
 
   /// The app can't see that an album was deleted in Photos, so re-saving is the user's call.
   Future<void> _confirmSaveAllAgain(BuildContext context, GalleryCubit cubit) async {
-    final confirmed =
-        await showDialog<bool>(
-          context: context,
-          builder: (dialogContext) => AlertDialog(
-            title: const Text('Save all photos again?'),
-            content: const Text(
-              'Every photo in this album is already marked as saved. Saving again adds them all to Photos '
-              'once more, so any that are still in your library will appear twice.',
-            ),
-            actions: [
-              TextButton(onPressed: () => Navigator.of(dialogContext).pop(false), child: const Text('Cancel')),
-              TextButton(onPressed: () => Navigator.of(dialogContext).pop(true), child: const Text('Save again')),
-            ],
-          ),
-        ) ??
-        false;
+    final confirmed = await showConfirmDialog(
+      context,
+      icon: CupertinoIcons.arrow_down_to_line,
+      title: 'Save all photos again?',
+      message:
+          'Every photo in this album is already marked as saved. Saving again adds them all to Photos '
+          'once more, so any that are still in your library will appear twice.',
+      confirmLabel: 'Save again',
+    );
     if (confirmed) await cubit.saveAllToPhotos(includeAlreadySaved: true);
   }
 

@@ -11,6 +11,7 @@ import 'package:photo_view/photo_view_gallery.dart';
 import 'package:share_plus/share_plus.dart';
 import 'package:xplore/constants/constants.dart';
 import 'package:xplore/constants/typography.dart';
+import 'package:xplore/core/confirm_dialog.dart';
 import 'package:xplore/core/glass.dart';
 import 'package:xplore/features/gallery/bloc/gallery_cubit.dart';
 import 'package:xplore/features/gallery/models/image_models.dart';
@@ -157,22 +158,14 @@ class _GalleryFocusViewState extends State<GalleryFocusView> {
 
   Future<void> _deleteCurrentPhoto() async {
     final id = _currentImage.id;
-    final confirmed =
-        await showDialog<bool>(
-          context: context,
-          builder: (dialogContext) => AlertDialog(
-            title: const Text('Delete this photo?'),
-            content: const Text('It will be removed from the album for everyone on the trip. This can’t be undone.'),
-            actions: [
-              TextButton(onPressed: () => Navigator.of(dialogContext).pop(false), child: const Text('Cancel')),
-              TextButton(
-                onPressed: () => Navigator.of(dialogContext).pop(true),
-                child: Text('Delete', style: TextStyle(color: XploreColors.error)),
-              ),
-            ],
-          ),
-        ) ??
-        false;
+    final confirmed = await showConfirmDialog(
+      context,
+      icon: CupertinoIcons.trash,
+      title: 'Delete this photo?',
+      message: 'It will be removed from the album for everyone on the trip. This can’t be undone.',
+      confirmLabel: 'Delete',
+      destructive: true,
+    );
     if (!confirmed || !mounted) return;
 
     setState(() => _deletingIds.add(id));
