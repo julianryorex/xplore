@@ -1,9 +1,11 @@
+import 'package:flutter/cupertino.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:xplore/constants/constants.dart';
 import 'package:xplore/constants/extensions.dart';
 import 'package:xplore/core/ambient_background.dart';
+import 'package:xplore/core/confirm_dialog.dart';
 import 'package:xplore/core/glass.dart';
 import 'package:xplore/core/header.dart';
 import 'package:xplore/core/layout_padding.dart';
@@ -83,24 +85,14 @@ class ProfilePage extends StatelessWidget {
 
   Future<void> _confirmAndSignOut(BuildContext context) async {
     final authCubit = context.read<AuthCubit>();
-    final shouldSignOut =
-        await showDialog<bool>(
-          context: context,
-          builder: (dialogContext) {
-            return AlertDialog(
-              title: const Text('Sign out?'),
-              content: const Text('You will return to the sign-in screen and can sign in again with any account.'),
-              actions: [
-                TextButton(onPressed: () => Navigator.of(dialogContext).pop(false), child: const Text('Cancel')),
-                TextButton(
-                  onPressed: () => Navigator.of(dialogContext).pop(true),
-                  child: Text('Sign out', style: TextStyle(color: XploreColors.error)),
-                ),
-              ],
-            );
-          },
-        ) ??
-        false;
+    final shouldSignOut = await showConfirmDialog(
+      context,
+      icon: CupertinoIcons.square_arrow_right,
+      title: 'Sign out?',
+      message: 'You will return to the sign-in screen and can sign in again with any account.',
+      confirmLabel: 'Sign out',
+      destructive: true,
+    );
 
     if (shouldSignOut) {
       await authCubit.signOut();
@@ -110,27 +102,16 @@ class ProfilePage extends StatelessWidget {
   Future<void> _confirmAndDeleteAccount(BuildContext context) async {
     final authCubit = context.read<AuthCubit>();
     final messenger = ScaffoldMessenger.of(context);
-    final shouldDelete =
-        await showDialog<bool>(
-          context: context,
-          builder: (dialogContext) {
-            return AlertDialog(
-              title: const Text('Delete account?'),
-              content: const Text(
-                'This permanently deletes your account and profile. This cannot be undone. '
-                "You'll be asked to confirm with your sign-in provider to continue.",
-              ),
-              actions: [
-                TextButton(onPressed: () => Navigator.of(dialogContext).pop(false), child: const Text('Cancel')),
-                TextButton(
-                  onPressed: () => Navigator.of(dialogContext).pop(true),
-                  child: Text('Delete', style: TextStyle(color: XploreColors.error)),
-                ),
-              ],
-            );
-          },
-        ) ??
-        false;
+    final shouldDelete = await showConfirmDialog(
+      context,
+      icon: CupertinoIcons.trash,
+      title: 'Delete account?',
+      message:
+          'This permanently deletes your account and profile. This cannot be undone. '
+          "You'll be asked to confirm with your sign-in provider to continue.",
+      confirmLabel: 'Delete',
+      destructive: true,
+    );
 
     if (!shouldDelete) return;
 

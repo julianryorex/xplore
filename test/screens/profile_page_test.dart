@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:xplore/constants/theme.dart';
+import 'package:xplore/core/confirm_dialog.dart';
 import 'package:xplore/features/auth/bloc/auth_cubit.dart';
 import 'package:xplore/features/profile/bloc/profile_cubit.dart';
 import 'package:xplore/screens/profile_page.dart';
@@ -61,7 +62,7 @@ void main() {
     expect(find.text('Sign out?'), findsOneWidget);
     expect(harness.authCubit.state, isA<AuthAuthenticated>());
 
-    await tester.tap(find.descendant(of: find.byType(AlertDialog), matching: find.text('Sign out')));
+    await tester.tap(find.descendant(of: find.byType(ConfirmDialog), matching: find.text('Sign out')));
     await tester.pumpAndSettle();
 
     expect(harness.authCubit.state, isA<AuthUnauthenticated>());
@@ -78,7 +79,7 @@ void main() {
     expect(find.text('Delete account?'), findsOneWidget);
     expect(harness.authCubit.state, isA<AuthAuthenticated>());
 
-    await tester.tap(find.descendant(of: find.byType(AlertDialog), matching: find.text('Cancel')));
+    await tester.tap(find.descendant(of: find.byType(ConfirmDialog), matching: find.text('Cancel')));
     await tester.pumpAndSettle();
 
     expect(find.text('Delete account?'), findsNothing);
