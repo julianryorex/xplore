@@ -293,6 +293,34 @@ void main() {
     });
   });
 
+  test('deletePhoto removes one photo\'s metadata, originals and saved mark, leaving the rest', () async {
+    final repository = buildRepository(download: (url) async => response([6]));
+    for (final id in ['gone', 'kept']) {
+      await repository.cacheMetadata('trip-1', buildModel(id));
+      await repository.markPhotoSaved('trip-1', id);
+    }
+    await repository.cacheFullRes('trip-1', 'gone', sourceFile('gone.jpg', [1]));
+    await repository.fetchAndCacheFullRes('trip-1', 'kept', url);
+
+    await repository.deletePhoto('trip-1', 'gone');
+
+    expect((await repository.loadImgFromCache('trip-1')).keys, ['kept']);
+    expect(await repository.loadSavedPhotoIds('trip-1'), {'kept'});
+    expect(await repository.fullResFile('trip-1', 'gone'), isNull);
+    expect(await repository.fullResFile('trip-1', 'kept'), isNotNull);
+  });
+
+  test('clearSavedPhotoIds forgets what was saved for that trip only', () async {
+    final repository = buildRepository();
+    await repository.markPhotoSaved('trip-1', 'img-1');
+    await repository.markPhotoSaved('trip-other', 'other');
+
+    await repository.clearSavedPhotoIds('trip-1');
+
+    expect(await repository.loadSavedPhotoIds('trip-1'), isEmpty);
+    expect(await repository.loadSavedPhotoIds('trip-other'), {'other'});
+  });
+
   test('reset clears metadata, full-res files and saved ids for that trip only', () async {
     final repository = buildRepository(download: (url) async => response([6]));
     await repository.cacheFullRes('trip-other', 'other', sourceFile('other.jpg', [5]));

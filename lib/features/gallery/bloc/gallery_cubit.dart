@@ -50,6 +50,10 @@ class GalleryCubit extends Cubit<GalleryState> with TripStreamMixin {
   /// `uploading` was interrupted (app killed mid-upload) and needs a retry.
   final Set<String> _uploadsInFlight = {};
 
+  /// Ids uploaded in this session that the cloud listener has not reported yet.
+  /// Until it does, their absence from a snapshot does not mean they were deleted.
+  final Set<String> _awaitingCloudEcho = {};
+
   // A flag rather than the emitted phase: the phase is only emitted after the
   // permission prompt, which would let a second tap start a parallel run.
   bool _isSavingAll = false;
@@ -158,12 +162,21 @@ class GalleryCubit extends Cubit<GalleryState> with TripStreamMixin {
 
   /// Saves every trip photo not yet saved from this device into the trip's
   /// album in the Photos app, reporting progress through [GalleryState.saveProgress].
-  Future<void> saveAllToPhotos() async {
+  ///
+  /// With [includeAlreadySaved] every photo is saved again. The app cannot see
+  /// that an album was deleted in Photos, so this is how the user restores it.
+  Future<void> saveAllToPhotos({bool includeAlreadySaved = false}) async {
     final tripId = _activeTripId;
     if (tripId == null || _isSavingAll) return;
 
     _isSavingAll = true;
     try {
+      if (includeAlreadySaved) {
+        await repository.clearSavedPhotoIds(tripId);
+        if (!_isActive(tripId)) return;
+        emit(state.copyWith(savedToPhotosIds: const {}));
+      }
+
       final access = await _photoSaveService.requestAccess();
       // The prompt can stay up for a while; the result belongs to the trip it was asked for.
       if (!_isActive(tripId)) return;
@@ -208,6 +221,39 @@ class GalleryCubit extends Cubit<GalleryState> with TripStreamMixin {
     return _saveToPhotos(tripId, image, album: _albumFor(access));
   }
 
+  /// Whether the signed-in member added photo [id] and may therefore delete it.
+  bool canDeletePhoto(String id) {
+    final uploaderUid = state.imageMap[id]?.uploaderUid;
+    return uploaderUid != null && uploaderUid == currentUid;
+  }
+
+  /// Deletes photo [id] for everyone on the trip; only its uploader can.
+  /// Returns whether it was deleted.
+  Future<bool> deletePhoto(String id) async {
+    final tripId = _activeTripId;
+    final image = state.imageMap[id];
+    final uid = currentUid;
+    if (tripId == null || image == null || uid == null || !canDeletePhoto(id)) return false;
+
+    try {
+      // The doc goes first: it is what puts the photo in other members' albums.
+      // A photo that never finished uploading has none, and deleting nothing is fine.
+      await _galleryService.deleteImageMetadata(tripId: tripId, imageId: id);
+    } catch (err) {
+      _logger.w('Could not delete photo $id: $err');
+      return false;
+    }
+
+    try {
+      await deleteStoredImage('gallery/$tripId/$uid/$id');
+    } catch (err) {
+      // Nothing references the original any more, so a leftover file is only wasted storage.
+      _logger.w('Could not delete the stored original of photo $id: $err');
+    }
+    await _forgetPhoto(tripId, id);
+    return true;
+  }
+
   /// Opens the Photos app, where the trip album lives.
   Future<void> openPhotosApp() => _photoSaveService.openPhotosApp();
 
@@ -222,6 +268,17 @@ class GalleryCubit extends Cubit<GalleryState> with TripStreamMixin {
   Future<String> uploadImage(File imageFile, String storagePath) async {
     final snapshot = await FirebaseStorage.instance.ref().child(storagePath).putFile(imageFile);
     return snapshot.ref.getDownloadURL();
+  }
+
+  /// Deletes the original at [storagePath] from Firebase Storage.
+  @visibleForTesting
+  Future<void> deleteStoredImage(String storagePath) async {
+    try {
+      await FirebaseStorage.instance.ref().child(storagePath).delete();
+    } on FirebaseException catch (err) {
+      // Already gone, e.g. the upload never got as far as Storage.
+      if (err.code != 'object-not-found') rethrow;
+    }
   }
 
   /// Deletes the active trip's cached gallery from this device. Dev tools only.
@@ -319,6 +376,7 @@ class GalleryCubit extends Cubit<GalleryState> with TripStreamMixin {
         storagePath: storagePath,
         thumb: syncThumbnail,
       );
+      _awaitingCloudEcho.add(id);
       await _finishUpload(tripId, image, EUploadStatus.complete, downloadUrl: downloadUrl);
       await _releaseUploadedOriginal(tripId, id);
     } catch (err) {
@@ -430,7 +488,25 @@ class GalleryCubit extends Cubit<GalleryState> with TripStreamMixin {
   void _onRemoteImages(String tripId, List<ImageModel> remoteImages) {
     if (!_isActive(tripId)) return;
 
+    final remoteIds = {for (final remote in remoteImages) remote.id};
+    _awaitingCloudEcho.removeAll(remoteIds);
+
     final merged = {...state.imageMap};
+    // An uploaded photo the cloud no longer lists was deleted by its uploader.
+    final deletedIds = merged.values
+        .where(
+          (image) =>
+              image.isUploading == EUploadStatus.complete &&
+              !remoteIds.contains(image.id) &&
+              !_awaitingCloudEcho.contains(image.id),
+        )
+        .map((image) => image.id)
+        .toList();
+    for (final id in deletedIds) {
+      merged.remove(id);
+      unawaited(repository.deletePhoto(tripId, id));
+    }
+
     for (final remote in remoteImages) {
       final local = merged[remote.id];
       final next = local == null ? remote : remote.copyWith(lowResImage: local.lowResImage);
@@ -449,6 +525,19 @@ class GalleryCubit extends Cubit<GalleryState> with TripStreamMixin {
   Future<void> _storeImage(String tripId, ImageModel image) async {
     if (_isActive(tripId)) emit(state.copyWith(imageMap: {...state.imageMap, image.id: image}));
     await repository.cacheMetadata(tripId, image);
+  }
+
+  /// Drops photo [id] from this device and, when its trip is on screen, from view.
+  Future<void> _forgetPhoto(String tripId, String id) async {
+    if (_isActive(tripId)) {
+      emit(
+        state.copyWith(
+          imageMap: {...state.imageMap}..remove(id),
+          savedToPhotosIds: {...state.savedToPhotosIds}..remove(id),
+        ),
+      );
+    }
+    await repository.deletePhoto(tripId, id);
   }
 
   Future<File?> _fullResFile(String tripId, ImageModel image) async {

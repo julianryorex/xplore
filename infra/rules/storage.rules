@@ -21,9 +21,11 @@ service firebase.storage {
       }
 
       allow read: if isOwner();
-      // Update covers a retried upload of the same photo. Originals are never
-      // deleted by clients. 100 MB bounds what one object can cost.
+      // Update covers a retried upload of the same photo. 100 MB bounds what one
+      // object can cost.
       allow create, update: if isOwner() && request.resource.size <= 100 * 1024 * 1024;
+      // The uploader removes the original when they delete the photo from the album.
+      allow delete: if isOwner();
     }
 
     // Profile avatars (FEAT-015): a user writes only their own avatar. Reads are
