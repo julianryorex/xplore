@@ -219,11 +219,14 @@ class _PlaceChip extends StatelessWidget {
             child: Container(
               height: 34,
               padding: const EdgeInsets.symmetric(horizontal: 14),
-              alignment: Alignment.center,
               decoration: const ShapeDecoration(
                 shape: StadiumBorder(side: BorderSide(color: XploreColors.separator)),
               ),
-              child: Text(place.name, style: XploreText.footnoteStrong.copyWith(color: XploreColors.white)),
+              // Centred with a width factor so the capsule hugs its label instead of filling the row.
+              child: Center(
+                widthFactor: 1,
+                child: Text(place.name, style: XploreText.footnoteStrong.copyWith(color: XploreColors.white)),
+              ),
             ),
           ),
         ),

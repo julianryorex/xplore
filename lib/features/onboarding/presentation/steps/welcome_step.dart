@@ -128,7 +128,7 @@ class _PhotosCard extends StatelessWidget {
   Widget build(BuildContext context) {
     return ExcludeSemantics(
       child: SizedBox(
-        width: 150,
+        width: 176,
         child: GlassSurface(
           strong: true,
           borderRadius: radiusMd,
@@ -183,7 +183,7 @@ class _UpNextCard extends StatelessWidget {
               Text('UP NEXT · 14:30', style: XploreText.overline.copyWith(color: XploreColors.accent)),
               Text('Time Out Market', maxLines: 1, style: XploreText.bodyStrong.copyWith(fontWeight: FontWeight.w600)),
               Text(
-                '8 min walk · everyone’s close',
+                '8 min walk from you',
                 maxLines: 1,
                 overflow: TextOverflow.ellipsis,
                 style: XploreText.footnote.copyWith(color: XploreColors.secondaryLabel),

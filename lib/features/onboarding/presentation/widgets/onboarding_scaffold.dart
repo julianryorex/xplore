@@ -32,7 +32,7 @@ class OnboardingScaffold extends StatelessWidget {
   final VoidCallback? onSkip;
 
   /// The progress bar fills [progressCurrent] of [progressTotal] segments; it
-  /// is hidden while [progressTotal] is 0.
+  /// is hidden when there are fewer than two.
   final int progressCurrent;
   final int progressTotal;
 
@@ -142,7 +142,8 @@ class _TopBar extends StatelessWidget {
             ),
           ),
           Expanded(
-            child: total == 0 ? const SizedBox.shrink() : _ProgressBar(current: current, total: total),
+            // A single step has no progress to show.
+            child: total < 2 ? const SizedBox.shrink() : _ProgressBar(current: current, total: total),
           ),
           SizedBox(
             width: minTouchTarget + paddingUnit,
