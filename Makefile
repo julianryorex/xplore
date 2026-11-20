@@ -1,4 +1,4 @@
-.PHONY: clean clean-artifacts get init gen format check-format analyze verify test test-gold delete-gold test-cov cov reboot build-ios build-ios-testflight build-mac deploy-ios redeploy-ios prep-ipad prep-mac pub-reset
+.PHONY: clean clean-artifacts get init gen format check-format analyze verify test test-gold delete-gold test-cov cov reboot run-test-login build-ios build-ios-testflight build-mac deploy-ios redeploy-ios prep-ipad prep-mac pub-reset
 
 FVM ?= fvm
 FLUTTER := $(FVM) flutter
@@ -22,6 +22,12 @@ get:
 
 reboot:
 	@make clean && make get && make gen && make build-ios
+
+# Run with the email/password test login on the sign-in screen (for simulator
+# and agent testing; never used for release builds). Pass a device via ARGS,
+# e.g. `make run-test-login ARGS="-d 'iPhone 17 Pro'"`. See docs/DEVELOPMENT.md.
+run-test-login:
+	$(FLUTTER) run --dart-define=ENABLE_TEST_LOGIN=true $(ARGS)
 
 build-ios:
 	@echo "Building iOS app with Xcode: $$(xcodebuild -version | head -1)"
