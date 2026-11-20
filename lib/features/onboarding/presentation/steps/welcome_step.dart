@@ -48,6 +48,9 @@ class WelcomeStep extends StatelessWidget {
     return const Scaffold(
       backgroundColor: XploreColors.background,
       body: CustomScrollView(
+        // Clamped so the screen stays put when everything fits: the default iOS
+        // physics would let it rubber-band even with nothing to scroll.
+        physics: ClampingScrollPhysics(),
         slivers: [
           // Fills the screen so the hero can take whatever height the copy leaves,
           // and scrolls only when the copy alone outgrows it (large text sizes).

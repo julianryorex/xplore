@@ -102,11 +102,14 @@ class OnboardingCubit extends Cubit<OnboardingState> {
   }
 
   /// Call when the user becomes authenticated. Moves past the sign-in step;
-  /// ignored on any other step.
-  void onAuthenticated() {
-    if (state.step == OnboardingStep.signIn) {
-      next();
+  /// ignored on any other step. An account that is not new ([isNewAccount]
+  /// false) has a profile already, so its profile step is dropped.
+  void onAuthenticated({bool isNewAccount = true}) {
+    if (state.step != OnboardingStep.signIn) {
+      return;
     }
+    emit(state.copyWith(skipsProfile: !isNewAccount));
+    next();
   }
 
   void tripSetupStarted() => emit(state.copyWith(tripSetup: TripSetupStatus.creating));

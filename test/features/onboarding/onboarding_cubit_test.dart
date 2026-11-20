@@ -95,6 +95,16 @@ void main() {
     expect(cubit.state.inviteLink, link);
   });
 
+  test('an account that has signed in before skips the profile step', () {
+    cubit.startOrganizer();
+    cubit.next();
+
+    cubit.onAuthenticated(isNewAccount: false);
+
+    expect(cubit.state.step, OnboardingStep.invite);
+    expect(cubit.state.progressTotal, 4);
+  });
+
   test('becoming authenticated outside the sign-in step does not move the flow', () {
     cubit.startOrganizer();
 

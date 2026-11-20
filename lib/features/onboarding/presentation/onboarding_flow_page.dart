@@ -28,10 +28,10 @@ class OnboardingFlowPage extends StatefulWidget {
 }
 
 class _OnboardingFlowPageState extends State<OnboardingFlowPage> {
-  void _onAuthenticated() {
+  void _onAuthenticated(AuthAuthenticated auth) {
     final onboarding = context.read<OnboardingCubit>();
     final signedInFromFlow = onboarding.state.step == OnboardingStep.signIn;
-    onboarding.onAuthenticated();
+    onboarding.onAuthenticated(isNewAccount: auth.isNewAccount);
     if (signedInFromFlow && onboarding.state.path == OnboardingPath.organizer) {
       unawaited(_createTrip());
     }
@@ -71,7 +71,9 @@ class _OnboardingFlowPageState extends State<OnboardingFlowPage> {
   Widget build(BuildContext context) {
     return BlocListener<AuthCubit, AuthState>(
       listenWhen: (previous, current) => previous is! AuthAuthenticated && current is AuthAuthenticated,
-      listener: (_, _) => _onAuthenticated(),
+      listener: (_, state) {
+        if (state is AuthAuthenticated) _onAuthenticated(state);
+      },
       child: BlocBuilder<OnboardingCubit, OnboardingState>(
         buildWhen: (previous, current) => previous.step != current.step || previous.path != current.path,
         builder: (context, state) {

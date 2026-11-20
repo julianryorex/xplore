@@ -40,6 +40,9 @@ abstract class OnboardingState with _$OnboardingState {
     @Default(0) int stepIndex,
     @Default(false) bool completed,
 
+    /// Drops the profile step, for an account that set itself up on an earlier sign-in.
+    @Default(false) bool skipsProfile,
+
     /// Organizer: the place picked on the destination step.
     CatalogPlace? destination,
 
@@ -57,11 +60,14 @@ abstract class OnboardingState with _$OnboardingState {
 
   const OnboardingState._();
 
-  List<OnboardingStep> get steps => switch (path) {
-    OnboardingPath.organizer => _organizerSteps,
-    OnboardingPath.invitee => _inviteeSteps,
-    OnboardingPath.returning => _returningSteps,
-  };
+  List<OnboardingStep> get steps {
+    final pathSteps = switch (path) {
+      OnboardingPath.organizer => _organizerSteps,
+      OnboardingPath.invitee => _inviteeSteps,
+      OnboardingPath.returning => _returningSteps,
+    };
+    return skipsProfile ? [...pathSteps.where((step) => step != OnboardingStep.profile)] : pathSteps;
+  }
 
   OnboardingStep get step => steps[stepIndex];
 
