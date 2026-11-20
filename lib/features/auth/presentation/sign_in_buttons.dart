@@ -6,6 +6,7 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:xplore/constants/constants.dart';
 import 'package:xplore/constants/typography.dart';
 import 'package:xplore/features/auth/bloc/auth_cubit.dart';
+import 'package:xplore/features/auth/presentation/test_login.dart';
 import 'package:xplore/features/auth/services/auth_service.dart';
 
 const _buttonHeight = 52.0;
@@ -21,7 +22,8 @@ const _labelStyle = TextStyle(
 
 enum _Provider { apple, google }
 
-/// The Apple and Google sign-in buttons with their in-flight and error states.
+/// The Apple and Google sign-in buttons with their in-flight and error states,
+/// plus the test login link in builds that enable it.
 /// Apple is the primary option (App Store policy). Success is not handled here:
 /// whoever listens to [AuthCubit] moves the user on once they are signed in.
 class SignInButtons extends StatefulWidget {
@@ -73,6 +75,7 @@ class _SignInButtonsState extends State<SignInButtons> {
         _AppleButton(loading: _pending == _Provider.apple, onPressed: _busy ? null : _signInWithApple),
         const SizedBox(height: paddingUnit),
         _GoogleButton(loading: _pending == _Provider.google, onPressed: _busy ? null : _signInWithGoogle),
+        const TestLoginEntry(),
       ],
     );
   }

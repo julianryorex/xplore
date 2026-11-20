@@ -65,6 +65,7 @@ class GalleryPage extends StatelessWidget {
     final isFirstSync = photos.isEmpty && !state.hasSyncedWithCloud;
     final isEmpty = photos.isEmpty && !isFirstSync;
     final status = AlbumStatus.of(state);
+    final saveMode = SaveAllMode.of(state, isFirstSync: isFirstSync);
     final bottomClearance =
         bottomInset + albumActionBarHeight + paddingUnit * 2 + (status == null ? 0 : _statusClearance);
 
@@ -119,10 +120,13 @@ class GalleryPage extends StatelessWidget {
                 ),
                 if (status != null) const SizedBox(height: _statusGap),
                 AlbumActionBar(
-                  saveMode: SaveAllMode.of(state, isFirstSync: isFirstSync),
+                  saveMode: saveMode,
                   unsavedCount: state.unsavedCount,
                   onAddPhotos: cubit.uploadToGallery,
-                  onSaveAll: cubit.saveAllToPhotos,
+                  // With nothing new to save, the button offers to save the whole album again.
+                  onSaveAll: saveMode == SaveAllMode.allSaved
+                      ? () => _confirmSaveAllAgain(context, cubit)
+                      : cubit.saveAllToPhotos,
                 ),
               ],
             ),
@@ -130,6 +134,27 @@ class GalleryPage extends StatelessWidget {
         ],
       ],
     );
+  }
+
+  /// The app can't see that an album was deleted in Photos, so re-saving is the user's call.
+  Future<void> _confirmSaveAllAgain(BuildContext context, GalleryCubit cubit) async {
+    final confirmed =
+        await showDialog<bool>(
+          context: context,
+          builder: (dialogContext) => AlertDialog(
+            title: const Text('Save all photos again?'),
+            content: const Text(
+              'Every photo in this album is already marked as saved. Saving again adds them all to Photos '
+              'once more, so any that are still in your library will appear twice.',
+            ),
+            actions: [
+              TextButton(onPressed: () => Navigator.of(dialogContext).pop(false), child: const Text('Cancel')),
+              TextButton(onPressed: () => Navigator.of(dialogContext).pop(true), child: const Text('Save again')),
+            ],
+          ),
+        ) ??
+        false;
+    if (confirmed) await cubit.saveAllToPhotos(includeAlreadySaved: true);
   }
 
   List<Widget> _albumSlivers(BuildContext context, GalleryState state, List<ImageModel> photos, TripModel? trip) {

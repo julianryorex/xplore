@@ -6,6 +6,8 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:sign_in_with_apple/sign_in_with_apple.dart';
 import 'package:xplore/features/auth/services/auth_service.dart';
 
+import '../../helpers/auth_fixtures.dart';
+
 /// Builds an [AppleCredentialRequester] that returns a canned Apple credential,
 /// standing in for the native authorization sheet.
 AppleCredentialRequester _fakeAppleRequester({
@@ -111,6 +113,34 @@ void main() {
       final service = _appleAuthService(firestore: firestore, requester: _fakeAppleRequester(identityToken: null));
 
       await expectLater(service.signInWithApple(), throwsA(isA<AuthFailureException>()));
+    });
+  });
+
+  group('AuthService.signInWithEmailPassword', () {
+    test('signs in and upserts the users/{uid} profile with the password provider', () async {
+      final firestore = FakeFirebaseFirestore();
+      final service = AuthService(
+        firebaseAuth: MockFirebaseAuth(
+          mockUser: MockUser(uid: 'test-user', email: 'tester@example.com'),
+        ),
+        firestore: firestore,
+      );
+
+      await service.signInWithEmailPassword(email: 'tester@example.com', password: 'pw');
+
+      expect(service.currentUid, 'test-user');
+      final doc = await firestore.collection('users').doc('test-user').get();
+      expect(doc.data()!['providers'], contains('password'));
+      expect(doc.data()!['createdAt'], isNotNull);
+    });
+
+    test('maps Firebase errors to AuthFailureException', () async {
+      final service = AuthService(firebaseAuth: RejectingEmailPasswordAuth(), firestore: FakeFirebaseFirestore());
+
+      await expectLater(
+        service.signInWithEmailPassword(email: 'tester@example.com', password: 'bad'),
+        throwsA(isA<AuthFailureException>()),
+      );
     });
   });
 

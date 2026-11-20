@@ -44,6 +44,20 @@ class _FakeGalleryCubit extends Cubit<GalleryState> implements GalleryCubit {
     return saveResult(id).future;
   }
 
+  /// Ids of photos the signed-in member uploaded.
+  var ownPhotoIds = <String>{};
+  var deleteSucceeds = true;
+  final deletedIds = <String>[];
+
+  @override
+  bool canDeletePhoto(String id) => ownPhotoIds.contains(id);
+
+  @override
+  Future<bool> deletePhoto(String id) async {
+    if (deleteSucceeds) deletedIds.add(id);
+    return deleteSucceeds;
+  }
+
   @override
   dynamic noSuchMethod(Invocation invocation) => super.noSuchMethod(invocation);
 }
@@ -67,8 +81,8 @@ File _originalFile() {
 Future<void> _swipeToNextPhoto(WidgetTester tester) =>
     tester.drag(find.byType(PhotoViewGallery), const Offset(-600, 0));
 
-Future<_FakeGalleryCubit> _pumpViewer(WidgetTester tester, {File? original}) async {
-  final cubit = _FakeGalleryCubit(original: original);
+Future<_FakeGalleryCubit> _pumpViewer(WidgetTester tester, {File? original, Set<String> ownPhotoIds = const {}}) async {
+  final cubit = _FakeGalleryCubit(original: original)..ownPhotoIds = ownPhotoIds;
   addTearDown(cubit.close);
   await tester.pumpWidget(
     BlocProvider<GalleryCubit>.value(
@@ -102,6 +116,23 @@ void main() {
 
     expect(find.text('3 of 3'), findsOneWidget);
     expect(find.text('Member'), findsOneWidget);
+    await tester.pump(const Duration(seconds: 1));
+  });
+
+  testWidgets('only your own photos offer Delete, and it asks before deleting', (tester) async {
+    final cubit = await _pumpViewer(tester, ownPhotoIds: {'c'});
+    // Photo b is Mara's.
+    expect(find.byTooltip('Delete photo'), findsNothing);
+
+    await _swipeToNextPhoto(tester);
+    await tester.pumpAndSettle();
+    await tester.tap(find.byTooltip('Delete photo'));
+    await tester.pumpAndSettle();
+    expect(cubit.deletedIds, isEmpty);
+
+    await tester.tap(find.text('Delete'));
+    await tester.pumpAndSettle();
+    expect(cubit.deletedIds, ['c']);
     await tester.pump(const Duration(seconds: 1));
   });
 

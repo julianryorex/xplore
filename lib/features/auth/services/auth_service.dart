@@ -188,6 +188,27 @@ class AuthService {
     }
   }
 
+  /// Email/password sign-in for the dedicated Firebase test user -> `users/{uid}`
+  /// upsert. Only reachable from the test-login UI, which exists solely in
+  /// builds made with `ENABLE_TEST_LOGIN` (see `test_login_flag.dart`).
+  ///
+  /// Throws [AuthFailureException] on any error (there is no cancellation).
+  Future<UserCredential> signInWithEmailPassword({required String email, required String password}) async {
+    try {
+      final userCredential = await _auth.signInWithEmailAndPassword(email: email, password: password);
+
+      final user = userCredential.user;
+      if (user == null) {
+        throw const AuthFailureException('Firebase returned no user.');
+      }
+
+      await _upsertUserProfile(user, provider: 'password');
+      return userCredential;
+    } on FirebaseAuthException catch (e) {
+      throw AuthFailureException(e.message ?? 'Authentication failed.');
+    }
+  }
+
   Future<void> _captureAppleDisplayName(User user, AuthorizationCredentialAppleID appleCredential) async {
     final hasName = (user.displayName ?? '').trim().isNotEmpty;
     if (hasName) return;
