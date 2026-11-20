@@ -90,14 +90,22 @@ class LocationCubit extends Cubit<LocationState> with TripStreamMixin {
       return;
     }
 
+    // This runs off a timer, so it must never raise the system prompt itself:
+    // onboarding and the map ask for location in context.
+    final permission = await Geolocator.checkPermission();
+    if (permission != LocationPermission.whileInUse && permission != LocationPermission.always) {
+      _logger.d('Skipping location update: location permission not granted');
+      return;
+    }
+
     DatabaseReference locationRef = FirebaseDatabase.instance.ref('locations/$tripId');
 
-    final myCoords = await getCurrentLocation();
+    final position = await Geolocator.getCurrentPosition();
     final myLocation = LocationModel(
       id: uid,
       lastUpdated: DateTime.now(),
-      lat: myCoords.latitude,
-      lng: myCoords.longitude,
+      lat: position.latitude,
+      lng: position.longitude,
     );
 
     emit(state.copyWith(locations: {uid: myLocation}));
