@@ -16,6 +16,7 @@ import 'package:xplore/features/itinerary/services/itinerary_service.dart';
 import 'package:xplore/features/location/bloc/location_cubit.dart';
 import 'package:xplore/features/map/bloc/map_cubit.dart';
 import 'package:xplore/features/nav/bloc/nav_cubit.dart';
+import 'package:xplore/features/onboarding/bloc/onboarding_cubit.dart';
 import 'package:xplore/features/profile/bloc/profile_cubit.dart';
 import 'package:xplore/features/trip/bloc/trip_cubit.dart';
 import 'package:xplore/features/trip/presentation/deep_link_handler.dart';
@@ -110,6 +111,7 @@ class MyApp extends StatelessWidget {
               BlocProvider<MapCubit>(create: (_) => MapCubit(authService)),
               BlocProvider<GalleryCubit>(create: (_) => GalleryCubit(authService)),
               BlocProvider<ProfileCubit>(create: (_) => ProfileCubit(authService)),
+              BlocProvider<OnboardingCubit>(create: (_) => OnboardingCubit(tripService)),
             ],
             // The UI is dark-only, so keep light status-bar glyphs regardless of
             // the device's appearance setting.

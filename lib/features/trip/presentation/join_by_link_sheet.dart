@@ -9,16 +9,22 @@ import 'package:xplore/routes.dart';
 /// Lets the user paste a friend's invite link and, when it parses, opens the
 /// same join screen an invite universal link would.
 Future<void> showJoinByLinkSheet(BuildContext context) async {
-  final invite = await showModalBottomSheet<InviteLinkData>(
+  final invite = await pickInviteLink(context);
+  if (invite != null && context.mounted) {
+    Navigator.pushNamed(context, Paths.joinTrip, arguments: invite);
+  }
+}
+
+/// Shows the paste-an-invite-link sheet and returns the parsed link, or null
+/// when the user dismisses it. Does not navigate.
+Future<InviteLinkData?> pickInviteLink(BuildContext context) {
+  return showModalBottomSheet<InviteLinkData>(
     context: context,
     isScrollControlled: true,
     backgroundColor: XploreColors.card,
     showDragHandle: true,
     builder: (_) => const _JoinByLinkSheet(),
   );
-  if (invite != null && context.mounted) {
-    Navigator.pushNamed(context, Paths.joinTrip, arguments: invite);
-  }
 }
 
 class _JoinByLinkSheet extends StatefulWidget {

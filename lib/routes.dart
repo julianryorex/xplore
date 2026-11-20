@@ -7,7 +7,7 @@ import 'package:xplore/constants/constants.dart';
 import 'package:xplore/core/app_tab.dart';
 import 'package:xplore/core/root_shell.dart';
 import 'package:xplore/features/agent/presentation/agent_page.dart';
-import 'package:xplore/features/auth/presentation/onboarding_page.dart';
+import 'package:xplore/features/onboarding/presentation/onboarding_flow_page.dart';
 import 'package:xplore/features/auth/presentation/sign_in_page.dart';
 import 'package:xplore/features/auth/services/auth_service.dart';
 import 'package:xplore/features/dev/presentation/dev_tools_page.dart';
@@ -122,7 +122,7 @@ class RouteGenerator {
           builder: (_) => AgentPage(args: args is AgentPageArgs ? args : const AgentPageArgs()),
         );
       case Paths.onboarding:
-        return MaterialPageRoute(builder: (_) => const OnboardingPage());
+        return MaterialPageRoute(builder: (_) => const OnboardingFlowPage());
       case Paths.signIn:
         return MaterialPageRoute(builder: (_) => const SignInPage());
       case Paths.gallery:
