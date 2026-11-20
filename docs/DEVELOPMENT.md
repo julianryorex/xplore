@@ -25,6 +25,7 @@ the high-level "what" and a minimal run; this file covers the details.
 | `make format` | Apply Dart fixes + format app/test code (120-char width) |
 | `make check-format` | CI-style format check |
 | `make build-ios` | Build iOS release |
+| `make run-test-login` | Run with the email/password [test login](#test-login) enabled |
 | `make clean` | Clean build artifacts and generated code |
 | `make reboot` | Full rebuild: clean → get → gen → build-ios |
 
@@ -92,6 +93,32 @@ For working sign-in / cloud / maps / AI you also need:
   (see [`infra/README.md`](../infra/README.md)).
 
 None of these are needed just to compile and launch the UI.
+
+## Test login
+
+Sign-in is Apple and Google only, which an agent (or anyone without the owner's
+account) can't complete in the simulator. Builds made with
+`--dart-define=ENABLE_TEST_LOGIN=true` add a small **Test login** link under the
+sign-in buttons that opens an email/password form:
+
+```bash
+make run-test-login ARGS="-d 'iPhone 17 Pro'"
+```
+
+The flag is a compile-time constant (`lib/features/auth/test_login_flag.dart`)
+that defaults to `false`, so `make build-ios` / `make build-ios-testflight` and
+plain `flutter run` never include the link.
+
+One-time setup in the Firebase console (not automated):
+
+1. **Authentication → Sign-in method**: enable the **Email/Password** provider.
+2. **Authentication → Users → Add user**: create a dedicated test user.
+
+Credentials are typed into the form (the password field has a show/hide
+toggle). Never commit them or put them in source. The test user gets a
+`users/{uid}` profile on first sign-in like any other account. In-app account
+deletion re-authenticates through Apple or Google only, so delete the test user
+from the Firebase console instead.
 
 ## Platform support & CI
 

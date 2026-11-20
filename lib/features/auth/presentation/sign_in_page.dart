@@ -7,6 +7,7 @@ import 'package:xplore/constants/typography.dart';
 import 'package:xplore/core/ambient_background.dart';
 import 'package:xplore/core/glass.dart';
 import 'package:xplore/features/auth/bloc/auth_cubit.dart';
+import 'package:xplore/features/auth/presentation/test_login.dart';
 import 'package:xplore/features/auth/services/auth_service.dart';
 
 /// The hard-gate sign-in step (FEAT-001 §5). Apple is the primary provider
@@ -118,6 +119,7 @@ class _SignInPageState extends State<SignInPage> {
                     ),
                   ),
                 ),
+                const TestLoginEntry(),
               ],
             ),
           ),

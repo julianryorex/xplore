@@ -64,6 +64,19 @@ class AuthCubit extends Cubit<AuthState> {
     }
   }
 
+  /// Test-login counterpart of the provider sign-ins (flag-gated in the UI).
+  /// Rethrows so the UI can surface errors.
+  Future<void> signInWithEmailPassword({required String email, required String password}) async {
+    analytics.signInStarted(provider: 'password');
+    try {
+      await _authService.signInWithEmailPassword(email: email, password: password);
+      analytics.signInSucceeded(provider: 'password');
+    } on AuthFailureException catch (e) {
+      analytics.signInFailed(provider: 'password', reason: e.message);
+      rethrow;
+    }
+  }
+
   Future<void> signOut() async {
     await _authService.signOut();
     analytics.signOut();
