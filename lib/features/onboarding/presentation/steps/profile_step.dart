@@ -29,7 +29,7 @@ class ProfileStep extends StatelessWidget {
         children: [
           const SizedBox(height: 4),
           OnboardingHeading(
-            title: isInvitee ? "Let the group know it's you" : 'How should the group see you?',
+            title: isInvitee ? 'Let the group know it’s you' : 'How should the group see you?',
             subtitle: isInvitee
                 ? 'A photo helps the group spot you on the map.'
                 : 'Your photo marks you on the map and on the photos you share.',

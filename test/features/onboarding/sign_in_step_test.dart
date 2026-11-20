@@ -77,7 +77,7 @@ void main() {
     await pumpStep(tester);
 
     expect(find.text('Sign in to join Lisbon'), findsOneWidget);
-    expect(find.text("3 people are already in. Sign in so they know it's you."), findsOneWidget);
+    expect(find.text('3 people are already in. Sign in so they know it’s you.'), findsOneWidget);
   });
 
   testWidgets('a returning user is welcomed back', (tester) async {

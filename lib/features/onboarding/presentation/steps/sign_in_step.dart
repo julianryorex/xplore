@@ -207,10 +207,10 @@ class _InviteeHeader extends StatelessWidget {
 
   static String _subtitle(int memberCount) {
     if (memberCount <= 0) {
-      return "Sign in so the group knows it's you.";
+      return 'Sign in so the group knows it’s you.';
     }
     final people = memberCount == 1 ? '1 person is' : '$memberCount people are';
-    return "$people already in. Sign in so they know it's you.";
+    return '$people already in. Sign in so they know it’s you.';
   }
 }
 
