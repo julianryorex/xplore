@@ -1,7 +1,9 @@
+import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:xplore/constants/constants.dart';
 import 'package:xplore/constants/typography.dart';
+import 'package:xplore/core/confirm_dialog.dart';
 import 'package:xplore/features/trip/bloc/trip_creation_cubit.dart';
 import 'package:xplore/features/trip/bloc/trip_creation_state.dart';
 import 'package:xplore/features/trip/bloc/trip_cubit.dart';
@@ -92,23 +94,16 @@ class CreateTripFlowPage extends StatelessWidget {
   }
 }
 
-Future<bool> _confirmDiscard(BuildContext context) async {
-  final discard = await showDialog<bool>(
-    context: context,
-    builder: (context) => AlertDialog(
-      title: const Text('Discard this trip?'),
-      content: const Text('The places and details you added will be lost.'),
-      actions: [
-        TextButton(onPressed: () => Navigator.of(context).pop(false), child: const Text('Keep editing')),
-        TextButton(
-          onPressed: () => Navigator.of(context).pop(true),
-          style: TextButton.styleFrom(foregroundColor: XploreColors.error),
-          child: const Text('Discard'),
-        ),
-      ],
-    ),
+Future<bool> _confirmDiscard(BuildContext context) {
+  return showConfirmDialog(
+    context,
+    icon: CupertinoIcons.trash,
+    title: 'Discard this trip?',
+    message: 'The places and details you added will be lost.',
+    confirmLabel: 'Discard',
+    cancelLabel: 'Keep editing',
+    destructive: true,
   );
-  return discard ?? false;
 }
 
 /// The steps counted in "STEP n OF 4" and the progress line; the invite step

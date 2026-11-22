@@ -15,7 +15,7 @@
 
 ## Proposed solution
 
-Poll or upvote on candidate locations before locking into the day plan. Organizer finalizes winners.
+Scout (FEAT-037), the owner or an admin opens a vote with two or three options for a slot (FEAT-024); any member can suggest an option, and an admin decides whether it goes to a vote; the group votes with a tap, each vote has a closing time, and the winner goes into the plan automatically when it closes. Open votes show on the Today view (FEAT-018). Available on every plan, including Free.
 
 ## Related code
 
@@ -24,3 +24,4 @@ Poll or upvote on candidate locations before locking into the day plan. Organize
 ## Notes / history
 
 - 2025-06-22: Created
+- 2026-11-22: Aligned with the launch-post vision ([launch-post.html](../launch-post.html)).

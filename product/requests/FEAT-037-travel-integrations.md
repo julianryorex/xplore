@@ -11,11 +11,11 @@
 
 ## Problem
 
-Generated itineraries (FEAT-010) reason from model training data alone: stops can be stale or invented, there are no real prices, and high-intent moments ("book this tour", "get a ride to the next stop", "where do we stay?") have no action. This both caps plan quality and leaves affiliate/booking revenue on the table. Competitors that win on quality (Mindtrip, Layla) do so by grounding the LLM in **live data** (real POIs, prices, availability) and by turning the plan into something you can actually **book and run your trip from**.
+Itineraries generated from model training data alone are unreliable: stops can be stale or invented, there are no real prices, and high-intent moments ("book this tour", "get a ride to the next stop", "where do we stay?") have no action. This both caps plan quality and leaves affiliate/booking revenue on the table. Competitors that win on quality (Mindtrip, Layla) do so by grounding the LLM in **live data** (real POIs, prices, availability) and by turning the plan into something you can actually **book and run your trip from**.
 
 ## Proposed solution
 
-An umbrella epic that turns Xplore's AI planner into a **tool-augmented travel agent** and a set of **lifecycle integrations**. The LLM (Gemini, via function calling) becomes an orchestrator that calls real data/booking tools instead of hallucinating, and itinerary surfaces gain contextual booking/transport actions. Integrations are mostly **affiliate-based**, so they generate revenue without charging the user — complementing the paywall (FEAT-020) rather than competing with it.
+An umbrella epic that turns Xplore's AI planner into a **tool-augmented travel agent** and a set of **lifecycle integrations**. **Scout**, the planning agent built in the `xplore-agent` repo, becomes an orchestrator that calls real data/booking tools instead of hallucinating, and itinerary surfaces gain contextual booking/transport actions. Integrations are mostly **affiliate-based**, so they generate revenue without charging the user — complementing the paywall (FEAT-020) rather than competing with it.
 
 Build it as a **decoupled tool layer** (one adapter per provider, ideally MCP-style tool/server boundaries) so the generation logic stays independent of any single vendor, and providers can be added/swapped without touching the planning flow.
 
@@ -28,7 +28,7 @@ Build it as a **decoupled tool layer** (one adapter per provider, ideally MCP-st
 
 ### LLM-as-orchestrator (the core unlock)
 
-Expose provider adapters to Gemini as callable tools, e.g. `search_places(query, near)`, `find_flights(origin, dest, dates)`, `search_stays(area, dates, budget)`, `estimate_ride(from, to)`, `get_weather(place, date)`. The model plans by calling these and reasoning over real results, which fixes hallucination and the `place_id` credibility gap, and enables weather/route-aware adjustments.
+Expose provider adapters to Scout as callable tools, e.g. `search_places(query, near)`, `find_flights(origin, dest, dates)`, `search_stays(area, dates, budget)`, `estimate_ride(from, to)`, `get_weather(place, date)`. The model plans by calling these and reasoning over real results, which fixes hallucination and the `place_id` credibility gap, and enables weather/route-aware adjustments.
 
 ## User stories
 
@@ -40,11 +40,14 @@ Expose provider adapters to Gemini as callable tools, e.g. `search_places(query,
 ## Acceptance criteria
 
 - [ ] A provider-agnostic tool/adapter layer (one adapter per integration; swappable; MCP-style boundary preferred)
-- [ ] Gemini function-calling wired to grounding tools (Places + weather at minimum) feeding generation
+- [ ] Scout wired to grounding tools (Places + weather at minimum); every stop comes from a live place search with hours and walking times checked, and Scout cannot save a place no search returned
+- [ ] Scout asks each traveler about pace, budget and food before drafting, and reworks a day mid-trip on request from the owner or an admin (FEAT-024)
+- [ ] Trip wallet: booking emails forwarded to a per-trip address appear on the right day, readable offline
+- [ ] Disruption watch: flight delays, weather and closures trigger an offered replan
 - [ ] At least one bookable affiliate action live end-to-end (e.g. activities via GetYourGuide/Viator) with affiliate disclosure
 - [ ] Rideshare and directions actions on itinerary stops (deep link + ETA)
-- [ ] Tool calls cached; AI+tool usage gated by credits (FEAT-021)
-- [ ] Graceful degradation when a provider is unavailable (fall back to non-tool generation)
+- [ ] Tool calls cached and place research reused across groups visiting the same city; usage gated by plan (FEAT-020), not credits
+- [ ] Graceful degradation when a provider is unavailable (Scout says what failed and leaves the plan untouched; it never saves a half-finished day)
 
 ## Success metrics
 
@@ -54,14 +57,15 @@ Expose provider adapters to Gemini as callable tools, e.g. `search_places(query,
 
 ## Dependencies
 
-- **FEAT-010** (Gemini itinerary generation) and **FEAT-021** (AI credits/limits) must land first — this augments that engine
+- The Scout agent from the `xplore-agent` repo, wired into the app (FEAT-007 phase 2), and plan gating (FEAT-020)
 - **FEAT-006** (production itinerary data layer) for persisting enriched stops
 - Subsumes / coordinates with **FEAT-031** (activity affiliates), **FEAT-040** (map transit), **FEAT-034** (expenses)
 - External: partner/affiliate agreements; booking APIs require approval, volume thresholds, and PCI/compliance for in-app payments
 
 ## Related code
 
-- `pubspec.yaml` — `flutter_gemini` (function calling)
+- `xplore-agent` repo — agent loop, tool layer, place refs and failure evals
+- `lib/features/agent/` — in-app agent surface
 - `lib/features/itinerary/models/itinerary_models.dart` — `LocationPlanModel.placeId` (enrichment target)
 - `lib/screens/itinerary_focus_page.dart` — booking/rideshare/directions CTAs
 - `lib/features/map/` — `MapCanvas` for live-pinned, route-aware plans
@@ -75,4 +79,5 @@ Expose provider adapters to Gemini as callable tools, e.g. `search_places(query,
 
 ## Notes / history
 
-- 2026-06-26: Created. Out-of-scope for the near-term trip-creation work (FEAT-007); scheduled late, after the AI engine (FEAT-010/021). Originated from integrations brainstorm (flights, rideshare, lodging) + the competitor finding that grounded, tool-augmented generation is what separates top AI planners.
+- 2026-06-26: Created. Out-of-scope for the near-term trip-creation work (FEAT-007); scheduled late, after the AI engine. Originated from integrations brainstorm (flights, rideshare, lodging) + the competitor finding that grounded, tool-augmented generation is what separates top AI planners.
+- 2026-11-22: Aligned with the launch-post vision ([launch-post.html](../launch-post.html)).

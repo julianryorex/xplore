@@ -15,18 +15,20 @@ Firebase Storage costs scale with full-resolution gallery uploads (the full-deta
 
 ## Proposed solution
 
-Track aggregate bytes per trip in Firestore (updated on upload complete). Soft warnings at 80%; block uploads at cap unless Plus or storage add-on. Show usage in trip settings.
+Track aggregate bytes per trip in Firestore (updated on upload complete). Soft warnings at 80%; block uploads at the cap unless the trip is upgraded or the buyer adds storage at **$0.99 per GB per month**. Show usage in trip settings.
 
 ## Acceptance criteria
 
 - [ ] Per-trip byte counter maintained
 - [ ] Upload blocked with paywall at free tier cap (500 MB default)
-- [ ] Plus tier higher cap (10 GB default)
+- [ ] Trip Pass and Plus cap of 10 GB per trip; Hosts cap of 50 GB per trip
+- [ ] Storage overage purchase at $0.99/GB/mo
 
 ## Dependencies
 
-- FEAT-014, FEAT-020, FEAT-043 (compression reduces COGS)
+- FEAT-011 (trip-scoped gallery paths, shipped), FEAT-020, FEAT-043 (compression reduces COGS)
 
 ## Notes / history
 
 - 2025-06-22: Created
+- 2026-11-22: Aligned with the launch-post vision ([launch-post.html](../launch-post.html)).

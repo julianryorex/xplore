@@ -18,7 +18,7 @@ Multi-city/country trips (e.g. a Japan tour through Tokyo, Osaka, Kyoto) have na
 Detect when a member enters a **planned destination's area** (city/region level, derived from the trip's itinerary) during trip dates, and celebrate it:
 
 - **App backgrounded:** a push notification — "Welcome to Kyoto!" (optionally social: "Julian just arrived in Osaka" to other trip members).
-- **App open / foreground:** a dedicated, tasteful **arrival screen** — hero moment for the city, what's planned there, a CTA into the day, optional "mark the moment" tie-in to the gallery.
+- **App open / foreground:** a dedicated, tasteful **arrival screen** — hero moment for the city with the local time, the weather, the way to the group's lodging and what the group is doing first, a CTA into the day, optional "mark the moment" tie-in to the gallery.
 
 Designed to be **delightful, not noisy:** one arrival moment per destination per arrival, with a cooldown/debounce and a user setting to tone it down or off. This is the city-level sibling of FEAT-044 (stop proximity nudges) and should share the underlying geofence engine.
 
@@ -67,3 +67,4 @@ Designed to be **delightful, not noisy:** one arrival moment per destination per
 ## Notes / history
 
 - 2026-06-26: Created. From an interactivity brainstorm — city-level arrival moments for multi-city tours, distinct from FEAT-044's stop-level proximity. Explicitly scoped to stay tasteful ("interactive and fun without being too much").
+- 2026-11-22: Aligned with the launch-post vision ([launch-post.html](../launch-post.html)).

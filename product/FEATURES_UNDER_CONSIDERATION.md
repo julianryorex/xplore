@@ -14,6 +14,18 @@ Keep entries short: what it is, why it's valuable, rough effort, and how it rela
 - **Trip countdown / anticipation moment** — countdown to the start date with a bit of delight; drives pre-trip opens. Effort S.
 - **Inline weather per day / destination** — show forecast on day cards; a light standalone slice of FEAT-037's weather data; big perceived-quality lift. Effort S–M.
 
+## From the launch-post vision
+
+Features described in [launch-post.html](./launch-post.html) that have no spec yet.
+
+- **Regroup** — one tap picks a meeting point that is fair for everyone and sends each person walking directions. Builds on FEAT-013 and FEAT-040. Effort M.
+- **Split up, meet back** — parallel tracks for part of a day, with a planned point where they rejoin. Builds on FEAT-019. Effort L.
+- **Remix a trip** — publish a finished itinerary as a template another group can copy and let Scout adapt. Trips stay private unless published. Effort M.
+- **Watch and car** — next stop and leave-by time on the wrist; regroup directions in CarPlay and Android Auto. Effort L.
+- **Browser preview for guests** — an invite link shows the full itinerary on the web before install, and joining needs only a name. Extends FEAT-003. Effort M.
+- **Web app for planning** — full planning on a big screen. Effort XL.
+- **Live translation** — menus and signs translated from inside a stop. Effort M.
+
 ## Cross-cutting foundations
 
 - **Localization, currency & units, destination time zones** — table stakes for international travel; currently single-locale. Show local time at the destination. Effort M–L.
@@ -22,7 +34,6 @@ Keep entries short: what it is, why it's valuable, rough effort, and how it rela
 ## Monetization-leaning
 
 - **Printed travel books / auto recap reels** — tasteful paid physical/share product leveraging the gallery (Polarsteps model). Extends FEAT-023. Effort M–L. Revenue: direct.
-- **Group trip fund / pooled kitty** — collect contributions for shared costs; complements FEAT-034 expenses; a natural payments hook. Effort L. Revenue: indirect/direct.
 
 ---
 

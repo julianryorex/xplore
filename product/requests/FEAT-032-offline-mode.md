@@ -15,7 +15,7 @@ Travelers lose connectivity abroad. Itinerary and map are useless without networ
 
 ## Proposed solution
 
-Cache active trip itinerary in Hive (partially started in FEAT-006). Optional offline map region download (Google Maps offline API or static snapshots for itinerary stops only).
+Cache active trip itinerary in Hive (partially started in FEAT-006). Download the itinerary, tickets and trip-wallet documents, and **map tiles for the trip area** automatically the night before departure. Edits made offline sync when the phone reconnects. Included with Trip Pass and Plus (FEAT-020).
 
 ## Dependencies
 
@@ -24,3 +24,4 @@ Cache active trip itinerary in Hive (partially started in FEAT-006). Optional of
 ## Notes / history
 
 - 2025-06-22: Created
+- 2026-11-22: Aligned with the launch-post vision ([launch-post.html](../launch-post.html)).

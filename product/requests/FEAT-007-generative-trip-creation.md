@@ -96,8 +96,8 @@ decision has been made on how it will be wired back in.
 ## Dependencies
 
 - FEAT-003 invites (share link, shipped) — reused on the invite screen.
-- FEAT-021 credits — later gate for AI generation, if it returns to the app.
-- Absorbed FEAT-010 (wire Gemini into UI), which is now deferred with generation; only stubs FEAT-006 "A2" (content seed).
+- FEAT-020 plans — gate for Scout planning beyond the free planned day.
+- Phase 2 wires in Scout (FEAT-037), which replaces the retired Gemini spec; only stubs FEAT-006 "A2" (content seed).
 
 ## Related code
 
@@ -129,3 +129,4 @@ decision has been made on how it will be wired back in.
 - 2026-11-18: Docs updated to match PR #227: flow rebuilt as four steps plus invite,
   multi-place (up to 8); in-app Gemini generation removed from the flow (deferred,
   being built in a separate repo); Plan step uses a hardcoded stub.
+- 2026-11-22: The Gemini UI and AI credits specs were retired; generation now points at Scout (FEAT-037) and plan gating (FEAT-020).

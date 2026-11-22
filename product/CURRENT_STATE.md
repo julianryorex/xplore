@@ -37,14 +37,14 @@ const itineraryId = 'ph4kd';
 The `location` cubit still uses `_activeTripId ?? itineraryId` as a late-subscriber/demo
 fallback. The `gallery` cubit no longer does: uploads are strictly trip-scoped
 (`gallery/{activeTripId}/{uid}/{imageId}`) and fail fast without an active trip, and Hive
-caches are namespaced per trip ([FEAT-014](./requests/FEAT-014-trip-scoped-gallery.md)).
+caches are namespaced per trip (shipped with [FEAT-011](./requests/FEAT-011-gallery-cloud-sync.md)).
 Itinerary production reads no longer depend on demo JSON at runtime —
 `loadDemoItinerary()` is test/golden-only.
 
 Also outstanding:
 
 - ~~New trips seed an **empty** cloud itinerary~~ → partly resolved by FEAT-007: the create flow's Plan step seeds a **stub** day skeleton (hardcoded per-place day themes, no places in the days). Real generated content is deferred. The Tokyo demo is intentionally **not** copied into real trips.
-- Itinerary **editing CRUD** not built; gated on FEAT-024 organizer roles → FEAT-006 follow-up. The create flow's plan preview is read-only (only the trip name is editable) as a result.
+- Itinerary **editing CRUD** not built; owner-only until FEAT-024 adds admins → FEAT-006 follow-up. The create flow's plan preview is read-only (only the trip name is editable) as a result.
 - Seeded days carry **no stops** (so no `place_id`s); real generation and Places enrichment are deferred. The create flow's place search runs over a **hardcoded place catalog**, not Google Places.
 - Mock onboarding placeholder only → **FEAT-005**
 - Trip invites / join flow shipped (FEAT-003, PR #96); only universal-link **production delivery** (AASA hosting + iOS Associated Domains on `xplore.olympuslabs.ai`) remains, deferred to launch + >100 users → GitHub #99
@@ -57,9 +57,9 @@ Also outstanding:
 
 | Item | Evidence |
 |------|----------|
-| Itinerary editing CRUD | Read path only; organizer UI deferred (FEAT-006 / FEAT-024) |
+| Itinerary editing CRUD | Read path only; edit UI deferred (FEAT-006, owner-only; admins via FEAT-024) |
 | Multi-trip switcher | Create-trip works; list/switch UI deferred (FEAT-002 gap) |
-| Gemini AI in UI | Not wired. `ItineraryGenerator` / `GeminiItineraryService` still exist in `lib/` but the create flow no longer calls them; agentic generation is being built outside this repo. Credits gating (FEAT-021) and `place_id` enrichment deferred |
+| Gemini AI in UI | Not wired. `ItineraryGenerator` / `GeminiItineraryService` still exist in `lib/` but the create flow no longer calls them; agentic generation is being built outside this repo. Plan gating (FEAT-020) and `place_id` enrichment deferred |
 | Gallery cloud fetch | Built (FEAT-011) and rules deployed; not yet exercised end to end on devices |
 | Push notifications (FCM) | `NotificationsPage` uses local sample data; no backend |
 | Background location | TODOs in `LocationCubit` |
