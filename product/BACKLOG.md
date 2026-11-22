@@ -51,7 +51,7 @@ Turn active trips into revenue and viral loops.
 | FEAT-020 | Trip Pass & Plus paywall | direct | L | backlog | [→](./requests/FEAT-020-subscription-paywall.md) |
 | FEAT-022 | Gallery storage tiers & limits | direct | M | backlog | [→](./requests/FEAT-022-storage-tiers.md) |
 | FEAT-023 | Trip recap & shareable link | indirect | M | backlog | [→](./requests/FEAT-023-trip-recap-share.md) |
-| FEAT-024 | Trip organizer role & permissions | enabler | M | backlog | [→](./requests/FEAT-024-organizer-roles.md) |
+| FEAT-024 | Trip roles & permissions (owner, admin, member) | enabler | M | backlog | [→](./requests/FEAT-024-organizer-roles.md) |
 | FEAT-025 | Analytics & funnel events | enabler | M | backlog | [→](./requests/FEAT-025-analytics-events.md) |
 | FEAT-026 | Referral / invite rewards | indirect | M | backlog | [→](./requests/FEAT-026-referral-invites.md) |
 
@@ -115,6 +115,6 @@ Shipped features live in [`requests/done/`](./requests/done/). Move a spec here 
 3. ~~**FEAT-003** Invites~~ ✅ → **FEAT-005** Onboarding
 4. **FEAT-011** Gallery cloud fetch
 5. **FEAT-025** Analytics → **FEAT-037** Scout planning (grounding slice)
-6. **FEAT-024** Organizer roles → **FEAT-020** Subscription paywall
+6. **FEAT-024** Trip roles → **FEAT-020** Subscription paywall
 
 See [MONETIZATION.md](./MONETIZATION.md) for why paywall comes after multi-user trips work.

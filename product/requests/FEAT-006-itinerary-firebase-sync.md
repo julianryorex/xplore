@@ -27,7 +27,7 @@ Persist itineraries in Firebase (Firestore recommended for nested `daily_plans`)
 
 - [x] Load itinerary from cloud by `TripCubit.activeTripId`
 - [x] Real-time sync when another member edits (or optimistic with conflict strategy)
-- [ ] Create/edit/delete daily plan and location (organizer-only initially — FEAT-024)
+- [ ] Create/edit/delete daily plan and location (owner-only today; owner and admins once FEAT-024 lands)
   — completion toggle shipped in #107; add/edit/delete still to do
 - [x] Offline read cache via Hive for airplane mode
 - [x] Demo loader remains for `test/itinerary_demo_smoke_test.dart`
@@ -58,12 +58,16 @@ Persist itineraries in Firebase (Firestore recommended for nested `daily_plans`)
   only; the snapshot listener is the only thing that emits and writes Hive, so the cache never
   holds a half-applied edit.
 - **Last-write-wins, no version field** for now. With owner-only editing there is one editor,
-  so contention is negligible. Revisit when FEAT-024 adds co-editors.
+  so contention is negligible. Revisit when FEAT-024 adds admins as co-editors; the editor set
+  stays small (owner plus the admins they promote), never the whole group.
 - **Owner-only editing** (`trips/{tripId}.createdBy`), enforced three times: the
   `validItineraryUpdate` rule (authoritative; only `daily_plans`, `pins`, `last_updated` may
   change, `invitees` stays immutable), `ItineraryCubit.canEdit` (mutators no-op for
   non-owners), and the UI (edit chrome hidden unless `canEdit`). Whole-itinerary delete stays
   denied.
+- **Editing never opens to all members.** FEAT-024 widens the gate from "owner" to "owner or
+  admin" in the same three places; members stay read-only. Build the CRUD below against a
+  single `canEdit` check so that widening is a one-line change in the cubit and the rule.
 
 ## Remaining work
 
@@ -74,7 +78,7 @@ Persist itineraries in Firebase (Firestore recommended for nested `daily_plans`)
    hides the plan). Keep the no-arg demo constructor working.
 2. **Edit UI** — a bottom-sheet stop editor (name, description; empty `place_id` for manual
    stops), swipe/long-press delete, "Add stop" and day add/edit from the overview. Show
-   `saveError` with a retry. Gate everything on `canEdit` so non-owners and goldens keep the
+   `saveError` with a retry. Gate everything on `canEdit` so members and goldens keep the
    read-only view. Closes #40 together with step 1.
 3. **Editable generated plan before creation** (FEAT-007 follow-up) — reuse the stop/day
    editor against the in-memory draft in the create flow so tweaks are seeded via
@@ -87,11 +91,12 @@ Persist itineraries in Firebase (Firestore recommended for nested `daily_plans`)
 
 ## Open questions
 
-- When FEAT-024 adds co-editors: add a `version` field for optimistic locking, or keep
-  last-write-wins?
+- None. Last-write-wins stays when FEAT-024 adds admins as co-editors (decided 2026-11-22);
+  each change records who made it and when, without showing it in the app yet.
 
 ## Notes / history
 
 - 2025-06-22: Created
 - 2026-11-17: Resolved the data-shape and conflict questions, recorded the owner-only editing
   model shipped in #107 (completion toggle), and added the remaining CRUD plan.
+- 2026-11-22: Editing will widen to owner and admins only (FEAT-024), not to every member.
