@@ -7,12 +7,15 @@ import 'package:xplore/core/layout_padding.dart';
 import 'package:xplore/features/itinerary/models/itinerary_models.dart';
 
 class ItineraryFocusPage extends StatelessWidget {
-  final LocationPlanModel locationPlan;
+  final int dayIndex;
+  final int stopIndex;
 
-  const ItineraryFocusPage({required this.locationPlan, super.key});
+  const ItineraryFocusPage({required this.dayIndex, required this.stopIndex, super.key});
 
   @override
   Widget build(BuildContext context) {
+    // STUB wiring — the stop detail page is being rebuilt to read the live stop.
+    const locationPlan = LocationPlanModel(name: '');
     return Scaffold(
       body: SafeArea(
         child: LayoutPadding(

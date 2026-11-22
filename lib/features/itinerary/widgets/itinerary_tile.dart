@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:xplore/constants/constants.dart';
 import 'package:xplore/constants/typography.dart';
 import 'package:xplore/features/itinerary/models/itinerary_models.dart';
-import 'package:xplore/routes.dart';
 
 class ItineraryTile extends StatelessWidget {
   final LocationPlanModel locationPlan;
@@ -19,7 +18,7 @@ class ItineraryTile extends StatelessWidget {
       color: XploreColors.surfaceElevated,
       child: InkWell(
         onTap: () {
-          Navigator.pushNamed(context, Paths.itineraryFocusView, arguments: locationPlan);
+          // Being removed with the day page restyle.
         },
         child: Container(
           width: width - height - paddingUnit * 2, // minus row size && gap

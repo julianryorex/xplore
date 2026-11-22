@@ -12,7 +12,7 @@ import 'package:xplore/features/auth/presentation/sign_in_page.dart';
 import 'package:xplore/features/auth/services/auth_service.dart';
 import 'package:xplore/features/dev/presentation/dev_tools_page.dart';
 import 'package:xplore/features/gallery/presentation/gallery_focus_view.dart';
-import 'package:xplore/features/itinerary/models/itinerary_models.dart';
+import 'package:xplore/features/itinerary/models/stop_ref.dart';
 import 'package:xplore/features/notifications/presentation/notifications_page.dart';
 import 'package:xplore/features/trip/bloc/join_trip_cubit.dart';
 import 'package:xplore/features/trip/bloc/trip_creation_cubit.dart';
@@ -22,6 +22,8 @@ import 'package:xplore/features/trip/services/invite_link.dart';
 import 'package:xplore/features/trip/services/trip_service.dart';
 import 'package:xplore/screens/gallery_page.dart';
 import 'package:xplore/screens/generic_error_page.dart';
+import 'package:xplore/screens/itinerary_day_edit_page.dart';
+import 'package:xplore/screens/itinerary_days_page.dart';
 import 'package:xplore/screens/itinerary_focus_page.dart';
 import 'package:xplore/screens/itinerary_overview_page.dart';
 import 'package:xplore/screens/profile_page.dart';
@@ -35,8 +37,17 @@ class Paths {
   static const gallery = '/gallery';
   static const galleryFocusView = '/gallery-focus';
 
+  /// One day of the plan. Takes the day's index (`int`).
   static const itineraryOverview = '/itinerary-overview';
+
+  /// One stop's detail page. Takes an [ItineraryStopRef].
   static const itineraryFocusView = '/itinerary-focus-view';
+
+  /// Owner-only edit mode for one day (reorder, delete, rename, remove). Takes the day's index (`int`).
+  static const itineraryDayEdit = '/itinerary-day-edit';
+
+  /// Owner-only list of every day (add, rename, remove). Takes no argument.
+  static const itineraryDays = '/itinerary-days';
   static const itineraryMapView = '/itinerary-map-view';
 
   static const profile = '/profile';
@@ -155,14 +166,27 @@ class RouteGenerator {
       case Paths.itineraryFocusView:
         return MaterialPageRoute(
           builder: (_) {
-            if (args is LocationPlanModel) {
-              return ItineraryFocusPage(locationPlan: args);
+            if (args is ItineraryStopRef) {
+              return ItineraryFocusPage(dayIndex: args.dayIndex, stopIndex: args.stopIndex);
             }
 
-            _logger.e('argument is not of type "LocationPlanModel"');
+            _logger.e('argument is not of type "ItineraryStopRef"');
             return const ErrorScreen();
           },
         );
+      case Paths.itineraryDayEdit:
+        return MaterialPageRoute(
+          builder: (_) {
+            if (args is int) {
+              return ItineraryDayEditPage(dayIndex: args);
+            }
+
+            _logger.e('argument is not of type "int" (itinerary day index)');
+            return const ErrorScreen();
+          },
+        );
+      case Paths.itineraryDays:
+        return MaterialPageRoute(builder: (_) => const ItineraryDaysPage(), settings: settings);
 
       default:
         return MaterialPageRoute(builder: (_) => const ErrorScreen());
