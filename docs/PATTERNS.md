@@ -73,10 +73,86 @@ Choose deliberately between action-driven and session/reactive auth patterns:
   Consumers cancel only their own `StreamSubscription` in `close()` and never
   close the shared broadcast controller.
 
+## Module boundaries: three layers, imports point down
+
+> **Status: target architecture, not yet enforced.** As of 2026-11-21 the code
+> has 117 feature-to-feature imports across 50 files, `lib/core` imports
+> features, and `lib/shared/` and `make check-imports` do not exist yet. New
+> code should follow the rule; existing violations are migrated one feature at
+> a time.
+
+```
+┌──────────────────────────────────────────────────────────────┐
+│ Composition   home · agent · onboarding · dev · root shell · │
+│               lib/screens                                    │
+└──────────────────────────────────────────────────────────────┘
+        │ may import                                    │
+        ▼                                               │
+┌───────────────────────────────────────────────────┐   │
+│ Features   trip · itinerary · gallery · profile · │   │
+│            map · location · auth                  │   │
+└───────────────────────────────────────────────────┘   │
+        │ may import                                    │
+        ▼                                               ▼
+┌──────────────────────────────────────────────────────────────┐
+│ Shared domain (lib/shared/)   services · models · state types│
+└──────────────────────────────────────────────────────────────┘
+```
+
+- **Composition** exists to stitch features together, so it may import
+  features and the shared layer.
+- **Features** import the shared layer only. A feature never imports another
+  feature — not its cubit, models, services, or widgets.
+- **Shared domain** imports no feature and nothing from composition.
+
+Why: imports that only point down cannot form cycles (today: `trip` ↔
+`itinerary`, `trip` ↔ `home`, `trip` ↔ `onboarding`, `auth` ↔ `onboarding`,
+`home` ↔ `agent`, `trip` → `map` → `location` → `trip`), each feature can be tested with only the shared layer, and a
+feature's internals can change without breaking its neighbours.
+
+### When a feature needs something from another feature
+
+Try these in order; moving code to shared is the last resort, not the first:
+
+1. **Let composition pass it down.** If a gallery widget needs a profile
+   avatar, the screen that composes both reads the profile and passes the
+   avatar in as a parameter.
+2. **Merge the features** if they import each other heavily in both
+   directions — they are probably one module.
+3. **Move the smallest piece to shared.** Move the one converter or state type
+   that is needed, not the file it happens to live in.
+
+### Keeping the shared layer small
+
+The shared layer is the easy fix for every violation, so it has its own rules:
+
+- **Two real consumers.** Code moves to shared only when a second feature
+  needs it. Code used by one feature stays there, however general it looks.
+- **Allow-list of contents.** Data models, services (interfaces and
+  implementations), and state types published across features (e.g.
+  `TripState`, `TripStreamMixin`). No widgets, no cubits, no feature-specific
+  logic. Nothing in shared imports `flutter_bloc` or Flutter widgets.
+- **Organised by domain, not by kind.** `shared/trip/`, `shared/itinerary/`,
+  `shared/auth/` — not `shared/models/` and `shared/services/`. Shared domains
+  must not import each other in a cycle.
+
+### Enforcement (planned)
+
+A `make check-imports` target, run as part of `make verify`, will fail on:
+
+- a file under `lib/features/<x>/` importing `lib/features/<y>/`;
+- a file under `lib/shared/` importing a feature, `flutter_bloc`, or Flutter
+  widgets;
+- an import cycle between shared domains.
+
+It will also print the shared layer's file count on each run, so steady growth
+there is visible in review.
+
 ## Other conventions (see README "Key patterns")
 
-- **Feature-first modules** — each domain owns its `bloc/`, `models/`,
-  `services/`, and `presentation/`.
+- **Feature-first modules** — each domain owns its `bloc/`, `presentation/`,
+  and whatever `models/` and `services/` only it uses; anything a second
+  feature needs lives in the shared layer (see "Module boundaries" above).
 - **Immutable state** via Freezed (`@freezed`), generated into `lib/generated/`.
 - **Offline-first data** — Hive CE (`hive_ce`) for local cache, Firebase for cloud sync.
 - **Repository pattern** for data abstractions (e.g. gallery over Hive CE).
