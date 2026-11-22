@@ -82,6 +82,9 @@ Persist itineraries in Firebase (Firestore recommended for nested `daily_plans`)
    hides the plan). Keep the no-arg demo constructor working.
 2. **Edit UI, place-first** — design the editor for a plan the agent drafted and a person
    adjusts, not for a plan typed from nothing:
+   - **Entry points.** Tapping a stop keeps opening its detail page, which everyone can read;
+     the owner gets an Edit button there that opens the stop editor. Home's Itinerary card
+     gets an owner-only "Edit days" row that opens the days list.
    - **Add a stop opens place search.** Picking a result stores that place's `place_id` and
      name. "Add as a custom stop" is the secondary option for things that are not places.
    - **A real-place stop shows a place card** (name, category, address, hours). Its name is
@@ -92,6 +95,8 @@ Persist itineraries in Firebase (Firestore recommended for nested `daily_plans`)
    - Edit mode on the day for reorder, delete, rename day and remove day; a days list for
      add, rename and remove. Deletes go through the shared confirmation dialog.
    - Show `saveError` with a retry; the unsaved stop stays visible, marked as not saved.
+   - No Scout labelling in stage 1 ("Drafted by Scout", "Written by Scout", "Plan day" on the
+     day page): Scout is not shipped, so nothing has an agent author yet.
    - An empty day is an edge case (a day the owner just added, or generation failed), not the
      default view of a new trip.
    - Gate everything on `canEdit` so members and goldens keep the read-only view. Closes #40
@@ -102,10 +107,13 @@ Persist itineraries in Firebase (Firestore recommended for nested `daily_plans`)
    `seedItinerary(dailyPlans:)`; editing the review must not trigger regeneration. The create
    flow is being replaced, so design this against the new flow, not
    `create_trip_review_steps.dart`.
-4. **Real place search** (required by step 2) — the stop editor needs live place search, so
-   Google Places billing has to be on; the create flow's hardcoded place catalog does not
-   cover it. Decide which place details are stored on the stop (at least `place_id` and name;
-   category, address and hours are shown in the designs) and which are fetched on view.
+4. **Place search behind our backend, mocked for now** (required by step 2) — the app never
+   calls Google Places directly; place search and place details go through our own backend.
+   Until that backend exists, stage 1 runs on mock place data behind the same interface, so
+   swapping in the real source later touches one place.
+   **Save the place details on the stop** when it is picked — name, `place_id`, category,
+   neighbourhood, address, opening hours and a photo reference — so viewing a plan does not
+   call the place source again. Saved hours can go stale; refreshing them is a later concern.
    Lazy lookup of a `place_id` from a typed name is dropped: it can silently pick the wrong
    place. Stops that predate this keep an empty `place_id` and read as custom stops.
 5. **Record the author of each change** — every add, edit, delete and reorder stores who made
@@ -126,3 +134,6 @@ Persist itineraries in Firebase (Firestore recommended for nested `daily_plans`)
 - 2026-11-22: Edit UI made place-first. The working assumption is that Scout drafts the plan
   and a person edits it, so stops are real places with a `place_id` by default and custom
   stops are the fallback. Real place search moved from optional to required.
+- 2026-11-22: Place search goes through our backend, mocked for stage 1; place details are
+  saved on the stop; Scout labels are hidden until Scout ships. Entry points settled: Edit
+  on the stop detail page, and an "Edit days" row on Home.

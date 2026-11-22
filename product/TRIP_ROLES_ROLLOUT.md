@@ -25,12 +25,18 @@ smallest version worth giving to a real group.
 - The owner can add a custom stop for something that is not a place. It is marked as custom
   and has no pin.
 - The owner can swap a stop for another place, edit its note, delete it and reorder stops.
-- The owner can add, rename and remove days.
+- The owner can add, rename and remove days, from an "Edit days" row on Home.
+- Tapping a stop still opens its detail page for everyone; the owner edits from an Edit
+  button there.
 - A failed save shows a clear message with a retry; the plan never disappears while saving.
 - Every change records who made it and when, from the first edit, even though nothing shows it.
   The author can be a person or Scout.
 
-**Needs:** live place search, which means turning on Google Places billing.
+**Needs:** place search. The app does not call Google Places directly; search goes through
+our backend, and stage 1 uses mock place data until that exists. A picked place's details
+are saved on the stop so viewing the plan never searches again.
+
+**Not in stage 1:** any "by Scout" labelling. It is hidden until Scout ships.
 
 **Why first:** whoever drafts the plan, a person has to be able to correct it, and roles mean
 nothing until there is something to edit. Until Scout is wired into the app this stage is
