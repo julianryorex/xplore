@@ -154,6 +154,7 @@ class RouteGenerator {
         );
       case Paths.itineraryOverview:
         return MaterialPageRoute(
+          settings: settings,
           builder: (_) {
             if (args is int) {
               return ItineraryOverviewPage(dayIndex: args);
@@ -165,6 +166,7 @@ class RouteGenerator {
         );
       case Paths.itineraryFocusView:
         return MaterialPageRoute(
+          settings: settings,
           builder: (_) {
             if (args is ItineraryStopRef) {
               return ItineraryFocusPage(dayIndex: args.dayIndex, stopIndex: args.stopIndex);
@@ -176,6 +178,7 @@ class RouteGenerator {
         );
       case Paths.itineraryDayEdit:
         return MaterialPageRoute(
+          settings: settings,
           builder: (_) {
             if (args is int) {
               return ItineraryDayEditPage(dayIndex: args);
