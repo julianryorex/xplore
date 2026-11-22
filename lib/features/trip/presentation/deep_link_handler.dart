@@ -3,18 +3,21 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:xplore/features/auth/bloc/auth_cubit.dart';
+import 'package:xplore/features/onboarding/bloc/onboarding_cubit.dart';
 import 'package:xplore/features/trip/services/deep_link_service.dart';
 import 'package:xplore/features/trip/services/invite_link.dart';
 import 'package:xplore/routes.dart';
 
-/// Listens for invite deep links and routes them to the join-confirmation
-/// screen once the user is authenticated.
+/// Listens for invite deep links and routes them by who is opening them.
+///
+/// A signed-in user goes straight to the join-confirmation screen. A signed-out
+/// user is handed to onboarding's invitee path, which shows the trip, signs
+/// them in and, once it completes, lands them on the same join screen, so a
+/// "tap link -> sign in -> land in the trip" flow works without losing the
+/// invite.
 ///
 /// Wraps the app's home so it sits *below* the [MaterialApp]'s [Navigator] and
-/// can push named routes directly. If a link arrives while signed out, it is
-/// held until [AuthAuthenticated] (the [AuthGate] presents sign-in/onboarding
-/// in the meantime), then the join screen is pushed — so a "tap link → sign in
-/// → land in the trip" flow works without losing the invite.
+/// can push named routes directly.
 class DeepLinkHandler extends StatefulWidget {
   const DeepLinkHandler({required this.child, super.key});
 
@@ -26,6 +29,9 @@ class DeepLinkHandler extends StatefulWidget {
 
 class _DeepLinkHandlerState extends State<DeepLinkHandler> {
   StreamSubscription<InviteLinkData>? _subscription;
+
+  /// A link that cannot be routed yet: auth is still resolving, or the user is
+  /// signed in but still finishing onboarding.
   InviteLinkData? _pending;
 
   @override
@@ -45,27 +51,45 @@ class _DeepLinkHandlerState extends State<DeepLinkHandler> {
 
   void _onInvite(InviteLinkData data) {
     _pending = data;
-    _tryConsumePending();
+    _routePending();
   }
 
-  /// Navigates to the join screen if there is a held invite and the user is
-  /// authenticated. Deferred to a post-frame callback so it runs after the
-  /// [AuthGate]'s own route reset on sign-in.
-  void _tryConsumePending() {
+  void _routePending() {
     final pending = _pending;
     if (pending == null || !mounted) {
       return;
     }
 
-    final isAuthenticated = context.read<AuthCubit>().state is AuthAuthenticated;
-    if (!isAuthenticated) {
-      return;
+    final onboarding = context.read<OnboardingCubit>();
+    switch (context.read<AuthCubit>().state) {
+      case AuthUnknown():
+        return;
+      case AuthUnauthenticated():
+        _pending = null;
+        unawaited(onboarding.startInvite(pending));
+      case AuthAuthenticated():
+        if (onboarding.state.isInProgress) {
+          return;
+        }
+        _pending = null;
+        _openJoinScreen(pending);
     }
+  }
 
-    _pending = null;
+  void _onOnboardingCompleted(OnboardingState state) {
+    final invite = state.inviteLink;
+    if (invite != null) {
+      _openJoinScreen(invite);
+    }
+    _routePending();
+  }
+
+  /// Deferred to a post-frame callback so it runs after the [AuthGate] has
+  /// swapped in Home and reset its routes.
+  void _openJoinScreen(InviteLinkData invite) {
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (mounted) {
-        Navigator.of(context).pushNamed(Paths.joinTrip, arguments: pending);
+        Navigator.of(context).pushNamed(Paths.joinTrip, arguments: invite);
       }
     });
   }
@@ -78,13 +102,17 @@ class _DeepLinkHandlerState extends State<DeepLinkHandler> {
 
   @override
   Widget build(BuildContext context) {
-    return BlocListener<AuthCubit, AuthState>(
-      listenWhen: (previous, current) => previous.runtimeType != current.runtimeType,
-      listener: (context, state) {
-        if (state is AuthAuthenticated) {
-          _tryConsumePending();
-        }
-      },
+    return MultiBlocListener(
+      listeners: [
+        BlocListener<AuthCubit, AuthState>(
+          listenWhen: (previous, current) => previous.runtimeType != current.runtimeType,
+          listener: (_, _) => _routePending(),
+        ),
+        BlocListener<OnboardingCubit, OnboardingState>(
+          listenWhen: (previous, current) => !previous.completed && current.completed,
+          listener: (_, state) => _onOnboardingCompleted(state),
+        ),
+      ],
       child: widget.child,
     );
   }

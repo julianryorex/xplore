@@ -7,13 +7,14 @@ import 'package:xplore/core/glass.dart';
 import 'package:xplore/core/header.dart';
 import 'package:xplore/core/layout_padding.dart';
 import 'package:xplore/features/gallery/bloc/gallery_cubit.dart';
+import 'package:xplore/features/onboarding/bloc/onboarding_cubit.dart';
 import 'package:xplore/features/profile/bloc/profile_cubit.dart';
 import 'package:xplore/features/trip/bloc/trip_cubit.dart';
 import 'package:xplore/routes.dart';
 
 /// Developer-only utilities (FEAT-008), moved off the production Home screen.
-/// Reached from a `kDebugMode`-gated entry in Profile; the page itself assumes
-/// it's only ever pushed in debug builds.
+/// Reached from an entry in Profile gated on `devToolsEnabled`; the page itself
+/// assumes it's only ever pushed in debug or test-login builds.
 class DevToolsPage extends StatelessWidget {
   const DevToolsPage({super.key});
 
@@ -34,10 +35,20 @@ class DevToolsPage extends StatelessWidget {
               children: [
                 const SizedBox(height: paddingUnit),
                 Text(
-                  'Debug utilities. These are only available in debug builds.',
+                  'Debug utilities. These are only available in debug and test-login builds.',
                   style: context.pText.bodySmall?.copyWith(color: XploreColors.mutedText),
                 ),
                 const SizedBox(height: paddingUnit * 1.5),
+                _DevTile(
+                  icon: Icons.replay_rounded,
+                  title: 'Replay onboarding',
+                  subtitle: 'Runs the new-organizer flow as a brand-new account. Creates a real trip.',
+                  onTap: () {
+                    context.read<OnboardingCubit>().startReplay();
+                    // The auth gate under this page swaps to onboarding; clear the routes above it.
+                    Navigator.of(context).popUntil((route) => route.isFirst);
+                  },
+                ),
                 _DevTile(
                   icon: Icons.cloud_upload_outlined,
                   title: 'Upload sample to gallery',

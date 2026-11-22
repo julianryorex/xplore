@@ -81,8 +81,9 @@ class TripService {
 
   /// Creates a fresh invite for [tripId] and returns it alongside the
   /// shareable universal link (see [InviteLink]). The caller ([uid]) must be a
-  /// trip member; `tripTitle` / `memberCount` are denormalised from the live
-  /// trip so the join screen can preview without a (blocked) trip read.
+  /// trip member; `tripTitle` / `memberCount` and the trip's dates are
+  /// denormalised from the live trip so the join screen can preview without a
+  /// (blocked) trip read.
   ///
   /// [expiresAt] is optional — the FEAT-003 default is no expiry.
   Future<TripInviteHandle> createInvite(String tripId, String uid, {DateTime? expiresAt}) async {
@@ -94,8 +95,7 @@ class TripService {
 
     final token = _uuid.v4().replaceAll('-', '');
     final inviteRef = _invites(tripId).doc(token);
-
-    await inviteRef.set(<String, dynamic>{
+    final fields = <String, dynamic>{
       'token': token,
       'tripId': tripId,
       'createdBy': uid,
@@ -104,7 +104,30 @@ class TripService {
       'revoked': false,
       'tripTitle': trip.title,
       'memberCount': trip.memberIds.length,
-    });
+    };
+
+    // Copied so an invitee can see when the trip runs before joining; an
+    // undated trip leaves both keys out.
+    var startDate = trip.startDate;
+    var endDate = trip.endDate;
+    try {
+      await inviteRef.set(<String, dynamic>{
+        ...fields,
+        if (startDate != null) 'startDate': Timestamp.fromDate(startDate),
+        if (endDate != null) 'endDate': Timestamp.fromDate(endDate),
+      });
+    } on FirebaseException catch (error) {
+      // Rules deployed before invites carried dates reject the two extra keys.
+      // Sharing a trip must keep working against them, so fall back to an
+      // invite without dates. Remove once the updated rules are live everywhere.
+      final hasDates = startDate != null || endDate != null;
+      if (error.code != 'permission-denied' || !hasDates) {
+        rethrow;
+      }
+      await inviteRef.set(fields);
+      startDate = null;
+      endDate = null;
+    }
 
     final invite = TripInvite(
       token: token,
@@ -113,6 +136,8 @@ class TripService {
       expiresAt: expiresAt,
       tripTitle: trip.title,
       memberCount: trip.memberIds.length,
+      startDate: startDate,
+      endDate: endDate,
     );
 
     return TripInviteHandle(

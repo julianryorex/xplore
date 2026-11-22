@@ -17,6 +17,9 @@ class AuthCubit extends Cubit<AuthState> {
   final AuthAnalytics analytics;
   StreamSubscription<User?>? _subscription;
 
+  /// Shown as the display name of an account whose provider gave none.
+  static const placeholderName = 'Traveler';
+
   AuthCubit(this._authService, {this.analytics = const AuthAnalytics()}) : super(const AuthState.unknown()) {
     _subscription = _authService.authStateChanges().listen(_onUserChanged);
   }
@@ -27,9 +30,28 @@ class AuthCubit extends Cubit<AuthState> {
       return;
     }
 
-    final name = (user.displayName == null || user.displayName!.trim().isEmpty) ? 'Traveler' : user.displayName!;
+    final name = (user.displayName == null || user.displayName!.trim().isEmpty) ? placeholderName : user.displayName!;
 
-    emit(AuthState.authenticated(uid: user.uid, displayName: name, email: user.email, photoUrl: user.photoURL));
+    emit(
+      AuthState.authenticated(
+        uid: user.uid,
+        displayName: name,
+        email: user.email,
+        photoUrl: user.photoURL,
+        isNewAccount: _isNewAccount(user),
+      ),
+    );
+  }
+
+  /// Firebase stamps an account's creation and its first sign-in together, and
+  /// moves only the sign-in time on later ones. Unknown times count as new.
+  static bool _isNewAccount(User user) {
+    final created = user.metadata.creationTime;
+    final lastSignIn = user.metadata.lastSignInTime;
+    if (created == null || lastSignIn == null) {
+      return true;
+    }
+    return lastSignIn.difference(created).abs() < const Duration(seconds: 10);
   }
 
   /// Forwards to [AuthService]; the `authStateChanges` stream drives the actual

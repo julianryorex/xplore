@@ -23,6 +23,11 @@ abstract class TripInvite with _$TripInvite {
     @Default(false) bool revoked,
     @Default('') String tripTitle,
     @Default(0) int memberCount,
+
+    /// The trip's dates when the invite was created, so an invitee can see when
+    /// it runs before joining. Null for a trip without dates.
+    @TimestampConverter() DateTime? startDate,
+    @TimestampConverter() DateTime? endDate,
   }) = _TripInvite;
 
   factory TripInvite.fromJson(Map<String, Object?> json) => _$TripInviteFromJson(json);

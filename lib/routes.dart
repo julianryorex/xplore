@@ -1,13 +1,13 @@
 import 'package:animations/animations.dart';
-import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:logger/logger.dart';
 import 'package:xplore/constants/constants.dart';
 import 'package:xplore/core/app_tab.dart';
 import 'package:xplore/core/root_shell.dart';
+import 'package:xplore/features/dev/dev_tools_flag.dart';
 import 'package:xplore/features/agent/presentation/agent_page.dart';
-import 'package:xplore/features/auth/presentation/onboarding_page.dart';
+import 'package:xplore/features/onboarding/presentation/onboarding_flow_page.dart';
 import 'package:xplore/features/auth/presentation/sign_in_page.dart';
 import 'package:xplore/features/auth/services/auth_service.dart';
 import 'package:xplore/features/dev/presentation/dev_tools_page.dart';
@@ -42,7 +42,7 @@ class Paths {
   static const profile = '/profile';
   static const notifications = '/notifications';
 
-  /// Developer tools page (FEAT-008), gated behind `kDebugMode` at its
+  /// Developer tools page (FEAT-008), gated behind `devToolsEnabled` at its
   /// entry points.
   static const dev = '/dev';
 
@@ -78,9 +78,9 @@ class RouteGenerator {
       case Paths.profile:
         return MaterialPageRoute(builder: (_) => const ProfilePage(), settings: settings);
       case Paths.dev:
-        // Defense-in-depth: the only entry point is kDebugMode-gated, but a
-        // deep link could still target /dev — never expose it in release.
-        if (!kDebugMode) {
+        // Defense-in-depth: the only entry point is gated on devToolsEnabled, but
+        // a deep link could still target /dev — never expose it in release.
+        if (!devToolsEnabled) {
           return MaterialPageRoute(builder: (_) => const ErrorScreen(), settings: settings);
         }
         return MaterialPageRoute(builder: (_) => const DevToolsPage(), settings: settings);
@@ -122,7 +122,7 @@ class RouteGenerator {
           builder: (_) => AgentPage(args: args is AgentPageArgs ? args : const AgentPageArgs()),
         );
       case Paths.onboarding:
-        return MaterialPageRoute(builder: (_) => const OnboardingPage());
+        return MaterialPageRoute(builder: (_) => const OnboardingFlowPage());
       case Paths.signIn:
         return MaterialPageRoute(builder: (_) => const SignInPage());
       case Paths.gallery:

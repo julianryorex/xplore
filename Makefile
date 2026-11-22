@@ -1,4 +1,4 @@
-.PHONY: clean clean-artifacts get init gen format check-format analyze verify test test-gold delete-gold test-cov cov reboot run-test-login build-ios build-ios-testflight build-mac deploy-ios redeploy-ios prep-ipad prep-mac pub-reset
+.PHONY: clean clean-artifacts get init gen format check-format analyze verify test test-gold delete-gold test-cov cov reboot run-test-login build-ios build-ios-test-login build-ios-testflight build-mac deploy-ios redeploy-ios prep-ipad prep-mac pub-reset
 
 FVM ?= fvm
 FLUTTER := $(FVM) flutter
@@ -32,6 +32,12 @@ run-test-login:
 build-ios:
 	@echo "Building iOS app with Xcode: $$(xcodebuild -version | head -1)"
 	$(FLUTTER) build ios
+
+# Device build with the test login and the Developer page (never for release).
+# Install it with `make deploy-ios`. See docs/DEVELOPMENT.md.
+build-ios-test-login:
+	@echo "Building iOS app with Xcode: $$(xcodebuild -version | head -1)"
+	$(FLUTTER) build ios --dart-define=ENABLE_TEST_LOGIN=true
 
 build-ios-testflight:
 	@echo "Building iOS app with Xcode: $$(xcodebuild -version | head -1)"

@@ -12,5 +12,9 @@ sealed class AuthState with _$AuthState {
     required String displayName,
     String? email,
     String? photoUrl,
+
+    /// False when this account has signed in before, so onboarding can skip
+    /// what a returning user has already set up.
+    @Default(true) bool isNewAccount,
   }) = AuthAuthenticated;
 }
