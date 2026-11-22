@@ -105,8 +105,9 @@ analyze:
 # then tests. Run this (not ad hoc fvm commands) to verify a change.
 verify: gen check-format check-imports analyze test
 
+# Pass a path or flags via ARGS, e.g. `make test ARGS=test/features/itinerary`.
 test:
-	$(FLUTTER) test
+	$(FLUTTER) test $(ARGS)
 
 # Refresh golden baselines. Goldens are an Apple-only artifact (text rasterises
 # differently on Linux) — only run this on a macOS host.

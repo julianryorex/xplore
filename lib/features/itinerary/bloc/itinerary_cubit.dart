@@ -59,8 +59,9 @@ class ItineraryCubit extends Cubit<ItineraryStates> with TripStreamMixin, AuthCl
   String? _activeTripCreatedBy;
 
   /// Editing is owner-only this pass: only the active trip's creator may write.
-  /// Guards both the in-app UI affordances ([LoadedItineraryState.canEdit]) and
-  /// the mutators below, on top of the authoritative Firestore rule.
+  /// The single gate for the in-app UI affordances ([LoadedItineraryState.canEdit])
+  /// and every mutator below, on top of the authoritative Firestore rule; FEAT-024
+  /// widens it to "owner or admin" here and in that rule.
   bool get _canEdit {
     final uid = _authService?.currentUid;
     return uid != null && uid == _activeTripCreatedBy;
@@ -82,6 +83,15 @@ class ItineraryCubit extends Cubit<ItineraryStates> with TripStreamMixin, AuthCl
   // Bumped whenever a load starts or the cubit is cleared, so a load still
   // awaiting the cache knows it was superseded and must not attach a listener.
   int _loadGeneration = 0;
+
+  // The edited plan while its save is in flight or has failed. The listener
+  // keeps showing it over server snapshots, so an unsaved edit stays visible.
+  List<DailyPlanModel>? _unsavedPlans;
+
+  // Bumped per save so only the latest one settles the saving / failed state.
+  int _saveSequence = 0;
+
+  bool _debugFailNextSave = false;
 
   /// Loads the itinerary for [tripId]: cache first, then a live cloud listener.
   /// No-op while that trip is already loaded or loading.
@@ -169,47 +179,260 @@ class ItineraryCubit extends Cubit<ItineraryStates> with TripStreamMixin, AuthCl
       return;
     }
 
-    _safeEmit(LoadedItineraryState(itinerary: itinerary, canEdit: _canEdit));
+    final current = state;
+    final unsaved = _unsavedPlans;
+    if (unsaved != null && current is LoadedItineraryState && (current.isSaving || current.saveFailure != null)) {
+      _safeEmit(
+        current.copyWith(
+          itinerary: itinerary.copyWith(dailyPlans: unsaved),
+          canEdit: _canEdit,
+        ),
+      );
+    } else {
+      _unsavedPlans = null;
+      _safeEmit(LoadedItineraryState(itinerary: itinerary, canEdit: _canEdit));
+    }
     await _repository.cacheItinerary(tripId, itinerary);
   }
 
-  /// Toggles the `completed` flag on the stop at [locationIndex] within the day
-  /// at [dayIndex]. Owner-only: no-ops for non-owners and when no itinerary is
-  /// loaded. Writes the whole `daily_plans` array to Firestore only — the
-  /// snapshot listener echoes the committed value back into state + cache (the
-  /// cubit never writes Hive directly; see the FEAT-006 sync contract).
-  Future<void> toggleLocationCompleted(int dayIndex, int locationIndex) async {
+  /// Toggles the `completed` flag on the stop at [stopIndex] of day [dayIndex].
+  Future<void> toggleLocationCompleted(int dayIndex, int stopIndex) {
+    return _saveEdit(
+      ItineraryEdit.completeStop,
+      (plans) => _withStops(plans, dayIndex, (stops) {
+        if (!_inRange(stopIndex, stops)) {
+          return null;
+        }
+        return [...stops]..[stopIndex] = stops[stopIndex].copyWith(completed: !stops[stopIndex].completed);
+      }),
+    );
+  }
+
+  /// Appends [stop] to day [dayIndex], recording [author] as who added it.
+  Future<void> addLocation(int dayIndex, LocationPlanModel stop, {ChangeAuthorType author = ChangeAuthorType.person}) {
+    final stopIndex = _stopsOf(dayIndex)?.length;
+    return _saveEdit(
+      ItineraryEdit.addStop,
+      (plans) => _withStops(plans, dayIndex, (stops) {
+        return [...stops, stop.copyWith(lastChange: _change(ItineraryChangeAction.added, author))];
+      }),
+      dayIndex: dayIndex,
+      stopIndex: stopIndex,
+    );
+  }
+
+  /// Replaces the stop at [stopIndex] of day [dayIndex] with [stop].
+  Future<void> updateLocation(
+    int dayIndex,
+    int stopIndex,
+    LocationPlanModel stop, {
+    ChangeAuthorType author = ChangeAuthorType.person,
+  }) {
+    return _saveEdit(
+      ItineraryEdit.updateStop,
+      (plans) => _withStops(plans, dayIndex, (stops) {
+        if (!_inRange(stopIndex, stops)) {
+          return null;
+        }
+        return [...stops]..[stopIndex] = stop.copyWith(lastChange: _change(ItineraryChangeAction.edited, author));
+      }),
+      dayIndex: dayIndex,
+      stopIndex: stopIndex,
+    );
+  }
+
+  /// Deletes the stop at [stopIndex] of day [dayIndex]. The removal is recorded on the day.
+  Future<void> removeLocation(int dayIndex, int stopIndex, {ChangeAuthorType author = ChangeAuthorType.person}) {
+    return _saveEdit(
+      ItineraryEdit.removeStop,
+      (plans) => _withStops(plans, dayIndex, dayChange: _change(ItineraryChangeAction.stopRemoved, author), (stops) {
+        if (!_inRange(stopIndex, stops)) {
+          return null;
+        }
+        return [...stops]..removeAt(stopIndex);
+      }),
+    );
+  }
+
+  /// Moves the stop at [fromIndex] of day [dayIndex] so it ends up at [toIndex].
+  Future<void> reorderLocations(
+    int dayIndex,
+    int fromIndex,
+    int toIndex, {
+    ChangeAuthorType author = ChangeAuthorType.person,
+  }) {
+    return _saveEdit(
+      ItineraryEdit.reorderStops,
+      (plans) => _withStops(plans, dayIndex, dayChange: _change(ItineraryChangeAction.stopsReordered, author), (stops) {
+        if (!_inRange(fromIndex, stops) || !_inRange(toIndex, stops) || fromIndex == toIndex) {
+          return null;
+        }
+        final reordered = [...stops];
+        reordered.insert(toIndex, reordered.removeAt(fromIndex));
+        return reordered;
+      }),
+    );
+  }
+
+  /// Adds an empty, untitled day after [afterIndex], or at the end when null.
+  /// It starts in the same place as the day before it.
+  Future<void> addDay({int? afterIndex, ChangeAuthorType author = ChangeAuthorType.person}) {
+    return _saveEdit(ItineraryEdit.addDay, (plans) {
+      if (afterIndex != null && !_inRange(afterIndex, plans)) {
+        return null;
+      }
+      final insertAt = afterIndex == null ? plans.length : afterIndex + 1;
+      final day = DailyPlanModel(
+        title: '',
+        location: insertAt == 0 ? '' : plans[insertAt - 1].location,
+        plan: const PlanModel(favorited: [], locations: []),
+        lastChange: _change(ItineraryChangeAction.added, author),
+      );
+      return [...plans]..insert(insertAt, day);
+    });
+  }
+
+  /// Sets the title of day [dayIndex]. A blank title falls back to the day's date in the UI.
+  Future<void> renameDay(int dayIndex, String title, {ChangeAuthorType author = ChangeAuthorType.person}) {
+    return _saveEdit(ItineraryEdit.renameDay, (plans) {
+      if (!_inRange(dayIndex, plans) || plans[dayIndex].title == title.trim()) {
+        return null;
+      }
+      final day = plans[dayIndex];
+      final renamed = day.copyWith(title: title.trim(), lastChange: _change(ItineraryChangeAction.renamed, author));
+      return [...plans]..[dayIndex] = renamed;
+    });
+  }
+
+  /// Deletes day [dayIndex] together with its stops; later days move up.
+  /// Who removed it is not recorded: change records live on the days themselves.
+  Future<void> removeDay(int dayIndex) {
+    return _saveEdit(ItineraryEdit.removeDay, (plans) {
+      return _inRange(dayIndex, plans) ? ([...plans]..removeAt(dayIndex)) : null;
+    });
+  }
+
+  /// Writes the edit left unsaved by a failed save again.
+  Future<void> retrySave() async {
+    final current = state;
+    final tripId = _activeTripId;
+    final plans = _unsavedPlans;
+    if (current is! LoadedItineraryState || tripId == null || plans == null || !_canEdit) {
+      return;
+    }
+    final failure = current.saveFailure;
+    if (failure != null) {
+      await _writePlans(tripId, plans, failure);
+    }
+  }
+
+  /// Developer tools only: makes the next itinerary save fail, to preview the save-failed state.
+  void debugFailNextSave() => _debugFailNextSave = true;
+
+  /// Applies [transform] to the shown plan and saves the result. Gated on
+  /// [_canEdit], the one place FEAT-024 widens editing to admins. A null
+  /// result from [transform] means there is nothing to change.
+  Future<void> _saveEdit(
+    ItineraryEdit edit,
+    List<DailyPlanModel>? Function(List<DailyPlanModel> plans) transform, {
+    int? dayIndex,
+    int? stopIndex,
+  }) async {
     final current = state;
     final tripId = _activeTripId;
     if (current is! LoadedItineraryState || tripId == null) {
       return;
     }
     if (!_canEdit) {
-      _logger.w('Ignoring itinerary edit: not the trip owner');
+      _logger.w('Ignoring itinerary edit: not allowed to edit this trip');
       return;
     }
-
-    final plans = current.itinerary.dailyPlans;
-    if (dayIndex < 0 || dayIndex >= plans.length) {
+    final plans = transform(current.itinerary.dailyPlans);
+    if (plans == null) {
       return;
+    }
+    await _writePlans(tripId, plans, ItinerarySaveFailure(edit: edit, dayIndex: dayIndex, stopIndex: stopIndex));
+  }
+
+  /// Shows [plans] at once, then writes the whole `daily_plans` array. The
+  /// cubit never writes the cache: the snapshot listener does, with what the
+  /// server holds (see the FEAT-006 sync contract).
+  Future<void> _writePlans(String tripId, List<DailyPlanModel> plans, ItinerarySaveFailure onFailure) async {
+    final current = state;
+    if (current is! LoadedItineraryState) {
+      return;
+    }
+    final sequence = ++_saveSequence;
+    _unsavedPlans = plans;
+    _safeEmit(
+      current.copyWith(itinerary: current.itinerary.copyWith(dailyPlans: plans), isSaving: true, saveFailure: null),
+    );
+
+    var failed = false;
+    try {
+      if (_debugFailNextSave) {
+        _debugFailNextSave = false;
+        throw StateError('Save failure requested from developer tools');
+      }
+      await _itineraryService.writeDailyPlans(tripId, plans);
+    } catch (err) {
+      _logger.w('Failed to save itinerary edit (${onFailure.edit.name}) for $tripId: $err');
+      failed = true;
+    }
+
+    // A newer edit, a trip switch or a reload owns the state now.
+    final latest = state;
+    if (sequence != _saveSequence || _activeTripId != tripId || latest is! LoadedItineraryState) {
+      return;
+    }
+    if (failed) {
+      _safeEmit(latest.copyWith(isSaving: false, saveFailure: onFailure));
+    } else {
+      _unsavedPlans = null;
+      _safeEmit(latest.copyWith(isSaving: false));
+    }
+  }
+
+  List<LocationPlanModel>? _stopsOf(int dayIndex) {
+    final current = state;
+    if (current is! LoadedItineraryState || !_inRange(dayIndex, current.itinerary.dailyPlans)) {
+      return null;
+    }
+    return current.itinerary.dailyPlans[dayIndex].plan.locations;
+  }
+
+  /// [plans] with the stops of day [dayIndex] replaced by [transform]'s result,
+  /// or null when the day is out of range or [transform] has nothing to change.
+  List<DailyPlanModel>? _withStops(
+    List<DailyPlanModel> plans,
+    int dayIndex,
+    List<LocationPlanModel>? Function(List<LocationPlanModel> stops) transform, {
+    ItineraryChangeModel? dayChange,
+  }) {
+    if (!_inRange(dayIndex, plans)) {
+      return null;
     }
     final day = plans[dayIndex];
-    final locations = day.plan.locations;
-    if (locationIndex < 0 || locationIndex >= locations.length) {
-      return;
+    final stops = transform(day.plan.locations);
+    if (stops == null) {
+      return null;
     }
+    final updated = day.copyWith(
+      plan: day.plan.copyWith(locations: stops),
+      lastChange: dayChange ?? day.lastChange,
+    );
+    return [...plans]..[dayIndex] = updated;
+  }
 
-    final location = locations[locationIndex];
-    final updatedLocations = [...locations]..[locationIndex] = location.copyWith(completed: !location.completed);
-    final updatedPlans = [...plans]..[dayIndex] = day.copyWith(plan: day.plan.copyWith(locations: updatedLocations));
+  static bool _inRange(int index, List<Object?> list) => index >= 0 && index < list.length;
 
-    try {
-      await _itineraryService.writeDailyPlans(tripId, updatedPlans);
-    } catch (err) {
-      // Firestore offline persistence queues the write, so a hard failure here
-      // is rare; the listener re-emits the server truth either way.
-      _logger.w('Failed to toggle stop completion for $tripId: $err');
-    }
+  ItineraryChangeModel _change(ItineraryChangeAction action, ChangeAuthorType author) {
+    return ItineraryChangeModel(
+      action: action,
+      authorType: author,
+      authorId: author == ChangeAuthorType.person ? (_authService?.currentUid ?? '') : '',
+      at: DateTime.now().toUtc(),
+    );
   }
 
   /// Best-effort lazy seed; the listener re-fires with the written doc.
@@ -239,6 +462,7 @@ class ItineraryCubit extends Cubit<ItineraryStates> with TripStreamMixin, AuthCl
 
   void _clear() {
     _abandonPendingLoads();
+    _unsavedPlans = null;
     _activeTripId = null;
     _activeTripCreatedBy = null;
     unawaited(_itinerarySubscription?.cancel());

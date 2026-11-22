@@ -33,6 +33,29 @@ abstract class LoadedItineraryState extends ItineraryStates with _$LoadedItinera
   /// [canEdit] is true only for the trip owner (`trips/{tripId}.createdBy`).
   /// Editing is owner-only this pass (co-editor roles → FEAT-024); the UI hides
   /// all edit affordances when false and the cubit's mutators no-op.
-  const factory LoadedItineraryState({required ItineraryModel itinerary, @Default(false) bool canEdit}) =
-      _LoadedItineraryState;
+  ///
+  /// While [isSaving] or after a [saveFailure], [itinerary] already shows the
+  /// edit even though the group cannot see it yet, so the plan never disappears.
+  const factory LoadedItineraryState({
+    required ItineraryModel itinerary,
+    @Default(false) bool canEdit,
+    @Default(false) bool isSaving,
+    ItinerarySaveFailure? saveFailure,
+  }) = _LoadedItineraryState;
+}
+
+/// The kinds of edit [ItineraryCubit] saves.
+enum ItineraryEdit { addStop, updateStop, completeStop, removeStop, reorderStops, addDay, renameDay, removeDay }
+
+/// The latest edit that could not be saved. [dayIndex] and [stopIndex] point
+/// at the stop to mark "Not saved" when the edit added or changed one.
+@freezed
+abstract class ItinerarySaveFailure with _$ItinerarySaveFailure {
+  const ItinerarySaveFailure._();
+
+  const factory ItinerarySaveFailure({required ItineraryEdit edit, int? dayIndex, int? stopIndex}) =
+      _ItinerarySaveFailure;
+
+  /// Whether the stop at [stop] on day [day] is the one that was not saved.
+  bool marksStop(int day, int stop) => dayIndex == day && stopIndex == stop;
 }

@@ -13,6 +13,8 @@ import 'package:xplore/features/gallery/bloc/gallery_cubit.dart';
 import 'package:xplore/features/gallery/models/image_models_adapters.dart';
 import 'package:xplore/features/itinerary/bloc/itinerary_cubit.dart';
 import 'package:xplore/features/itinerary/services/itinerary_service.dart';
+import 'package:xplore/features/itinerary/services/mock_place_search_service.dart';
+import 'package:xplore/features/itinerary/services/place_search_service.dart';
 import 'package:xplore/features/location/bloc/location_cubit.dart';
 import 'package:xplore/features/map/bloc/map_cubit.dart';
 import 'package:xplore/features/nav/bloc/nav_cubit.dart';
@@ -87,6 +89,9 @@ class MyApp extends StatelessWidget {
         RepositoryProvider<AuthService>(create: (_) => AuthService()),
         RepositoryProvider<TripService>(create: (_) => TripService()),
         RepositoryProvider<ItineraryService>(create: (_) => ItineraryService()),
+        // The one place the place-search source is chosen. Mock data until our
+        // backend serves place search; the app never calls Google Places itself.
+        RepositoryProvider<PlaceSearchService>(create: (_) => const MockPlaceSearchService()),
         // Itinerary generation behind the create-trip "Generate" step. Uses Gemini
         // when a key is configured, deterministic skeleton otherwise or on
         // failure (FEAT-007).

@@ -12,8 +12,8 @@ Snapshot of what exists in `lib/` vs. what product assumes. Update this doc when
 | Developer tools page | ✅ | Debug controls moved off Home into a `kDebugMode`-gated Profile entry ([FEAT-008](./requests/FEAT-008-dev-tools-page.md)) |
 | Dynamic user/trip IDs | ✅ | Cubits read uid from auth and trip scope from `TripCubit` ([FEAT-004](./requests/done/FEAT-004-remove-hardcoded-ids.md), PR #76) |
 | Trip invites & join flow | ✅ Partial | Link generation, deep-link routing through auth, join screen, invalid/expired/revoked handling, member-cap rule ([FEAT-003](./requests/done/FEAT-003-trip-invites.md), PR #96); universal-link **production delivery** on `xplore.olympuslabs.ai` deferred → GitHub #99 |
-| Itinerary cloud read path | ✅ Partial | `ItineraryCubit.loadForTrip(activeTripId)` listens to Firestore `itineraries/{tripId}`, Hive CE offline cache, lazy seed on missing doc ([FEAT-006](./requests/FEAT-006-itinerary-firebase-sync.md) read slice, PR #87); editing CRUD UI deferred |
-| Itinerary UI | ✅ | Day carousel, overview, location detail; runtime data from cloud when a trip is active |
+| Itinerary cloud data layer | ✅ Partial | `ItineraryCubit.loadForTrip(activeTripId)` listens to Firestore `itineraries/{tripId}`, Hive CE offline cache, lazy seed on missing doc ([FEAT-006](./requests/FEAT-006-itinerary-firebase-sync.md)). The trip owner can add, edit, delete and reorder stops and add, rename and remove days; edits save as they are made, with a Retry when a save fails. Members are read-only until [FEAT-024](./requests/FEAT-024-organizer-roles.md) adds admins |
+| Itinerary UI | ✅ | Day page, stop detail, and for the owner a stop editor, place search with a custom-stop fallback, edit mode and a days list; runtime data from cloud when a trip is active. Place search runs on bundled mock data behind `PlaceSearchService` until the backend serves it |
 | Google Map + neon style | ✅ | `MapCanvas`, `assets/maps/GoogleMapNeon.json` |
 | Live location sync | ✅ | Firebase RTDB at `locations/{tripId}`; interval configurable via `.env` |
 | Avatar map markers | ✅ | Profile photo → widget → PNG → Hive CE + Storage |
@@ -44,7 +44,7 @@ Itinerary production reads no longer depend on demo JSON at runtime —
 Also outstanding:
 
 - ~~New trips seed an **empty** cloud itinerary~~ → partly resolved by FEAT-007: the create flow's Plan step seeds a **stub** day skeleton (hardcoded per-place day themes, no places in the days). Real generated content is deferred. The Tokyo demo is intentionally **not** copied into real trips.
-- Itinerary **editing CRUD** not built; owner-only until FEAT-024 adds admins → FEAT-006 follow-up. The create flow's plan preview is read-only (only the trip name is editable) as a result.
+- Itinerary editing is **owner-only** (stage 1 of [TRIP_ROLES_ROLLOUT](./TRIP_ROLES_ROLLOUT.md)); admins arrive with FEAT-024. The create flow's plan preview is still read-only (only the trip name is editable). Place search is mock data, so stops have no photos yet.
 - Seeded days carry **no stops** (so no `place_id`s); real generation and Places enrichment are deferred. The create flow's place search runs over a **hardcoded place catalog**, not Google Places.
 - Mock onboarding placeholder only → **FEAT-005**
 - Trip invites / join flow shipped (FEAT-003, PR #96); only universal-link **production delivery** (AASA hosting + iOS Associated Domains on `xplore.olympuslabs.ai`) remains, deferred to launch + >100 users → GitHub #99
@@ -57,7 +57,7 @@ Also outstanding:
 
 | Item | Evidence |
 |------|----------|
-| Itinerary editing CRUD | Read path only; edit UI deferred (FEAT-006, owner-only; admins via FEAT-024) |
+| Itinerary editing for admins | Owner-only today; the people list, roles and promotion are stages 2 and 3 of the rollout (FEAT-024) |
 | Multi-trip switcher | Create-trip works; list/switch UI deferred (FEAT-002 gap) |
 | Gemini AI in UI | Not wired. `ItineraryGenerator` / `GeminiItineraryService` still exist in `lib/` but the create flow no longer calls them; agentic generation is being built outside this repo. Plan gating (FEAT-020) and `place_id` enrichment deferred |
 | Gallery cloud fetch | Built (FEAT-011) and rules deployed; not yet exercised end to end on devices |

@@ -39,6 +39,21 @@ class _ScriptedItineraryService extends ItineraryService {
   }
 }
 
+/// Rejects every `daily_plans` write while [failWrites] is set, like a save the server refuses.
+class _FlakyWriteItineraryService extends ItineraryService {
+  _FlakyWriteItineraryService(FakeFirebaseFirestore firestore) : super(firestore: firestore);
+
+  bool failWrites = true;
+
+  @override
+  Future<void> writeDailyPlans(String tripId, List<DailyPlanModel> dailyPlans) {
+    if (failWrites) {
+      return Future.error(FirebaseException(plugin: 'cloud_firestore', code: 'unavailable'));
+    }
+    return super.writeDailyPlans(tripId, dailyPlans);
+  }
+}
+
 /// What Firestore raises for a trip the server has not committed yet.
 FirebaseException _denied() => FirebaseException(plugin: 'cloud_firestore', code: 'permission-denied');
 
@@ -70,6 +85,29 @@ Map<String, dynamic> _dayPlan({required String title, bool completed = true}) {
       ],
     },
   };
+}
+
+const _museum = LocationPlanModel(
+  name: 'Sumida Hokusai Museum',
+  placeId: 'mock:tokyo-hokusai-museum',
+  category: 'Art museum',
+  neighbourhood: 'Ryōgoku',
+  address: '2-7-2 Kamezawa, Sumida City, Tokyo',
+  openingHours: '09:30–17:30',
+);
+
+/// The stored `daily_plans` array, as raw maps.
+Future<List<Map<String, dynamic>>> _storedDays(FakeFirebaseFirestore firestore, String tripId) async {
+  final snap = await firestore.collection('itineraries').doc(tripId).get();
+  return [for (final day in snap.data()!['daily_plans'] as List) Map<String, dynamic>.from(day as Map)];
+}
+
+List<Map<String, dynamic>> _stopsOf(Map<String, dynamic> day) {
+  return [for (final stop in (day['plan'] as Map)['locations'] as List) Map<String, dynamic>.from(stop as Map)];
+}
+
+List<String> _stopNames(LoadedItineraryState state, {int day = 0}) {
+  return [for (final stop in state.itinerary.dailyPlans[day].plan.locations) stop.name];
 }
 
 bool _firstStopCompleted(DocumentSnapshot<Map<String, dynamic>> snap) {
@@ -392,6 +430,217 @@ void main() {
       await Future<void>.delayed(const Duration(milliseconds: 50));
 
       expect(_firstStopCompleted(await doc.get()), isFalse);
+    });
+  });
+  group('ItineraryCubit stop and day edits', () {
+    /// Seeds a one-day trip owned by user-1 and returns a cubit that has loaded it as [uid].
+    Future<ItineraryCubit> loadedCubit({String uid = 'user-1', ItineraryService? itineraryService}) async {
+      await _seedItinerary(firestore, 'trip-1');
+      final cubit = ItineraryCubit(
+        itineraryService ?? service,
+        fakeAuthService(signedIn: true, user: MockUser(uid: uid)),
+        ItineraryRepository(),
+      );
+      addTearDown(cubit.close);
+      final loaded = _waitFor<LoadedItineraryState>(cubit);
+      final trip = _trip('trip-1', memberIds: ['user-1', 'user-2']);
+      _TripStreamHarness().pushTripEvent(TripState.loaded(active: trip, all: [trip]));
+      await loaded;
+      return cubit;
+    }
+
+    test('adding a stop saves its place details and records who added it', () async {
+      final cubit = await loadedCubit();
+
+      await cubit.addLocation(0, _museum);
+
+      final added = _stopsOf((await _storedDays(firestore, 'trip-1')).single).last;
+      expect(added['name'], 'Sumida Hokusai Museum');
+      expect(added['place_id'], 'mock:tokyo-hokusai-museum');
+      expect(added['category'], 'Art museum');
+      expect(added['neighbourhood'], 'Ryōgoku');
+      expect(added['opening_hours'], '09:30–17:30');
+      final change = Map<String, dynamic>.from(added['last_change'] as Map);
+      expect(change['action'], 'added');
+      expect(change['author_type'], 'person');
+      expect(change['author_id'], 'user-1');
+      expect(DateTime.parse(change['at'] as String).isAfter(DateTime.utc(2026)), isTrue);
+
+      final state = cubit.state as LoadedItineraryState;
+      expect(_stopNames(state), ['Tsukiji Fish Market', 'Sumida Hokusai Museum']);
+      expect(state.isSaving, isFalse);
+      expect(state.saveFailure, isNull);
+    });
+
+    test('a change made by Scout is recorded as Scout, not as the signed-in person', () async {
+      final cubit = await loadedCubit();
+
+      await cubit.addLocation(0, _museum, author: ChangeAuthorType.scout);
+
+      final change = _stopsOf((await _storedDays(firestore, 'trip-1')).single).last['last_change'] as Map;
+      expect(change['author_type'], 'scout');
+      expect(change['author_id'], '');
+    });
+
+    test('updating a stop replaces it and marks it edited', () async {
+      final cubit = await loadedCubit();
+
+      await cubit.updateLocation(0, 0, _museum.copyWith(description: 'Meet at the entrance.'));
+
+      final stop = _stopsOf((await _storedDays(firestore, 'trip-1')).single).single;
+      expect(stop['name'], 'Sumida Hokusai Museum');
+      expect(stop['description'], 'Meet at the entrance.');
+      expect((stop['last_change'] as Map)['action'], 'edited');
+    });
+
+    test('removing a stop deletes it and records the removal on the day', () async {
+      final cubit = await loadedCubit();
+      await cubit.addLocation(0, _museum);
+
+      await cubit.removeLocation(0, 0);
+
+      final day = (await _storedDays(firestore, 'trip-1')).single;
+      expect(_stopsOf(day).map((stop) => stop['name']), ['Sumida Hokusai Museum']);
+      expect((day['last_change'] as Map)['action'], 'stop_removed');
+      expect((day['last_change'] as Map)['author_id'], 'user-1');
+    });
+
+    test('reordering moves a stop to the given position', () async {
+      final cubit = await loadedCubit();
+      await cubit.addLocation(0, _museum);
+      await cubit.addLocation(0, const LocationPlanModel(name: 'Back to the hotel lobby'));
+
+      await cubit.reorderLocations(0, 2, 0);
+
+      final day = (await _storedDays(firestore, 'trip-1')).single;
+      expect(_stopsOf(day).map((stop) => stop['name']), [
+        'Back to the hotel lobby',
+        'Tsukiji Fish Market',
+        'Sumida Hokusai Museum',
+      ]);
+      expect((day['last_change'] as Map)['action'], 'stops_reordered');
+    });
+
+    test('days can be added after a day, renamed and removed', () async {
+      final cubit = await loadedCubit();
+
+      await cubit.addDay(afterIndex: 0);
+      await cubit.addDay();
+      await cubit.renameDay(1, '  Asakusa and the river ');
+
+      var days = await _storedDays(firestore, 'trip-1');
+      expect(days.map((day) => day['title']), ['Day of trip-1', 'Asakusa and the river', '']);
+      // A new day starts where the day before it is.
+      expect(days[1]['location'], 'Tokyo');
+      expect(_stopsOf(days[1]), isEmpty);
+      expect((days[1]['last_change'] as Map)['action'], 'renamed');
+      expect((days[2]['last_change'] as Map)['action'], 'added');
+
+      await cubit.removeDay(0);
+
+      days = await _storedDays(firestore, 'trip-1');
+      expect(days.map((day) => day['title']), ['Asakusa and the river', '']);
+    });
+
+    test('out-of-range edits change nothing', () async {
+      final cubit = await loadedCubit();
+      final before = await _storedDays(firestore, 'trip-1');
+
+      await cubit.addLocation(3, _museum);
+      await cubit.updateLocation(0, 4, _museum);
+      await cubit.removeLocation(0, 4);
+      await cubit.reorderLocations(0, 0, 2);
+      await cubit.renameDay(2, 'Nope');
+      await cubit.removeDay(-1);
+      await cubit.addDay(afterIndex: 7);
+
+      expect(await _storedDays(firestore, 'trip-1'), before);
+      expect((cubit.state as LoadedItineraryState).saveFailure, isNull);
+    });
+
+    test('a member who is not the owner cannot make any edit', () async {
+      final cubit = await loadedCubit(uid: 'user-2');
+      final before = await _storedDays(firestore, 'trip-1');
+      expect((cubit.state as LoadedItineraryState).canEdit, isFalse);
+
+      await cubit.addLocation(0, _museum);
+      await cubit.updateLocation(0, 0, _museum);
+      await cubit.removeLocation(0, 0);
+      await cubit.addDay();
+      await cubit.renameDay(0, 'Mine now');
+      await cubit.removeDay(0);
+      await Future<void>.delayed(const Duration(milliseconds: 50));
+
+      expect(await _storedDays(firestore, 'trip-1'), before);
+      expect(_stopNames(cubit.state as LoadedItineraryState), ['Tsukiji Fish Market']);
+    });
+
+    test('the plan shows the edit and reports saving while the write is in flight', () async {
+      final cubit = await loadedCubit();
+      final states = <LoadedItineraryState>[];
+      final subscription = cubit.stream.listen((state) => states.add(state as LoadedItineraryState));
+      addTearDown(subscription.cancel);
+
+      await cubit.addLocation(0, _museum);
+      await Future<void>.delayed(Duration.zero);
+
+      expect(states.first.isSaving, isTrue);
+      expect(_stopNames(states.first), ['Tsukiji Fish Market', 'Sumida Hokusai Museum']);
+      expect((cubit.state as LoadedItineraryState).isSaving, isFalse);
+    });
+
+    test('a failed save keeps the unsaved stop on the plan and marks it', () async {
+      final flaky = _FlakyWriteItineraryService(firestore);
+      final cubit = await loadedCubit(itineraryService: flaky);
+
+      await cubit.addLocation(0, _museum);
+
+      var state = cubit.state as LoadedItineraryState;
+      expect(state.isSaving, isFalse);
+      expect(state.saveFailure?.edit, ItineraryEdit.addStop);
+      expect(state.saveFailure!.marksStop(0, 1), isTrue);
+      expect(_stopNames(state), ['Tsukiji Fish Market', 'Sumida Hokusai Museum']);
+      expect(_stopsOf((await _storedDays(firestore, 'trip-1')).single), hasLength(1));
+
+      // A fresh server snapshot must not make the unsaved stop disappear.
+      await firestore.collection('itineraries').doc('trip-1').update({
+        'pins': <dynamic>['pin'],
+      });
+      await Future<void>.delayed(const Duration(milliseconds: 50));
+      state = cubit.state as LoadedItineraryState;
+      expect(_stopNames(state), ['Tsukiji Fish Market', 'Sumida Hokusai Museum']);
+      expect(state.saveFailure, isNotNull);
+    });
+
+    test('retrying a failed save writes the unsaved edit and clears the failure', () async {
+      final flaky = _FlakyWriteItineraryService(firestore);
+      final cubit = await loadedCubit(itineraryService: flaky);
+      await cubit.addLocation(0, _museum);
+
+      flaky.failWrites = false;
+      await cubit.retrySave();
+
+      final state = cubit.state as LoadedItineraryState;
+      expect(state.saveFailure, isNull);
+      expect(state.isSaving, isFalse);
+      expect(_stopsOf((await _storedDays(firestore, 'trip-1')).single).map((stop) => stop['name']), [
+        'Tsukiji Fish Market',
+        'Sumida Hokusai Museum',
+      ]);
+    });
+
+    test('an edit made after a failed save carries the unsaved change with it', () async {
+      final flaky = _FlakyWriteItineraryService(firestore);
+      final cubit = await loadedCubit(itineraryService: flaky);
+      await cubit.addLocation(0, _museum);
+
+      flaky.failWrites = false;
+      await cubit.renameDay(0, 'Sumida');
+
+      final day = (await _storedDays(firestore, 'trip-1')).single;
+      expect(day['title'], 'Sumida');
+      expect(_stopsOf(day), hasLength(2));
+      expect((cubit.state as LoadedItineraryState).saveFailure, isNull);
     });
   });
 }
