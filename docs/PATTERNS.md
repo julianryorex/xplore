@@ -75,11 +75,11 @@ Choose deliberately between action-driven and session/reactive auth patterns:
 
 ## Module boundaries: three layers, imports point down
 
-> **Status: target architecture, not yet enforced.** As of 2026-11-21 the code
-> has 117 feature-to-feature imports across 50 files, `lib/core` imports
-> features, and `lib/shared/` and `make check-imports` do not exist yet. New
-> code should follow the rule; existing violations are migrated one feature at
-> a time.
+> **Status: target architecture, enforced against a baseline.** As of
+> 2026-11-21 the code has 117 feature-to-feature imports across 50 files (45 of
+> them from the feature layer, which is what the rule forbids), `lib/core`
+> imports features, and `lib/shared/` does not exist yet. `make check-imports`
+> stops new violations; existing ones are migrated one feature at a time.
 
 ```
 ┌──────────────────────────────────────────────────────────────┐
@@ -136,17 +136,29 @@ The shared layer is the easy fix for every violation, so it has its own rules:
   `shared/auth/` — not `shared/models/` and `shared/services/`. Shared domains
   must not import each other in a cycle.
 
-### Enforcement (planned)
+### Enforcement
 
-A `make check-imports` target, run as part of `make verify`, will fail on:
+`make check-imports` (`scripts/check-imports.sh`, part of `make verify`) scans
+`lib/` outside `lib/generated/` and reports:
 
-- a file under `lib/features/<x>/` importing `lib/features/<y>/`;
+- a file under a feature-layer folder `lib/features/<x>/` importing
+  `lib/features/<y>/`;
 - a file under `lib/shared/` importing a feature, `flutter_bloc`, or Flutter
-  widgets;
-- an import cycle between shared domains.
+  widgets (`widgets.dart`, `material.dart`, `cupertino.dart`).
 
-It will also print the shared layer's file count on each run, so steady growth
-there is visible in review.
+Existing violations are listed in `scripts/check-imports-baseline.txt`. The
+target passes while every violation is in that file and fails as soon as a new
+one appears, so the count can only go down. After fixing imports, run
+`make check-imports-baseline` to drop them from the baseline so they cannot
+come back; never add lines to it to get a new import through.
+
+Each run prints the violations per source feature, the total, and the shared
+layer's file count, so steady growth there is visible in review
+(`make check-imports ARGS=--list` prints every import). Which folders are
+composition and which are features is one list at the top of the script.
+
+Not checked yet: import cycles between shared domains, and `lib/core` importing
+features.
 
 ## Other conventions (see README "Key patterns")
 

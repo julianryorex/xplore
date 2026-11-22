@@ -1,4 +1,4 @@
-.PHONY: clean clean-artifacts get init gen format check-format analyze verify test test-gold delete-gold test-cov cov reboot run-test-login build-ios build-ios-test-login build-ios-testflight build-mac deploy-ios redeploy-ios prep-ipad prep-mac pub-reset
+.PHONY: clean clean-artifacts get init gen format check-format check-imports check-imports-baseline analyze verify test test-gold delete-gold test-cov cov reboot run-test-login build-ios build-ios-test-login build-ios-testflight build-mac deploy-ios redeploy-ios prep-ipad prep-mac pub-reset
 
 FVM ?= fvm
 FLUTTER := $(FVM) flutter
@@ -89,12 +89,21 @@ format:
 check-format:
 	$(DART) format --output=none -l 120 --set-exit-if-changed $(DART_FORMAT_DIRS)
 
+# Report module-boundary violations (docs/PATTERNS.md). Fails only on a violation
+# that is not in scripts/check-imports-baseline.txt. ARGS: --list for every import.
+check-imports:
+	@scripts/check-imports.sh $(ARGS)
+
+# Rewrite the baseline after fixing imports, so the fixed ones cannot come back.
+check-imports-baseline:
+	@scripts/check-imports.sh --update-baseline
+
 analyze:
 	$(FLUTTER) analyze $(DART_FORMAT_DIRS)
 
-# Canonical agent/CI verification: codegen, formatting, lint, then tests.
-# Run this (not ad hoc fvm commands) to verify a change.
-verify: gen check-format analyze test
+# Canonical agent/CI verification: codegen, formatting, module boundaries, lint,
+# then tests. Run this (not ad hoc fvm commands) to verify a change.
+verify: gen check-format check-imports analyze test
 
 test:
 	$(FLUTTER) test

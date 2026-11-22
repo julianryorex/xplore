@@ -24,6 +24,9 @@ the high-level "what" and a minimal run; this file covers the details.
 | `make gen` | Run build_runner (Freezed, json_serializable) |
 | `make format` | Apply Dart fixes + format app/test code (120-char width) |
 | `make check-format` | CI-style format check |
+| `make check-imports` | Report [module-boundary](PATTERNS.md#module-boundaries-three-layers-imports-point-down) violations; fails only on ones not in `scripts/check-imports-baseline.txt` |
+| `make check-imports-baseline` | Regenerate that baseline after fixing imports |
+| `make verify` | gen → check-format → check-imports → analyze → test |
 | `make build-ios` | Build iOS release |
 | `make run-test-login` | Run with the email/password [test login](#test-login) enabled |
 | `make build-ios-test-login` | Device build with the [test login](#test-login) and the Developer page |
