@@ -9,7 +9,7 @@ Gemini). See `docs/DEVELOPMENT.md` and the `Makefile` for the canonical commands
 trimmed, recruiter-facing overview.
 
 **Verification — always use the `make` targets, never ad hoc `fvm` commands.** To
-verify any change, run `make verify` (codegen → `check-format` → `analyze` → `test`),
+verify any change, run `make verify` (codegen → `check-format` → `check-imports` → `analyze` → `test`),
 or the individual targets when iterating: `make gen`, `make format` /
 `make check-format`, `make analyze`, `make test`. This keeps formatting (`-l 120`),
 lint scope (`lib test`), and codegen consistent with CI. Do **not** invoke

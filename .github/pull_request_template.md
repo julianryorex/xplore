@@ -12,7 +12,7 @@ Closes #
 
 ## Test plan
 
-- [ ] `make verify` (codegen → check-format → analyze → test) passes.
+- [ ] `make verify` (codegen → check-format → check-imports → analyze → test) passes.
 - [ ] If this PR changes backend/infra behavior, include the relevant Terraform commands run (for example `terraform plan`, and `terraform apply` if deployed) plus any notable output or follow-up needed.
 
 ### Step-by-step verification workflow
