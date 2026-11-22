@@ -27,8 +27,9 @@ Persist itineraries in Firebase (Firestore recommended for nested `daily_plans`)
 
 - [x] Load itinerary from cloud by `TripCubit.activeTripId`
 - [x] Real-time sync when another member edits (or optimistic with conflict strategy)
-- [ ] Create/edit/delete daily plan and location (owner-only today; owner and admins once FEAT-024 lands)
-  — completion toggle shipped in #107; add/edit/delete still to do
+- [x] Create/edit/delete daily plan and location (owner-only today; owner and admins once FEAT-024 lands)
+  — completion toggle shipped in #107; add, edit, delete and reorder of stops and add, rename and remove
+  of days shipped with stage 1 of the [trip roles rollout](../TRIP_ROLES_ROLLOUT.md)
 - [x] Offline read cache via Hive for airplane mode
 - [x] Demo loader remains for `test/itinerary_demo_smoke_test.dart`
 
@@ -69,25 +70,44 @@ Persist itineraries in Firebase (Firestore recommended for nested `daily_plans`)
   admin" in the same three places; members stay read-only. Build the CRUD below against a
   single `canEdit` check so that widening is a one-line change in the cubit and the rule.
 
+## Shipped in stage 1 (owner editing)
+
+- **Day/stop CRUD in `ItineraryCubit`** — `addLocation` / `updateLocation` / `removeLocation` /
+  `reorderLocations`, `addDay` / `renameDay` / `removeDay`, all transforms over the loaded model
+  funnelled through `writeDailyPlans` and gated on the single `_canEdit` check. `LoadedItineraryState`
+  carries `isSaving` and `saveFailure`; the plan shows an edit at once and keeps showing it after a
+  failed save (the unsaved stop is marked "Not saved") until `retrySave()` goes through.
+- **Edit UI** — restyled day page with an "Add stop" row, a stop editor sheet (place card, Change,
+  note, Save, Delete), a place search sheet with a custom-stop fallback, edit mode (reorder, delete,
+  rename day, remove day), a days list reached from Home's owner-only "Edit days" row, and the
+  save-failed banner with Retry. Members see none of it.
+- **Stops are real places by default.** A picked place's details (name, `place_id`, category,
+  neighbourhood, address, opening hours, photo reference) are saved on the stop, so viewing a plan
+  never searches. A custom stop is free text with an empty `place_id` and is labelled as custom.
+  Stops stored before these fields existed still load.
+- **Place search sits behind `PlaceSearchService`** and is backed by `MockPlaceSearchService`
+  (bundled place data, no network). The app never calls Google Places; the backend implementation
+  replaces the mock where it is provided in `lib/main.dart`.
+- **Change record** — every stop carries `last_change` (added / edited) and every day carries
+  `last_change` (added / renamed / stop removed / stops reordered) with the author (a person's uid,
+  or Scout) and a client timestamp. Nothing displays it yet.
+
 ## Remaining work
 
-1. **Day/stop CRUD in `ItineraryCubit`** — `addLocation` / `updateLocation` /
-   `removeLocation`, `addDay` / `updateDay` / `removeDay` (optional `reorderDays`), all as
-   transforms over the loaded model funnelled through `writeDailyPlans`, gated on `canEdit`.
-   Add an `isSaving` / `saveError` signal on `LoadedItineraryState` (not a separate state that
-   hides the plan). Keep the no-arg demo constructor working.
-2. **Edit UI** — a bottom-sheet stop editor (name, description; empty `place_id` for manual
-   stops), swipe/long-press delete, "Add stop" and day add/edit from the overview. Show
-   `saveError` with a retry. Gate everything on `canEdit` so members and goldens keep the
-   read-only view. Closes #40 together with step 1.
-3. **Editable generated plan before creation** (FEAT-007 follow-up) — reuse the stop/day
+1. **Editable generated plan before creation** (FEAT-007 follow-up) — reuse the stop/day
    editor against the in-memory draft in the create flow so tweaks are seeded via
    `seedItinerary(dailyPlans:)`; editing the review must not trigger regeneration. The create
    flow is being replaced, so design this against the new flow, not
    `create_trip_review_steps.dart`.
-4. **`place_id` enrichment** (optional, own PR) — generated and manual stops have an empty
-   `place_id`; resolve lazily with a Places text search on name + location and tolerate empty
-   ids until then. Gated on Places billing.
+2. **Real place search** — implement `PlaceSearchService` against our backend and swap it in for
+   the mock. Photo references cannot be shown until that source exists; stops show a placeholder.
+3. **`place_id` enrichment** (optional, own PR) — generated stops and stops stored before stage 1
+   have no saved place details; resolve them through the backend place search and tolerate missing
+   details until then.
+4. **Full change history** — the record is the latest change per stop and per day, kept inside
+   `daily_plans`. Who removed a day is not recorded (the day is gone), and there is no history to
+   undo from. Both need a top-level change log, which means a Firestore rule change and deploy.
+5. **Reorder days** — optional; not in stage 1.
 
 ## Open questions
 
@@ -100,3 +120,5 @@ Persist itineraries in Firebase (Firestore recommended for nested `daily_plans`)
 - 2026-11-17: Resolved the data-shape and conflict questions, recorded the owner-only editing
   model shipped in #107 (completion toggle), and added the remaining CRUD plan.
 - 2026-11-22: Editing will widen to owner and admins only (FEAT-024), not to every member.
+- 2026-11-21: Stage 1 of the trip roles rollout shipped owner editing (CRUD, edit UI, saved place
+  details, mock place search, change record). Steps 1 and 2 of the previous plan are done.

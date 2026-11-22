@@ -6,7 +6,7 @@ Legend: **Status** — `backlog` · `ready_for_dev` (full spec written) · `in_p
 
 > **Next up:** [FEAT-007 Generative trip creation](./requests/FEAT-007-generative-trip-creation.md) — multi-step, multi-place create flow that seeds a stub day skeleton; real itinerary generation is deferred to Scout (FEAT-037); the FEAT-006 content-seed gap is only stubbed.
 
-> **Next up:** [FEAT-006 Production itinerary data layer](./requests/FEAT-006-itinerary-firebase-sync.md) — makes the active trip from FEAT-002 load real cloud itinerary data instead of demo JSON.
+> **Next up:** [FEAT-006 Production itinerary data layer](./requests/FEAT-006-itinerary-firebase-sync.md) — cloud read path and owner editing (stage 1 of the [trip roles rollout](./TRIP_ROLES_ROLLOUT.md)) are in; what is left is the editable plan in the create flow and real place search from the backend.
 >
 > **Early ideas** not yet specced live in [FEATURES_UNDER_CONSIDERATION.md](./FEATURES_UNDER_CONSIDERATION.md).
 

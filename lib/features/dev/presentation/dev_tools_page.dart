@@ -7,6 +7,7 @@ import 'package:xplore/core/glass.dart';
 import 'package:xplore/core/header.dart';
 import 'package:xplore/core/layout_padding.dart';
 import 'package:xplore/features/gallery/bloc/gallery_cubit.dart';
+import 'package:xplore/features/itinerary/bloc/itinerary_cubit.dart';
 import 'package:xplore/features/onboarding/bloc/onboarding_cubit.dart';
 import 'package:xplore/features/profile/bloc/profile_cubit.dart';
 import 'package:xplore/features/trip/bloc/trip_cubit.dart';
@@ -66,6 +67,16 @@ class DevToolsPage extends StatelessWidget {
                   onTap: () {
                     context.read<GalleryCubit>().deleteAll();
                     context.read<ProfileCubit>().deleteAll();
+                  },
+                ),
+                _DevTile(
+                  icon: Icons.cloud_off_outlined,
+                  title: 'Fail next itinerary save',
+                  subtitle: 'The next itinerary edit fails to save, to preview the save-failed state and Retry.',
+                  onTap: () {
+                    context.read<ItineraryCubit>().debugFailNextSave();
+                    ScaffoldMessenger.of(context)
+                        .showSnackBar(const SnackBar(content: Text('The next itinerary save will fail.')));
                   },
                 ),
                 _DevTile(

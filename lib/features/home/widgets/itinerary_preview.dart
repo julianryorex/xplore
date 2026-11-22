@@ -4,9 +4,11 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:xplore/constants/constants.dart';
 import 'package:xplore/constants/typography.dart';
 import 'package:xplore/core/error_state.dart';
+import 'package:xplore/core/grouped_card.dart';
 import 'package:xplore/features/agent/presentation/agent_page.dart';
 import 'package:xplore/features/home/models/trip_overview.dart';
 import 'package:xplore/features/home/widgets/capsule_button.dart';
+import 'package:xplore/features/home/widgets/day_date_tile.dart';
 import 'package:xplore/features/home/widgets/home_section_header.dart';
 import 'package:xplore/features/itinerary/bloc/itinerary_cubit.dart';
 import 'package:xplore/features/itinerary/models/itinerary_models.dart';
@@ -79,50 +81,89 @@ class _ItineraryPreviewState extends State<ItineraryPreview> {
         message: 'Something went wrong. Please try again.',
         onRetry: () => context.read<ItineraryCubit>().retry(),
       ),
-      LoadedItineraryState() when days.isEmpty => const _QuietCard(message: 'No days planned yet.'),
-      LoadedItineraryState() => _DayList(
+      LoadedItineraryState(:final canEdit) when days.isEmpty => _NoDaysCard(canEdit: canEdit),
+      LoadedItineraryState(:final canEdit) => _DayList(
         overview: widget.overview,
         dayCount: _expanded ? days.length : days.length.clamp(0, _collapsedDayCount),
+        canEdit: canEdit,
       ),
     };
   }
 }
 
 class _DayList extends StatelessWidget {
-  const _DayList({required this.overview, required this.dayCount});
+  const _DayList({required this.overview, required this.dayCount, required this.canEdit});
 
   final TripOverview overview;
   final int dayCount;
+  final bool canEdit;
 
   @override
   Widget build(BuildContext context) {
-    return Material(
-      color: XploreColors.card,
-      borderRadius: BorderRadius.circular(radiusLg),
-      clipBehavior: Clip.antiAlias,
-      child: Column(
-        children: [
-          for (var index = 0; index < dayCount; index++) ...[
-            if (index > 0) const _InsetSeparator(),
-            _DayRow(overview: overview, dayIndex: index),
-          ],
-        ],
+    return GroupedCard(
+      children: [
+        for (var index = 0; index < dayCount; index++) _DayRow(overview: overview, dayIndex: index),
+        if (canEdit) const _EditDaysRow(),
+      ],
+    );
+  }
+}
+
+/// The owner's way into the days list, as the last row of the itinerary card.
+class _EditDaysRow extends StatelessWidget {
+  const _EditDaysRow();
+
+  @override
+  Widget build(BuildContext context) {
+    return Semantics(
+      button: true,
+      child: InkWell(
+        onTap: () => Navigator.pushNamed(context, Paths.itineraryDays),
+        child: ConstrainedBox(
+          constraints: const BoxConstraints(minHeight: 56),
+          child: Padding(
+            padding: const EdgeInsets.fromLTRB(16, 8, 14, 8),
+            child: Row(
+              children: [
+                Container(
+                  width: 40,
+                  height: 40,
+                  decoration: BoxDecoration(color: XploreColors.raised, borderRadius: BorderRadius.circular(radiusSm)),
+                  child: const Icon(Icons.edit_outlined, size: 18, color: XploreColors.white),
+                ),
+                const SizedBox(width: 12),
+                Expanded(
+                  child: Text('Edit days', style: XploreText.bodyStrong.copyWith(color: XploreColors.white)),
+                ),
+                const SizedBox(width: 12),
+                const Icon(CupertinoIcons.chevron_right, size: 16, color: XploreColors.tertiaryLabel),
+              ],
+            ),
+          ),
+        ),
       ),
     );
   }
 }
 
-class _InsetSeparator extends StatelessWidget {
-  const _InsetSeparator();
+/// "No days planned yet.", with the way to add the first day under it for the owner.
+class _NoDaysCard extends StatelessWidget {
+  const _NoDaysCard({required this.canEdit});
+
+  static const _message = 'No days planned yet.';
+
+  final bool canEdit;
 
   @override
   Widget build(BuildContext context) {
-    return const Padding(
-      padding: EdgeInsets.only(left: 68),
-      child: ColoredBox(
-        color: XploreColors.separator,
-        child: SizedBox(height: 1, width: double.infinity),
-      ),
+    if (!canEdit) {
+      return const _QuietCard(message: _message);
+    }
+    return const GroupedCard(
+      children: [
+        _QuietMessage(message: _message),
+        _EditDaysRow(),
+      ],
     );
   }
 }
@@ -148,7 +189,7 @@ class _DayRow extends StatelessWidget {
         padding: const EdgeInsets.fromLTRB(16, 8, 14, 8),
         child: Row(
           children: [
-            _DateTile(overview: overview, dayIndex: dayIndex, planned: true),
+            DayDateTile(overview: overview, dayIndex: dayIndex, planned: true),
             const SizedBox(width: 12),
             Expanded(
               child: Column(
@@ -185,7 +226,7 @@ class _DayRow extends StatelessWidget {
       padding: const EdgeInsets.fromLTRB(16, 4, 12, 4),
       child: Row(
         children: [
-          _DateTile(overview: overview, dayIndex: dayIndex, planned: false),
+          DayDateTile(overview: overview, dayIndex: dayIndex, planned: false),
           const SizedBox(width: 12),
           Expanded(
             child: Text(
@@ -207,43 +248,6 @@ class _DayRow extends StatelessWidget {
             ),
           ),
         ],
-      ),
-    );
-  }
-}
-
-/// Month over day number for a dated trip, or "DAY" over the 1-based index.
-class _DateTile extends StatelessWidget {
-  const _DateTile({required this.overview, required this.dayIndex, required this.planned});
-
-  final TripOverview overview;
-  final int dayIndex;
-  final bool planned;
-
-  @override
-  Widget build(BuildContext context) {
-    final date = overview.dateOfDay(dayIndex);
-    final caption = date == null ? 'DAY' : monthAbbreviation(date).toUpperCase();
-    final number = date == null ? '${dayIndex + 1}' : '${date.day}';
-    final foreground = planned ? XploreColors.accent : XploreColors.secondaryLabel;
-
-    return Container(
-      width: 40,
-      height: 40,
-      decoration: BoxDecoration(
-        color: planned ? XploreColors.accentSoft : XploreColors.raised,
-        borderRadius: BorderRadius.circular(radiusSm),
-      ),
-      // The tile keeps its fixed size, so large text sizes shrink to fit instead of overflowing.
-      child: FittedBox(
-        fit: BoxFit.scaleDown,
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Text(caption, style: XploreText.overline.copyWith(color: foreground)),
-            Text(number, style: XploreText.stat.copyWith(height: 1.05, color: foreground)),
-          ],
-        ),
       ),
     );
   }
@@ -273,9 +277,22 @@ class _QuietCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 20),
+    return DecoratedBox(
       decoration: BoxDecoration(color: XploreColors.card, borderRadius: BorderRadius.circular(radiusLg)),
+      child: _QuietMessage(message: message),
+    );
+  }
+}
+
+class _QuietMessage extends StatelessWidget {
+  const _QuietMessage({required this.message});
+
+  final String message;
+
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 20),
       child: Text(message, style: XploreText.body.copyWith(color: XploreColors.secondaryLabel)),
     );
   }
