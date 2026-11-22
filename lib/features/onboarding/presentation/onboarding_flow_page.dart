@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:xplore/features/auth/bloc/auth_cubit.dart';
 import 'package:xplore/features/onboarding/bloc/onboarding_cubit.dart';
+import 'package:xplore/features/onboarding/presentation/steps/all_set_step.dart';
 import 'package:xplore/features/onboarding/presentation/steps/destination_step.dart';
 import 'package:xplore/features/onboarding/presentation/steps/invite_step.dart';
 import 'package:xplore/features/onboarding/presentation/steps/invite_welcome_step.dart';
@@ -64,6 +65,7 @@ class _OnboardingFlowPageState extends State<OnboardingFlowPage> {
       OnboardingStep.profile => const ProfileStep(),
       OnboardingStep.invite => InviteStep(onRetryTripSetup: _createTrip),
       OnboardingStep.location => const LocationStep(),
+      OnboardingStep.allSet => const AllSetStep(),
     };
   }
 

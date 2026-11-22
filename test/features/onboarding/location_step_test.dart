@@ -14,7 +14,10 @@ void main() {
   late OnboardingCubit onboarding;
 
   setUp(() {
-    onboarding = OnboardingCubit(TripService(firestore: FakeFirebaseFirestore()))..startOrganizer();
+    // The location step only appears for a trip that is under way.
+    onboarding = OnboardingCubit(TripService(firestore: FakeFirebaseFirestore()), clock: () => DateTime(2027, 6, 5))
+      ..startOrganizer()
+      ..setDates(DateTime(2027, 6, 3), DateTime(2027, 6, 9));
     while (onboarding.state.step != OnboardingStep.location) {
       onboarding.next();
     }
@@ -35,7 +38,7 @@ void main() {
     );
   }
 
-  testWidgets('"Turn on location" asks for permission, then completes onboarding', (tester) async {
+  testWidgets('"Turn on location" asks for permission, then moves on to the send-off', (tester) async {
     final answer = Completer<void>();
     var requests = 0;
     await pumpStep(tester, () {
@@ -46,23 +49,23 @@ void main() {
     await tester.tap(find.text('Turn on location'));
     await tester.pump();
     expect(requests, 1);
-    expect(onboarding.state.completed, isFalse, reason: 'waits for the answer before moving on');
+    expect(onboarding.state.step, OnboardingStep.location, reason: 'waits for the answer before moving on');
 
     answer.complete();
     await tester.pump();
-    expect(onboarding.state.completed, isTrue);
+    expect(onboarding.state.step, OnboardingStep.allSet);
   });
 
-  testWidgets('a failed permission prompt still completes onboarding', (tester) async {
+  testWidgets('a failed permission prompt still moves on', (tester) async {
     await pumpStep(tester, () => Future.error(StateError('no prompt')));
 
     await tester.tap(find.text('Turn on location'));
     await tester.pump();
 
-    expect(onboarding.state.completed, isTrue);
+    expect(onboarding.state.step, OnboardingStep.allSet);
   });
 
-  testWidgets('"Not now" completes onboarding without asking for permission', (tester) async {
+  testWidgets('"Not now" moves on without asking for permission', (tester) async {
     var requests = 0;
     await pumpStep(tester, () async => requests++);
 
@@ -70,6 +73,6 @@ void main() {
     await tester.pump();
 
     expect(requests, 0);
-    expect(onboarding.state.completed, isTrue);
+    expect(onboarding.state.step, OnboardingStep.allSet);
   });
 }

@@ -15,7 +15,12 @@ void main() {
     service = TripService(firestore: firestore);
   });
 
-  Future<String> seedTrip({required String owner, List<String> extraMembers = const []}) async {
+  Future<String> seedTrip({
+    required String owner,
+    List<String> extraMembers = const [],
+    DateTime? startDate,
+    DateTime? endDate,
+  }) async {
     final doc = firestore.collection('trips').doc();
     await doc.set(<String, dynamic>{
       'title': 'Tokyo 2026',
@@ -24,6 +29,8 @@ void main() {
       'lastUpdatedBy': owner,
       'createdAt': Timestamp.now(),
       'lastUpdatedAt': Timestamp.now(),
+      if (startDate != null) 'startDate': Timestamp.fromDate(startDate),
+      if (endDate != null) 'endDate': Timestamp.fromDate(endDate),
     });
     return doc.id;
   }
@@ -50,6 +57,37 @@ void main() {
           .get();
       expect(stored.exists, isTrue);
       expect(stored.data()!['revoked'], false);
+    });
+
+    test('copies the dates of a dated trip onto the invite', () async {
+      final start = DateTime(2026, 6, 3);
+      final end = DateTime(2026, 6, 9);
+      final tripId = await seedTrip(owner: 'owner-1', startDate: start, endDate: end);
+
+      final handle = await service.createInvite(tripId, 'owner-1');
+
+      expect(handle.invite.startDate, start);
+      expect(handle.invite.endDate, end);
+      final lookup = await service.lookupInvite(tripId, handle.invite.token);
+      final preview = (lookup as InviteLookupValid).invite;
+      expect(preview.startDate, start);
+      expect(preview.endDate, end);
+    });
+
+    test('leaves the dates off the invite for an undated trip', () async {
+      final tripId = await seedTrip(owner: 'owner-1');
+
+      final handle = await service.createInvite(tripId, 'owner-1');
+
+      expect(handle.invite.startDate, isNull);
+      expect(handle.invite.endDate, isNull);
+      final stored = await firestore
+          .collection('trips')
+          .doc(tripId)
+          .collection('invites')
+          .doc(handle.invite.token)
+          .get();
+      expect(stored.data()!.keys, isNot(anyOf(contains('startDate'), contains('endDate'))));
     });
 
     test('throws when the trip does not exist', () async {

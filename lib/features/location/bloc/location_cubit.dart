@@ -13,6 +13,8 @@ import 'package:xplore/features/auth/services/auth_service.dart';
 import 'package:xplore/features/location/models/location_models.dart';
 import 'package:xplore/features/trip/bloc/trip_state.dart';
 import 'package:xplore/features/trip/bloc/trip_stream_mixin.dart';
+import 'package:xplore/features/trip/models/trip_model.dart';
+import 'package:xplore/features/trip/models/trip_window.dart';
 import 'package:xplore/utilities/utilities.dart';
 
 part '../../../generated/features/location/bloc/location_cubit.freezed.dart';
@@ -21,18 +23,47 @@ part 'location_states.dart';
 // TODO: test if this still works with app in the foreground
 // TODO: look into background fetch
 
+/// What to do with a member's location for a trip at a given moment.
+enum LocationSharing {
+  /// Read the device position and publish it to the group.
+  share,
+
+  /// Remove the member's last published position.
+  clear,
+
+  /// Neither read nor publish anything.
+  off,
+}
+
+/// Location is shared only while a trip is under way. Once it has ended the last
+/// position is cleared; before it starts, or while it has no dates, nothing is shared.
+LocationSharing locationSharingFor(TripWindow window) {
+  return switch (window) {
+    TripWindow.underWay => LocationSharing.share,
+    TripWindow.ended => LocationSharing.clear,
+    TripWindow.upcoming || TripWindow.undated => LocationSharing.off,
+  };
+}
+
+/// Publishes the signed-in member's position for the active trip while it is
+/// under way, and polls the rest of the group's positions.
 class LocationCubit extends Cubit<LocationState> with TripStreamMixin {
   late final Logger _logger;
   final AuthService _authService;
+  final DateTime Function() _clock;
   StreamSubscription<TripState>? _tripSubscription;
-  String? _activeTripId;
+  TripModel? _activeTrip;
+
+  /// Trips whose ended-trip position this member already removed, so the timer
+  /// does not issue a delete every tick.
+  final Set<String> _clearedTripIds = {};
 
   /// Timer that periodically updates and fetches user locations from the cloud.
   Timer? _updateLocationTimer;
 
   static const locationUpdateInterval = 10;
 
-  LocationCubit(this._authService) : super(const LocationState(locations: {})) {
+  LocationCubit(this._authService, {this._clock = DateTime.now}) : super(const LocationState(locations: {})) {
     _logger = createLogger('Location');
     _tripSubscription = listenToTripState(_onTripStateChanged);
     updateMyLocation();
@@ -59,6 +90,15 @@ class LocationCubit extends Cubit<LocationState> with TripStreamMixin {
   /// The active Firebase UID, or null when unauthenticated.
   String? get _uid => _authService.currentUid;
 
+  /// The sharing decision for the active trip right now; off without one.
+  LocationSharing get _sharingNow {
+    final trip = _activeTrip;
+    if (trip == null) {
+      return LocationSharing.off;
+    }
+    return locationSharingFor(tripWindowOn(_clock(), start: trip.startDate, end: trip.endDate));
+  }
+
   //! -------------------------------------------------------------------------
   //! Public Methods
   //! -------------------------------------------------------------------------
@@ -84,10 +124,22 @@ class LocationCubit extends Cubit<LocationState> with TripStreamMixin {
 
     // Without an active trip there is no scope to write into. No-op rather than
     // falling back to a shared/demo node.
-    final tripId = _activeTripId;
+    final tripId = _activeTrip?.id;
     if (tripId == null) {
       _logger.d('Skipping location update: no active trip');
       return;
+    }
+
+    switch (_sharingNow) {
+      case LocationSharing.off:
+        _logger.d('Skipping location update: trip is not under way');
+        return;
+      case LocationSharing.clear:
+        await _clearMyLocation(tripId, uid);
+        return;
+      case LocationSharing.share:
+        // The trip may have been extended after it was cleared; clear again if it ends.
+        _clearedTripIds.remove(tripId);
     }
 
     // This runs off a timer, so it must never raise the system prompt itself:
@@ -101,12 +153,7 @@ class LocationCubit extends Cubit<LocationState> with TripStreamMixin {
     DatabaseReference locationRef = FirebaseDatabase.instance.ref('locations/$tripId');
 
     final position = await Geolocator.getCurrentPosition();
-    final myLocation = LocationModel(
-      id: uid,
-      lastUpdated: DateTime.now(),
-      lat: position.latitude,
-      lng: position.longitude,
-    );
+    final myLocation = LocationModel(id: uid, lastUpdated: _clock(), lat: position.latitude, lng: position.longitude);
 
     emit(state.copyWith(locations: {uid: myLocation}));
     await locationRef.child(uid).set(myLocation.toJson());
@@ -118,15 +165,22 @@ class LocationCubit extends Cubit<LocationState> with TripStreamMixin {
 
     // Without an active trip there is no scope to read from. No-op rather than
     // falling back to a shared/demo node.
-    final tripId = _activeTripId;
+    final tripId = _activeTrip?.id;
     if (tripId == null) {
       _logger.d('Skipping location fetch: no active trip');
       return;
     }
 
-    DatabaseReference locationRef = FirebaseDatabase.instance.ref('locations/$tripId');
-
     await updateMyLocation();
+
+    // Outside a running trip the group's positions are not shown, so stale pins
+    // from before or after the trip never reach the map.
+    if (_sharingNow != LocationSharing.share) {
+      emit(state.copyWith(locations: const {}));
+      return;
+    }
+
+    DatabaseReference locationRef = FirebaseDatabase.instance.ref('locations/$tripId');
 
     // fetch all locations
     final snapshot = await locationRef.get();
@@ -168,12 +222,22 @@ class LocationCubit extends Cubit<LocationState> with TripStreamMixin {
     emit(LocationState(locations: locationMap));
   }
 
+  /// Removes this member's last position for an ended trip, once per trip.
+  Future<void> _clearMyLocation(String tripId, String uid) async {
+    if (_clearedTripIds.contains(tripId)) {
+      return;
+    }
+    await FirebaseDatabase.instance.ref('locations/$tripId').child(uid).remove();
+    _clearedTripIds.add(tripId);
+    _logger.d('Cleared my location for ended trip $tripId');
+  }
+
   void _onTripStateChanged(TripState tripState) {
     switch (tripState) {
       case TripLoaded(:final active):
-        _activeTripId = active.id;
+        _activeTrip = active;
       case TripEmpty() || TripError():
-        _activeTripId = null;
+        _activeTrip = null;
       case TripLoading():
         break;
     }

@@ -180,7 +180,8 @@ service cloud.firestore {
     }
 
     function inviteFields() {
-      return ['token', 'tripId', 'createdBy', 'createdAt', 'expiresAt', 'revoked', 'tripTitle', 'memberCount'];
+      return ['token', 'tripId', 'createdBy', 'createdAt', 'expiresAt', 'revoked', 'tripTitle', 'memberCount',
+        'startDate', 'endDate'];
     }
 
     function requiredInviteFields() {
@@ -198,6 +199,8 @@ service cloud.firestore {
         && data.createdAt is timestamp
         && data.revoked is bool
         && optionalTimestamp(data, 'expiresAt')
+        && optionalTimestamp(data, 'startDate')
+        && optionalTimestamp(data, 'endDate')
         && optionalString(data, 'tripTitle', 80)
         && (!('memberCount' in data) || data.memberCount is int);
     }
@@ -284,7 +287,7 @@ service cloud.firestore {
       // to preview the trip before joining. That includes signed-out readers:
       // the invite link's web page (infra/hosting/worker.js) reads the trip
       // title for the link preview. The doc holds only the trip title, member
-      // count, inviter uid and timestamps. Listing still needs sign-in. Only trip members may
+      // count, trip dates, inviter uid and timestamps. Listing still needs sign-in. Only trip members may
       // create invites; revoke (or refresh memberCount) and delete are
       // member-only. The token never grants trip-document read access.
       match /invites/{token} {

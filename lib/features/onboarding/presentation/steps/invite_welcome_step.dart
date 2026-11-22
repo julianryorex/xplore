@@ -5,6 +5,7 @@ import 'package:xplore/constants/typography.dart';
 import 'package:xplore/core/xplore_wordmark.dart';
 import 'package:xplore/features/onboarding/bloc/onboarding_cubit.dart';
 import 'package:xplore/features/onboarding/presentation/widgets/onboarding_buttons.dart';
+import 'package:xplore/features/onboarding/presentation/widgets/onboarding_labels.dart';
 import 'package:xplore/features/onboarding/presentation/widgets/onboarding_map_art.dart';
 import 'package:xplore/features/onboarding/presentation/widgets/onboarding_scaffold.dart';
 import 'package:xplore/features/trip/models/trip_invite.dart';
@@ -57,7 +58,7 @@ class InviteWelcomeStep extends StatelessWidget {
                       const SizedBox(height: paddingUnit),
                       _TripTitle(status: status, invite: invite),
                       const SizedBox(height: 28),
-                      _TripCard(memberCount: status == InvitePreviewStatus.ready ? invite?.memberCount ?? 0 : 0),
+                      _TripCard(invite: status == InvitePreviewStatus.ready ? invite : null),
                     ],
                   ),
                 ),
@@ -116,12 +117,15 @@ class _TitlePlaceholder extends StatelessWidget {
 }
 
 class _TripCard extends StatelessWidget {
-  const _TripCard({required this.memberCount});
+  const _TripCard({required this.invite});
 
-  final int memberCount;
+  /// The loaded preview, or null when it is loading or unavailable.
+  final TripInvite? invite;
 
   @override
   Widget build(BuildContext context) {
+    final memberCount = invite?.memberCount ?? 0;
+    final dates = tripDatesLabel(invite?.startDate, invite?.endDate);
     return ClipRRect(
       borderRadius: BorderRadius.circular(radiusLg),
       child: ColoredBox(
@@ -130,25 +134,44 @@ class _TripCard extends StatelessWidget {
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
             const OnboardingMapArt(height: _mapHeight, borderRadius: 0, showRoute: true, pins: _mapPins),
-            if (memberCount > 0)
+            if (memberCount > 0 || dates != null)
               Padding(
                 padding: const EdgeInsets.fromLTRB(18, 16, 18, 18),
-                child: Row(
+                child: Column(
                   spacing: 10,
                   children: [
-                    const Icon(Icons.group_rounded, size: 20, color: XploreColors.accent),
-                    Expanded(
-                      child: Text(
-                        memberCount == 1 ? '1 person going' : '$memberCount people going',
-                        style: XploreText.bodyStrong.copyWith(color: XploreColors.white),
+                    if (dates != null) _CardRow(icon: Icons.calendar_today_rounded, label: dates),
+                    if (memberCount > 0)
+                      _CardRow(
+                        icon: Icons.group_rounded,
+                        label: memberCount == 1 ? '1 person going' : '$memberCount people going',
                       ),
-                    ),
                   ],
                 ),
               ),
           ],
         ),
       ),
+    );
+  }
+}
+
+class _CardRow extends StatelessWidget {
+  const _CardRow({required this.icon, required this.label});
+
+  final IconData icon;
+  final String label;
+
+  @override
+  Widget build(BuildContext context) {
+    return Row(
+      spacing: 10,
+      children: [
+        Icon(icon, size: 20, color: XploreColors.accent),
+        Expanded(
+          child: Text(label, style: XploreText.bodyStrong.copyWith(color: XploreColors.white)),
+        ),
+      ],
     );
   }
 }

@@ -22,7 +22,7 @@ void main() {
   });
   tearDown(() => cubit.close());
 
-  Future<InviteLinkData> seedInvite() async {
+  Future<InviteLinkData> seedInvite({DateTime? startDate, DateTime? endDate}) async {
     final trip = firestore.collection('trips').doc();
     await trip.set(<String, dynamic>{
       'title': 'Lisbon with friends',
@@ -31,6 +31,8 @@ void main() {
       'lastUpdatedBy': 'owner-1',
       'createdAt': Timestamp.now(),
       'lastUpdatedAt': Timestamp.now(),
+      if (startDate != null) 'startDate': Timestamp.fromDate(startDate),
+      if (endDate != null) 'endDate': Timestamp.fromDate(endDate),
     });
     final handle = await tripService.createInvite(trip.id, 'owner-1');
     return InviteLinkData(tripId: trip.id, token: handle.invite.token);
@@ -54,6 +56,30 @@ void main() {
 
     expect(find.text('Lisbon with friends'), findsOneWidget);
     expect(find.text('2 people going'), findsOneWidget);
+    expect(find.byIcon(Icons.calendar_today_rounded), findsNothing);
+  });
+
+  testWidgets('shows the trip dates when the preview has them', (tester) async {
+    final link = await tester.runAsync(
+      () => seedInvite(startDate: DateTime(2026, 6, 28), endDate: DateTime(2026, 7, 3)),
+    );
+    await tester.runAsync(() => cubit.startInvite(link!));
+
+    await pumpStep(tester);
+
+    expect(find.text('Jun 28 – Jul 3'), findsOneWidget);
+    expect(find.text('2 people going'), findsOneWidget);
+  });
+
+  testWidgets('shortens a date range within one month', (tester) async {
+    final link = await tester.runAsync(
+      () => seedInvite(startDate: DateTime(2026, 6, 3), endDate: DateTime(2026, 6, 9)),
+    );
+    await tester.runAsync(() => cubit.startInvite(link!));
+
+    await pumpStep(tester);
+
+    expect(find.text('Jun 3 – 9'), findsOneWidget);
   });
 
   testWidgets('falls back to generic copy when the preview is unavailable', (tester) async {

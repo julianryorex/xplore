@@ -7,6 +7,7 @@ import 'package:xplore/features/auth/bloc/auth_cubit.dart';
 import 'package:xplore/features/onboarding/bloc/onboarding_cubit.dart';
 import 'package:xplore/features/onboarding/presentation/steps/invite_step.dart';
 import 'package:xplore/features/trip/data/place_catalog.dart';
+import 'package:xplore/features/trip/models/trip_model.dart';
 import 'package:xplore/features/trip/services/trip_service.dart';
 
 import '../../helpers/auth_fixtures.dart';
@@ -50,15 +51,31 @@ void main() {
         ],
       ),
     );
-    await tester.pump();
+    // Lets the entrance finish; not pumpAndSettle, as the loading button's spinner never settles.
+    await tester.pump(const Duration(seconds: 2));
   }
 
   testWidgets('the share action cannot be tapped while the trip is still saving', (tester) async {
     onboarding.tripSetupStarted();
     await pumpStep(tester);
 
-    expect(find.text('Saving your trip…'), findsOneWidget);
+    expect(find.text('SAVING YOUR TRIP…'), findsOneWidget);
     expect(tester.widget<FilledButton>(find.byType(FilledButton)).onPressed, isNull);
+  });
+
+  testWidgets('the pass is stamped saved once the trip finishes saving on this step', (tester) async {
+    onboarding.tripSetupStarted();
+    await pumpStep(tester);
+    expect(find.bySemanticsLabel('Saved'), findsNothing);
+
+    onboarding.tripCreated(
+      const TripModel(id: 't1', title: 'Lisbon', memberIds: ['organizer'], createdBy: 'organizer'),
+    );
+    await tester.pump(const Duration(seconds: 2));
+
+    expect(find.text('YOUR TRIP IS LIVE'), findsOneWidget);
+    expect(find.bySemanticsLabel('Saved'), findsOneWidget);
+    expect(tester.widget<FilledButton>(find.byType(FilledButton)).onPressed, isNotNull);
   });
 
   testWidgets('after a failed save, "Try again" retries the trip setup', (tester) async {
@@ -73,13 +90,12 @@ void main() {
     expect(retries, 1);
   });
 
-  testWidgets('"I\'ll do this later" moves on to the location step', (tester) async {
-    onboarding.tripSetupFailed();
+  testWidgets('"I\'ll do this later" moves on to the send-off', (tester) async {
     await pumpStep(tester);
 
     await tester.tap(find.text('I’ll do this later'));
     await tester.pump();
 
-    expect(onboarding.state.step, OnboardingStep.location);
+    expect(onboarding.state.step, OnboardingStep.allSet);
   });
 }

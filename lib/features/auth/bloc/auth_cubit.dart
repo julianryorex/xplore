@@ -17,6 +17,9 @@ class AuthCubit extends Cubit<AuthState> {
   final AuthAnalytics analytics;
   StreamSubscription<User?>? _subscription;
 
+  /// Shown as the display name of an account whose provider gave none.
+  static const placeholderName = 'Traveler';
+
   AuthCubit(this._authService, {this.analytics = const AuthAnalytics()}) : super(const AuthState.unknown()) {
     _subscription = _authService.authStateChanges().listen(_onUserChanged);
   }
@@ -27,7 +30,7 @@ class AuthCubit extends Cubit<AuthState> {
       return;
     }
 
-    final name = (user.displayName == null || user.displayName!.trim().isEmpty) ? 'Traveler' : user.displayName!;
+    final name = (user.displayName == null || user.displayName!.trim().isEmpty) ? placeholderName : user.displayName!;
 
     emit(
       AuthState.authenticated(

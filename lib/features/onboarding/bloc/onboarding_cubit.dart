@@ -6,6 +6,7 @@ import 'package:xplore/features/trip/models/nights_allocation.dart';
 import 'package:xplore/features/trip/models/trip_draft.dart';
 import 'package:xplore/features/trip/models/trip_invite.dart';
 import 'package:xplore/features/trip/models/trip_model.dart';
+import 'package:xplore/features/trip/models/trip_window.dart';
 import 'package:xplore/features/trip/services/invite_link.dart';
 import 'package:xplore/features/trip/services/invite_results.dart';
 import 'package:xplore/features/trip/services/trip_service.dart';
@@ -18,10 +19,15 @@ part 'onboarding_state.dart';
 /// only, so a signed-in user who relaunches the app goes straight to Home.
 /// Imports no other cubit, per the architecture rule.
 class OnboardingCubit extends Cubit<OnboardingState> {
-  OnboardingCubit(this._tripService, {this.analytics = const OnboardingAnalytics()}) : super(const OnboardingState());
+  OnboardingCubit(this._tripService, {this.analytics = const OnboardingAnalytics(), DateTime Function()? clock})
+    : _clock = clock ?? DateTime.now,
+      super(const OnboardingState());
 
   final TripService _tripService;
   final OnboardingAnalytics analytics;
+
+  /// Today's date, injectable so tests can pin where a trip's dates fall.
+  final DateTime Function() _clock;
 
   /// Welcome -> destination, for someone planning their own trip.
   void startOrganizer() => _start(OnboardingPath.organizer);
@@ -56,6 +62,7 @@ class OnboardingCubit extends Cubit<OnboardingState> {
       state.copyWith(
         invitePreview: preview,
         invitePreviewStatus: preview == null ? InvitePreviewStatus.unavailable : InvitePreviewStatus.ready,
+        tripUnderWay: _isUnderWay(preview?.startDate, preview?.endDate),
       ),
     );
   }
@@ -69,10 +76,13 @@ class OnboardingCubit extends Cubit<OnboardingState> {
     if (to.isBefore(from)) {
       (from, to) = (to, from);
     }
-    emit(state.copyWith(startDate: from, endDate: to));
+    emit(state.copyWith(startDate: from, endDate: to, tripUnderWay: _isUnderWay(from, to)));
   }
 
-  void clearDates() => emit(state.copyWith(startDate: null, endDate: null));
+  void clearDates() => emit(state.copyWith(startDate: null, endDate: null, tripUnderWay: false));
+
+  /// Records that the organizer opened the share sheet for their invite link.
+  void inviteShared() => emit(state.copyWith(inviteShared: true));
 
   /// Advances one step, or completes onboarding from the last one.
   void next() {
@@ -125,6 +135,9 @@ class OnboardingCubit extends Cubit<OnboardingState> {
     emit(OnboardingState(path: path, stepIndex: 1));
     _logViewed();
   }
+
+  bool _isUnderWay(DateTime? start, DateTime? end) =>
+      tripWindowOn(_clock(), start: start, end: end) == TripWindow.underWay;
 
   void _logViewed() => analytics.stepViewed(path: state.path.name, step: state.step.name);
 }

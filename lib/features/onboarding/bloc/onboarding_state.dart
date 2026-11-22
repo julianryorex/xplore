@@ -12,7 +12,7 @@ enum OnboardingPath {
   returning,
 }
 
-enum OnboardingStep { welcome, destination, signIn, profile, invite, location }
+enum OnboardingStep { welcome, destination, signIn, profile, invite, location, allSet }
 
 /// Where the invitee welcome screen is with loading the trip preview.
 enum InvitePreviewStatus { none, loading, ready, unavailable }
@@ -27,6 +27,7 @@ const _organizerSteps = [
   OnboardingStep.profile,
   OnboardingStep.invite,
   OnboardingStep.location,
+  OnboardingStep.allSet,
 ];
 
 const _inviteeSteps = [OnboardingStep.welcome, OnboardingStep.signIn, OnboardingStep.profile, OnboardingStep.location];
@@ -42,6 +43,13 @@ abstract class OnboardingState with _$OnboardingState {
 
     /// Drops the profile step, for an account that set itself up on an earlier sign-in.
     @Default(false) bool skipsProfile,
+
+    /// Whether the trip is running today. Location is only shared during a
+    /// trip, so the location step is only shown when this holds.
+    @Default(false) bool tripUnderWay,
+
+    /// Organizer: whether they opened the share sheet on the invite step.
+    @Default(false) bool inviteShared,
 
     /// Organizer: the place picked on the destination step.
     CatalogPlace? destination,
@@ -66,8 +74,16 @@ abstract class OnboardingState with _$OnboardingState {
       OnboardingPath.invitee => _inviteeSteps,
       OnboardingPath.returning => _returningSteps,
     };
-    return skipsProfile ? [...pathSteps.where((step) => step != OnboardingStep.profile)] : pathSteps;
+    return [...pathSteps.where(_isShown)];
   }
+
+  bool _isShown(OnboardingStep step) => switch (step) {
+    OnboardingStep.profile => !skipsProfile,
+    OnboardingStep.location => tripUnderWay,
+    // The send-off celebrates a saved trip, so it is dropped when saving failed.
+    OnboardingStep.allSet => tripSetup != TripSetupStatus.failed,
+    _ => true,
+  };
 
   OnboardingStep get step => steps[stepIndex];
 
@@ -78,15 +94,17 @@ abstract class OnboardingState with _$OnboardingState {
   /// sign-in are not cut short by the user becoming authenticated.
   bool get isInProgress => !completed && stepIndex > 0;
 
-  /// Steps counted by the progress bar: every step after welcome.
-  int get progressTotal => steps.length - 1;
+  /// Steps counted by the progress bar: every step between the welcome screen
+  /// and the send-off.
+  int get progressTotal =>
+      steps.where((step) => step != OnboardingStep.welcome && step != OnboardingStep.allSet).length;
 
   /// 1-based position within [progressTotal]; 0 on the welcome screen.
   int get progressCurrent => stepIndex;
 
-  /// Going back is blocked on welcome and once signed in, since the screens
-  /// before sign-in no longer apply to an authenticated user.
-  bool get canGoBack => stepIndex > 0 && steps[stepIndex - 1] != OnboardingStep.signIn;
+  /// Going back is blocked on welcome, on the send-off, and once signed in,
+  /// since the screens before sign-in no longer apply to an authenticated user.
+  bool get canGoBack => stepIndex > 0 && step != OnboardingStep.allSet && steps[stepIndex - 1] != OnboardingStep.signIn;
 
   bool get hasDates => startDate != null && endDate != null;
 

@@ -48,7 +48,7 @@ void main() {
     return visited;
   }
 
-  test('the organizer path runs destination, sign-in, profile, invite, location', () {
+  test('the organizer path runs destination, sign-in, profile, invite, then the send-off', () {
     cubit.startOrganizer();
 
     expect(walkToEnd(), [
@@ -56,8 +56,44 @@ void main() {
       OnboardingStep.signIn,
       OnboardingStep.profile,
       OnboardingStep.invite,
-      OnboardingStep.location,
+      OnboardingStep.allSet,
     ]);
+    expect(cubit.state.progressTotal, 4, reason: 'the send-off is not a counted step');
+  });
+
+  group('the location step', () {
+    OnboardingCubit cubitOn(DateTime today) =>
+        OnboardingCubit(TripService(firestore: firestore), clock: () => today)..startOrganizer();
+
+    test('is shown when the trip is under way, first and last day included', () async {
+      for (final today in [DateTime(2027, 6, 3, 23), DateTime(2027, 6, 6), DateTime(2027, 6, 9, 1)]) {
+        final underWay = cubitOn(today)..setDates(DateTime(2027, 6, 3), DateTime(2027, 6, 9));
+
+        expect(underWay.state.steps, contains(OnboardingStep.location), reason: 'on $today');
+        await underWay.close();
+      }
+    });
+
+    test('is left out before the trip starts, after it ends, and without dates', () async {
+      final upcoming = cubitOn(DateTime(2027, 6, 2))..setDates(DateTime(2027, 6, 3), DateTime(2027, 6, 9));
+      final ended = cubitOn(DateTime(2027, 6, 10))..setDates(DateTime(2027, 6, 3), DateTime(2027, 6, 9));
+      final undated = cubitOn(DateTime(2027, 6, 6))
+        ..setDates(DateTime(2027, 6, 3), DateTime(2027, 6, 9))
+        ..clearDates();
+
+      for (final other in [upcoming, ended, undated]) {
+        expect(other.state.steps, isNot(contains(OnboardingStep.location)));
+        await other.close();
+      }
+    });
+  });
+
+  test('the send-off is dropped when the trip could not be saved', () {
+    cubit
+      ..startOrganizer()
+      ..tripSetupFailed();
+
+    expect(cubit.state.steps, isNot(contains(OnboardingStep.allSet)));
   });
 
   test('the returning path completes as soon as the user signs in', () {
@@ -77,12 +113,7 @@ void main() {
 
     expect(cubit.state.invitePreviewStatus, InvitePreviewStatus.ready);
     expect(cubit.state.invitePreview?.tripTitle, 'Lisbon');
-    expect(walkToEnd(), [
-      OnboardingStep.welcome,
-      OnboardingStep.signIn,
-      OnboardingStep.profile,
-      OnboardingStep.location,
-    ]);
+    expect(walkToEnd(), [OnboardingStep.welcome, OnboardingStep.signIn, OnboardingStep.profile]);
     expect(cubit.state.inviteLink, link);
   });
 
@@ -102,7 +133,7 @@ void main() {
     cubit.onAuthenticated(isNewAccount: false);
 
     expect(cubit.state.step, OnboardingStep.invite);
-    expect(cubit.state.progressTotal, 4);
+    expect(cubit.state.progressTotal, 3);
   });
 
   test('becoming authenticated outside the sign-in step does not move the flow', () {

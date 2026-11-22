@@ -12,7 +12,9 @@
 // RTDB / Geolocator here, the active-trip path is exercised indirectly: once a
 // trip is active the guard no longer short-circuits, so the call proceeds to
 // touch Firebase and throws headlessly (in contrast to the no-trip no-op which
-// completes without touching anything).
+// completes without touching anything). The same probe shows the trip window
+// gate: an upcoming trip no-ops, a trip under way reaches Firebase. The
+// share / clear / off decision itself is covered by `locationSharingFor`.
 //
 // `DISABLE_REALTIME_LOCATIONS` is set so the constructor skips the periodic
 // timer, and the global trip stream is reset per test so a stray active trip
@@ -27,13 +29,29 @@ import 'package:xplore/features/location/bloc/location_cubit.dart';
 import 'package:xplore/features/trip/bloc/trip_state.dart';
 import 'package:xplore/features/trip/bloc/trip_stream_mixin.dart';
 import 'package:xplore/features/trip/models/trip_model.dart';
+import 'package:xplore/features/trip/models/trip_window.dart';
 
 import '../../helpers/auth_fixtures.dart';
 
 class _TripStreamHarness with TripStreamMixin {}
 
-TripModel _trip(String id) {
-  return TripModel(id: id, title: 'Trip $id', memberIds: const ['user-1'], createdBy: 'user-1');
+TripModel _trip(String id, {DateTime? startDate, DateTime? endDate}) {
+  return TripModel(
+    id: id,
+    title: 'Trip $id',
+    memberIds: const ['user-1'],
+    createdBy: 'user-1',
+    startDate: startDate,
+    endDate: endDate,
+  );
+}
+
+// A trip running June 3 to 9, inclusive.
+final _june3 = DateTime(2026, 6, 3);
+final _june9 = DateTime(2026, 6, 9);
+
+LocationSharing _sharingOn(DateTime now, {DateTime? start, DateTime? end}) {
+  return locationSharingFor(tripWindowOn(now, start: start, end: end));
 }
 
 void main() {
@@ -44,6 +62,27 @@ void main() {
     dotenv.loadFromString(mergeWith: {'DISABLE_REALTIME_LOCATIONS': 'true'}, isOptional: true);
   });
   tearDown(dotenv.clean);
+
+  group('locationSharingFor', () {
+    test('is off for a trip without dates', () {
+      expect(_sharingOn(DateTime(2026, 6, 5)), LocationSharing.off);
+      expect(_sharingOn(DateTime(2026, 6, 5), start: _june3), LocationSharing.off);
+    });
+
+    test('is off the day before an upcoming trip starts', () {
+      expect(_sharingOn(DateTime(2026, 6, 2, 23, 59), start: _june3, end: _june9), LocationSharing.off);
+    });
+
+    test('shares from the start of the first day to the end of the last day', () {
+      expect(_sharingOn(DateTime(2026, 6, 3), start: _june3, end: _june9), LocationSharing.share);
+      expect(_sharingOn(DateTime(2026, 6, 6, 12), start: _june3, end: _june9), LocationSharing.share);
+      expect(_sharingOn(DateTime(2026, 6, 9, 23, 59), start: _june3, end: _june9), LocationSharing.share);
+    });
+
+    test('clears the day after the trip ends', () {
+      expect(_sharingOn(DateTime(2026, 6, 10), start: _june3, end: _june9), LocationSharing.clear);
+    });
+  });
 
   group('LocationCubit', () {
     test('loadDemoLocations parses the bundled demo locations', () async {
@@ -104,18 +143,48 @@ void main() {
       await cubit.close();
     });
 
-    test('updateMyLocation no longer no-ops once a trip is active', () async {
-      final cubit = LocationCubit(fakeAuthService(signedIn: true, user: MockUser(uid: 'user-1')));
-
-      _TripStreamHarness().pushTripEvent(TripState.loaded(active: _trip('trip-1'), all: [_trip('trip-1')]));
-      // Let the broadcast event propagate so `_activeTripId` is set.
+    Future<LocationCubit> cubitWithActiveTrip(TripModel trip, {required DateTime now}) async {
+      final cubit = LocationCubit(
+        fakeAuthService(signedIn: true, user: MockUser(uid: 'user-1')),
+        clock: () => now,
+      );
+      _TripStreamHarness().pushTripEvent(TripState.loaded(active: trip, all: [trip]));
+      // Let the broadcast event propagate so the active trip is set.
       await Future<void>.delayed(Duration.zero);
+      return cubit;
+    }
 
-      // With an active trip the guard is bypassed and the call proceeds to the
-      // RTDB / Geolocator path, which is unavailable in headless tests — so it
-      // throws rather than silently no-opping. This confirms the scope is the
-      // real trip id, not the removed demo fallback.
+    test('updateMyLocation reaches Firebase while the active trip is under way', () async {
+      final trip = _trip('trip-1', startDate: _june3, endDate: _june9);
+      final cubit = await cubitWithActiveTrip(trip, now: DateTime(2026, 6, 5));
+
+      // The guards are passed and the call proceeds to the RTDB / Geolocator
+      // path, which is unavailable in headless tests, so it throws rather than
+      // silently no-opping.
       await expectLater(cubit.updateMyLocation(), throwsA(anything));
+
+      await cubit.close();
+    });
+
+    test('updateMyLocation and timerCallback stay off for an upcoming trip', () async {
+      final trip = _trip('trip-1', startDate: _june3, endDate: _june9);
+      final cubit = await cubitWithActiveTrip(trip, now: DateTime(2026, 6, 1));
+
+      final timer = Timer(const Duration(days: 1), () {});
+      addTearDown(timer.cancel);
+
+      // Completing (instead of throwing on Firebase) proves nothing was read or written.
+      await expectLater(cubit.updateMyLocation(), completes);
+      await expectLater(cubit.timerCallback(timer), completes);
+      expect(cubit.state.locations, isEmpty);
+
+      await cubit.close();
+    });
+
+    test('updateMyLocation stays off for an undated trip', () async {
+      final cubit = await cubitWithActiveTrip(_trip('trip-1'), now: DateTime(2026, 6, 5));
+
+      await expectLater(cubit.updateMyLocation(), completes);
 
       await cubit.close();
     });
