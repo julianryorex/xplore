@@ -15,13 +15,13 @@ No distinction between who can edit itinerary vs. view-only. Billing assumes an 
 
 ## Proposed solution
 
-Roles: `owner`, `organizer`, `member`. Only owner/organizer edit itinerary, invite, upgrade trip. Transfer ownership flow.
+Roles: `owner`, `organizer`, `member`. **Every member can edit the itinerary**, invite, vote and buy a Trip Pass for the trip (FEAT-020). Roles gate only the destructive and administrative actions: removing members, deleting the trip, transferring ownership, and Hosts broadcast messages (FEAT-045). This replaces the owner-only editing model recorded in FEAT-006.
 
 ## Acceptance criteria
 
 - [ ] Role on trip membership record
-- [ ] UI hides edit affordances for members
-- [ ] Firebase rules enforce write by role
+- [ ] All members can edit the itinerary; edits are attributed and undoable
+- [ ] Member removal, trip deletion and ownership transfer limited to owner/organizer in UI and Firebase rules
 
 ## Dependencies
 
@@ -30,3 +30,4 @@ Roles: `owner`, `organizer`, `member`. Only owner/organizer edit itinerary, invi
 ## Notes / history
 
 - 2025-06-22: Created
+- 2026-11-22: Aligned with the launch-post vision ([launch-post.html](../launch-post.html)).

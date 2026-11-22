@@ -15,7 +15,7 @@ The whole app is planning-oriented: the itinerary is a set of day *cards* you br
 
 ## Proposed solution
 
-A **Today / Now** view that auto-selects the active day (by date, and later by location) and surfaces the present moment: current stop, next stop with ETA/distance, time-of-day awareness, and quick actions (view on map, directions, mark done). It's a new *lens* over existing itinerary data, not new infrastructure. Pairs naturally with FEAT-047 (arrival moments) and FEAT-013 (live location).
+A **Today / Now** view that auto-selects the active day (by date, and later by location) and surfaces the present moment: current stop, next stop with ETA/distance, time-of-day awareness, and a **leave-by time** for the next stop, and quick actions (view on map, directions, mark done). The same now/next/leave-by summary is shown on the lock screen as a **Live Activity**, so most of the group never needs to open the app. During an active trip the app opens on Today. It's a new *lens* over existing itinerary data, not new infrastructure. Pairs naturally with FEAT-047 (arrival moments) and FEAT-013 (live location).
 
 ## User stories
 
@@ -29,7 +29,9 @@ A **Today / Now** view that auto-selects the active day (by date, and later by l
 - [ ] Show current stop + next stop with relative timing and distance/ETA
 - [ ] Quick actions: focus on map, get directions (ties to FEAT-040), mark stop done (ties to FEAT-016)
 - [ ] Graceful states: before trip ("starts in N days"), between days, after trip
-- [ ] Entry point from Home / nav for an active trip
+- [ ] Leave-by time computed from the next stop's start time and travel time (FEAT-040)
+- [ ] Lock-screen Live Activity (iOS) / ongoing notification (Android) with now, next and leave-by
+- [ ] The app opens on Today while a trip is active
 
 ## Success metrics
 
@@ -54,3 +56,4 @@ A **Today / Now** view that auto-selects the active day (by date, and later by l
 ## Notes / history
 
 - 2026-06-26: Created. From the in-trip UX gap review — the app plans trips well but does little while you're *on* one.
+- 2026-11-22: Aligned with the launch-post vision ([launch-post.html](../launch-post.html)).

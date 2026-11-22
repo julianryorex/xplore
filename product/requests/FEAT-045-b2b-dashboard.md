@@ -15,7 +15,9 @@ Future segment in [VISION.md](../VISION.md): tour operators running many group t
 
 ## Proposed solution
 
-Web admin: create recurring trip templates, bulk invite, white-label app config, usage reporting. Separate pricing tier ($99+/mo).
+**Xplore for Hosts**, for tour operators, retreat leaders and wedding planners who run the same trip again and again with new groups. Web dashboard across all of a host's groups, reusable itinerary templates, bulk invite, the host's own branding, waivers, and broadcast messages to everyone on a trip. Priced **per traveler per trip, from $4**, with up to 200 travelers and 50 GB of photos per trip.
+
+Later: payments and sign-up pages, so a retreat can go from announcement to departure inside Xplore.
 
 ## Dependencies
 
@@ -24,3 +26,4 @@ Web admin: create recurring trip templates, bulk invite, white-label app config,
 ## Notes / history
 
 - 2025-06-22: Created
+- 2026-11-22: Aligned with the launch-post vision ([launch-post.html](../launch-post.html)).

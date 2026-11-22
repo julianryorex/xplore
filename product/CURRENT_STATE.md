@@ -37,7 +37,7 @@ const itineraryId = 'ph4kd';
 The `location` cubit still uses `_activeTripId ?? itineraryId` as a late-subscriber/demo
 fallback. The `gallery` cubit no longer does: uploads are strictly trip-scoped
 (`gallery/{activeTripId}/{uid}/{imageId}`) and fail fast without an active trip, and Hive
-caches are namespaced per trip ([FEAT-014](./requests/FEAT-014-trip-scoped-gallery.md)).
+caches are namespaced per trip (shipped with [FEAT-011](./requests/FEAT-011-gallery-cloud-sync.md)).
 Itinerary production reads no longer depend on demo JSON at runtime —
 `loadDemoItinerary()` is test/golden-only.
 
@@ -59,7 +59,7 @@ Also outstanding:
 |------|----------|
 | Itinerary editing CRUD | Read path only; organizer UI deferred (FEAT-006 / FEAT-024) |
 | Multi-trip switcher | Create-trip works; list/switch UI deferred (FEAT-002 gap) |
-| Gemini AI in UI | Not wired. `ItineraryGenerator` / `GeminiItineraryService` still exist in `lib/` but the create flow no longer calls them; agentic generation is being built outside this repo. Credits gating (FEAT-021) and `place_id` enrichment deferred |
+| Gemini AI in UI | Not wired. `ItineraryGenerator` / `GeminiItineraryService` still exist in `lib/` but the create flow no longer calls them; agentic generation is being built outside this repo. Plan gating (FEAT-020) and `place_id` enrichment deferred |
 | Gallery cloud fetch | Built (FEAT-011) and rules deployed; not yet exercised end to end on devices |
 | Push notifications (FCM) | `NotificationsPage` uses local sample data; no backend |
 | Background location | TODOs in `LocationCubit` |
