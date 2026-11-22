@@ -18,6 +18,7 @@ The app is Flutter + Firebase today, with Gemini itinerary-generation code prese
 |----------|---------|
 | [VISION.md](./VISION.md) | Target users, positioning, north-star metrics |
 | [MONETIZATION.md](./MONETIZATION.md) | Revenue models and pricing hypotheses |
+| [launch-post.html](./launch-post.html) | Vision piece: a launch blog post written as if Xplore 1.0 had shipped. Inspiration, not a record of what exists |
 | [PRIORITIES.md](./PRIORITIES.md) | Priority tiers (P0–P4) and scoring rubric |
 | [BACKLOG.md](./BACKLOG.md) | **Start here** — ranked index of all feature requests |
 | [CURRENT_STATE.md](./CURRENT_STATE.md) | What ships today vs. gaps |

@@ -15,7 +15,7 @@ Xplore gives users no reason to open the app when they're *not* actively plannin
 
 ## Proposed solution
 
-A personal **saved places / wishlist** (places and destinations a user wants to visit), plus an **iOS Share Extension** so a Google Maps link, web page, or social link can be shared *into* Xplore and turned into a saved place — or dropped directly onto a trip as a stop. This is the "Start Anywhere" inbound pattern (Mindtrip) and keeps users engaged between trips.
+A personal **saved places / wishlist** plus a per-trip **group wishlist** that Scout plans around (FEAT-037), and a **share extension** (iOS and Android) so a Google Maps link, web page, video or social post can be shared *into* Xplore and turned into a saved place — or dropped directly onto a trip as a stop. This is the "Start Anywhere" inbound pattern (Mindtrip) and keeps users engaged between trips.
 
 ## User stories
 
@@ -51,3 +51,4 @@ A personal **saved places / wishlist** (places and destinations a user wants to 
 ## Notes / history
 
 - 2026-06-26: Created. From the UX gap review — between-trips retention + inbound inspiration capture.
+- 2026-11-22: Aligned with the launch-post vision ([launch-post.html](../launch-post.html)).

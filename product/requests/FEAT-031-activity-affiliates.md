@@ -15,13 +15,18 @@ Itinerary stops have names and `place_id` but no booking action — missed affil
 
 ## Proposed solution
 
-"Book / Reserve" on `ItineraryFocusPage` deep links to partner (GetYourGuide, OpenTable) with affiliate params. Disclose affiliate relationship in UI.
+"Book / Reserve" on `ItineraryFocusPage` lets the group book from the stop itself: a table for eight, six tour tickets or a transfer, through a partner (GetYourGuide, Viator, OpenTable). The partner pays Xplore a commission and the confirmation lands in the trip wallet (FEAT-037).
+
+**Commission never decides the plan.** Scout chooses stops first and a booking link is attached afterwards; partners cannot pay to appear. Bookable stops are labeled.
 
 ## Acceptance criteria
 
 - [ ] CTA on location detail when partner match exists
 - [ ] Opens in-app browser or SFSafariViewController
-- [ ] Affiliate disclosure copy approved
+- [ ] Bookable stops labeled; affiliate disclosure copy approved
+- [ ] Group size pre-filled from trip membership
+- [ ] Stop selection and ranking has no access to partner or commission data
+- [ ] Booking confirmation saved to the trip wallet
 
 ## Dependencies
 
@@ -35,3 +40,4 @@ Itinerary stops have names and `place_id` but no booking action — missed affil
 ## Notes / history
 
 - 2025-06-22: Created
+- 2026-11-22: Aligned with the launch-post vision ([launch-post.html](../launch-post.html)).

@@ -100,7 +100,7 @@ Steps 1–4 are one PR (cloud listing, thumbnails, de-dupe); step 5 is a second 
 
 ## Dependencies
 
-- FEAT-004, FEAT-014
+- FEAT-004
 
 ## Related code
 

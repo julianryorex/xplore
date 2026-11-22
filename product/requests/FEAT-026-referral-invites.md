@@ -15,7 +15,7 @@ Invites (FEAT-003) drive growth but offer no incentive to share beyond social ut
 
 ## Proposed solution
 
-Reward organizers: e.g. 1 free AI credit per accepted invite (cap 5), or 1 week Plus extension when trip reaches 4+ members. Track referral attribution on invite links.
+Reward organizers: e.g. a free Trip Pass for the organizer's next trip once a trip reaches 6+ joined members, or a month of Plus when an invited guest organizes their own first trip. There are no AI credits to grant (see FEAT-020). Track referral attribution on invite links.
 
 ## Acceptance criteria
 
@@ -25,8 +25,9 @@ Reward organizers: e.g. 1 free AI credit per accepted invite (cap 5), or 1 week 
 
 ## Dependencies
 
-- FEAT-003, FEAT-021, FEAT-025
+- FEAT-003, FEAT-020, FEAT-025
 
 ## Notes / history
 
 - 2025-06-22: Created
+- 2026-11-22: Aligned with the launch-post vision ([launch-post.html](../launch-post.html)).

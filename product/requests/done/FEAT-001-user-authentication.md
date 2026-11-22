@@ -167,7 +167,7 @@ Today rules are effectively open. With auth we tighten:
 
 - **Firestore `users/{uid}`**: read/write only where `request.auth.uid == uid`. (`firestore.rules`)
 - **RTDB `locations/{tripId}/{uid}`**: a user may write only their own `{uid}` node. Membership scoping arrives with FEAT-002; until then require `auth != null` and `uid == auth.uid` on write.
-- **Storage `gallery/{tripId}/...`**: `request.auth != null`; tighten to trip membership in FEAT-014.
+- **Storage `gallery/{tripId}/...`**: `request.auth != null`; tightened to owner-scoped paths in FEAT-011.
 
 Deliverable: committed `firestore.rules` and RTDB rules JSON requiring `auth != null`, even if full membership checks are stubbed until FEAT-002. **Do not ship auth without closing the open-rules hole.**
 

@@ -15,7 +15,7 @@
 
 ## Proposed solution
 
-Implement iOS background location updates (with clear UX and App Store privacy strings), configurable interval by tier (Plus = faster updates). Keep stale-marker opacity behavior for >10 min old positions.
+Implement iOS background location updates (with clear UX and App Store privacy strings), with an **adaptive interval**: frequent while the group is moving or split up, rare while everyone is together (e.g. at the same dinner table). The interval is the same on every plan. Sharing is on only while a trip is active, switches off automatically when the trip ends, and any member can go invisible for an hour with one tap. No location history is kept once the recap (FEAT-023) is made. Keep stale-marker opacity behavior for >10 min old positions.
 
 ## User stories
 
@@ -25,8 +25,10 @@ Implement iOS background location updates (with clear UX and App Store privacy s
 ## Acceptance criteria
 
 - [ ] Background location on iOS with `UIBackgroundModes`
-- [ ] Pause / stop sharing toggle in profile or map
-- [ ] Battery-conscious default interval on free tier
+- [ ] One-tap "invisible for an hour" and a stop-sharing toggle on the map
+- [ ] Sharing stops automatically when the trip ends; location history deleted after the recap
+- [ ] Adaptive interval driven by group movement and spread, not by plan
+- [ ] A full day of sharing costs roughly an hour of video playback in battery
 - [ ] Verify foreground timer still works (existing TODO)
 
 ## Success metrics
@@ -45,3 +47,4 @@ Implement iOS background location updates (with clear UX and App Store privacy s
 ## Notes / history
 
 - 2025-06-22: Created
+- 2026-11-22: Aligned with the launch-post vision ([launch-post.html](../launch-post.html)).
