@@ -22,6 +22,7 @@ The app is Flutter + Firebase today, with Gemini itinerary-generation code prese
 | [PRIORITIES.md](./PRIORITIES.md) | Priority tiers (P0–P4) and scoring rubric |
 | [BACKLOG.md](./BACKLOG.md) | **Start here** — ranked index of all feature requests |
 | [CURRENT_STATE.md](./CURRENT_STATE.md) | What ships today vs. gaps |
+| [TRIP_ROLES_ROLLOUT.md](./TRIP_ROLES_ROLLOUT.md) | Staged product plan for itinerary editing and trip roles (FEAT-006 / FEAT-024) |
 | [requests/](./requests/) | Open feature requests (detail + acceptance criteria) |
 | [requests/done/](./requests/done/) | Shipped feature specs (archived from `requests/`) |
 | [requests/_TEMPLATE.md](./requests/_TEMPLATE.md) | Copy this when adding a new request |

@@ -81,6 +81,10 @@ Three roles on the trip membership record: `owner`, `admin`, `member`.
 - FEAT-002 (trip membership), FEAT-006 (itinerary edit path; this spec widens its gate)
 - Consumed by FEAT-020 (who can buy), FEAT-037 (who can direct Scout), FEAT-041 (who opens votes), FEAT-045 (Hosts)
 
+## Rollout
+
+Staged in [TRIP_ROLES_ROLLOUT.md](../TRIP_ROLES_ROLLOUT.md): owner editing, then the people list, then promotion.
+
 ## Related code
 
 - `lib/features/trip/models/` — trip membership record
