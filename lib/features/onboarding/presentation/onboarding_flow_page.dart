@@ -43,7 +43,8 @@ class _OnboardingFlowPageState extends State<OnboardingFlowPage> {
   Future<void> _createTrip() async {
     final onboarding = context.read<OnboardingCubit>();
     final draft = onboarding.state.tripDraft;
-    if (draft == null || onboarding.state.tripSetup == TripSetupStatus.creating) {
+    final status = onboarding.state.tripSetup;
+    if (draft == null || status == TripSetupStatus.creating || status == TripSetupStatus.created) {
       return;
     }
 
@@ -71,11 +72,22 @@ class _OnboardingFlowPageState extends State<OnboardingFlowPage> {
 
   @override
   Widget build(BuildContext context) {
-    return BlocListener<AuthCubit, AuthState>(
-      listenWhen: (previous, current) => previous is! AuthAuthenticated && current is AuthAuthenticated,
-      listener: (_, state) {
-        if (state is AuthAuthenticated) _onAuthenticated(state);
-      },
+    return MultiBlocListener(
+      listeners: [
+        BlocListener<AuthCubit, AuthState>(
+          listenWhen: (previous, current) => previous is! AuthAuthenticated && current is AuthAuthenticated,
+          listener: (_, state) {
+            if (state is AuthAuthenticated) _onAuthenticated(state);
+          },
+        ),
+        BlocListener<OnboardingCubit, OnboardingState>(
+          // A replay has no sign-in to hang the save on, so it saves the trip
+          // when the user moves on from the destination step.
+          listenWhen: (previous, current) =>
+              current.isReplay && previous.step == OnboardingStep.destination && current.stepIndex > previous.stepIndex,
+          listener: (_, _) => unawaited(_createTrip()),
+        ),
+      ],
       child: BlocBuilder<OnboardingCubit, OnboardingState>(
         buildWhen: (previous, current) => previous.step != current.step || previous.path != current.path,
         builder: (context, state) {

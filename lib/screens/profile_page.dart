@@ -1,4 +1,3 @@
-import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:xplore/constants/constants.dart';
@@ -7,6 +6,7 @@ import 'package:xplore/core/ambient_background.dart';
 import 'package:xplore/core/glass.dart';
 import 'package:xplore/core/header.dart';
 import 'package:xplore/core/layout_padding.dart';
+import 'package:xplore/features/dev/dev_tools_flag.dart';
 import 'package:xplore/features/auth/bloc/auth_cubit.dart';
 import 'package:xplore/features/auth/services/auth_service.dart';
 import 'package:xplore/features/profile/bloc/profile_cubit.dart';
@@ -45,7 +45,7 @@ class ProfilePage extends StatelessWidget {
                       const SizedBox(height: paddingUnit * 2),
                       const _SaveChangesButton(),
                       const SizedBox(height: paddingUnit),
-                      if (kDebugMode) ...[
+                      if (devToolsEnabled) ...[
                         _DeveloperButton(onTap: () => context.push(Paths.dev)),
                         const SizedBox(height: paddingUnit),
                       ],

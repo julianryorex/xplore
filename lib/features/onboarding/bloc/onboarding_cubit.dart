@@ -35,6 +35,13 @@ class OnboardingCubit extends Cubit<OnboardingState> {
   /// Welcome -> sign-in, for someone who already has an account.
   void startReturning() => _start(OnboardingPath.returning);
 
+  /// Developer tool: runs the organizer flow for a user who is already signed
+  /// in, treating them as a new account so every step shows.
+  void startReplay() {
+    emit(const OnboardingState(stepIndex: 1, isReplay: true));
+    _logViewed();
+  }
+
   /// Shows the invitee welcome for [link] and loads the trip preview for it.
   /// The preview is readable before sign-in; when it cannot be loaded the
   /// screen falls back to generic copy and the join screen reports why later.

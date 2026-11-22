@@ -96,6 +96,26 @@ void main() {
     expect(cubit.state.steps, isNot(contains(OnboardingStep.allSet)));
   });
 
+  test('a replay runs the organizer flow without the sign-in step', () {
+    cubit.startReplay();
+
+    expect(walkToEnd(), [
+      OnboardingStep.destination,
+      OnboardingStep.profile,
+      OnboardingStep.invite,
+      OnboardingStep.allSet,
+    ]);
+  });
+
+  test('a replay cannot go back to the destination once its trip is being saved', () {
+    cubit
+      ..startReplay()
+      ..next();
+
+    expect(cubit.state.step, OnboardingStep.profile);
+    expect(cubit.state.canGoBack, isFalse);
+  });
+
   test('the returning path completes as soon as the user signs in', () {
     cubit.startReturning();
     expect(cubit.state.step, OnboardingStep.signIn);

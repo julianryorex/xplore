@@ -44,6 +44,10 @@ abstract class OnboardingState with _$OnboardingState {
     /// Drops the profile step, for an account that set itself up on an earlier sign-in.
     @Default(false) bool skipsProfile,
 
+    /// A developer replay: the organizer flow run by someone already signed
+    /// in, so there is no sign-in step.
+    @Default(false) bool isReplay,
+
     /// Whether the trip is running today. Location is only shared during a
     /// trip, so the location step is only shown when this holds.
     @Default(false) bool tripUnderWay,
@@ -78,6 +82,7 @@ abstract class OnboardingState with _$OnboardingState {
   }
 
   bool _isShown(OnboardingStep step) => switch (step) {
+    OnboardingStep.signIn => !isReplay,
     OnboardingStep.profile => !skipsProfile,
     OnboardingStep.location => tripUnderWay,
     // The send-off celebrates a saved trip, so it is dropped when saving failed.
@@ -102,9 +107,13 @@ abstract class OnboardingState with _$OnboardingState {
   /// 1-based position within [progressTotal]; 0 on the welcome screen.
   int get progressCurrent => stepIndex;
 
-  /// Going back is blocked on welcome, on the send-off, and once signed in,
-  /// since the screens before sign-in no longer apply to an authenticated user.
-  bool get canGoBack => stepIndex > 0 && step != OnboardingStep.allSet && steps[stepIndex - 1] != OnboardingStep.signIn;
+  /// Going back is blocked on welcome, on the send-off, and past the point
+  /// where the trip is saved, since the screens before it no longer apply.
+  bool get canGoBack => stepIndex > 0 && step != OnboardingStep.allSet && steps[stepIndex - 1] != _pointOfNoReturn;
+
+  /// The last step before the trip is saved: sign-in, or in a replay (which has
+  /// no sign-in) the destination step.
+  OnboardingStep get _pointOfNoReturn => isReplay ? OnboardingStep.destination : OnboardingStep.signIn;
 
   bool get hasDates => startDate != null && endDate != null;
 

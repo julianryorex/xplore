@@ -26,6 +26,7 @@ the high-level "what" and a minimal run; this file covers the details.
 | `make check-format` | CI-style format check |
 | `make build-ios` | Build iOS release |
 | `make run-test-login` | Run with the email/password [test login](#test-login) enabled |
+| `make build-ios-test-login` | Device build with the [test login](#test-login) and the Developer page |
 | `make clean` | Clean build artifacts and generated code |
 | `make reboot` | Full rebuild: clean → get → gen → build-ios |
 
@@ -108,6 +109,12 @@ make run-test-login ARGS="-d 'iPhone 17 Pro'"
 The flag is a compile-time constant (`lib/features/auth/test_login_flag.dart`)
 that defaults to `false`, so `make build-ios` / `make build-ios-testflight` and
 plain `flutter run` never include the link.
+
+The same flag also shows the **Developer** page (Profile → Developer) outside
+debug builds, so its tools work on a real device: `make build-ios-test-login`
+then `make deploy-ios`. Its **Replay onboarding** entry runs the new-organizer
+onboarding flow as a brand-new account without signing out; it creates a real
+trip each time.
 
 One-time setup in the Firebase console (not automated):
 
