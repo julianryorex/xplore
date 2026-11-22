@@ -41,7 +41,7 @@ Expose provider adapters to Scout as callable tools, e.g. `search_places(query, 
 
 - [ ] A provider-agnostic tool/adapter layer (one adapter per integration; swappable; MCP-style boundary preferred)
 - [ ] Scout wired to grounding tools (Places + weather at minimum); every stop comes from a live place search with hours and walking times checked, and Scout cannot save a place no search returned
-- [ ] Scout asks each traveler about pace, budget and food before drafting, and reworks a day on request mid-trip
+- [ ] Scout asks each traveler about pace, budget and food before drafting, and reworks a day mid-trip on request from the owner or an admin (FEAT-024)
 - [ ] Trip wallet: booking emails forwarded to a per-trip address appear on the right day, readable offline
 - [ ] Disruption watch: flight delays, weather and closures trigger an offered replan
 - [ ] At least one bookable affiliate action live end-to-end (e.g. activities via GetYourGuide/Viator) with affiliate disclosure

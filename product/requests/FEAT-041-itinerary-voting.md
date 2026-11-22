@@ -15,7 +15,7 @@
 
 ## Proposed solution
 
-Scout (FEAT-037) or any member proposes two or three options for a slot; the group votes with a tap, each vote has a closing time, and the winner goes into the plan automatically when it closes. Open votes show on the Today view (FEAT-018). Available on every plan, including Free.
+Scout (FEAT-037), the owner or an admin opens a vote with two or three options for a slot (FEAT-024); any member can suggest an option, and an admin decides whether it goes to a vote; the group votes with a tap, each vote has a closing time, and the winner goes into the plan automatically when it closes. Open votes show on the Today view (FEAT-018). Available on every plan, including Free.
 
 ## Related code
 
