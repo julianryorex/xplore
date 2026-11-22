@@ -45,7 +45,7 @@ Also outstanding:
 
 - ~~New trips seed an **empty** cloud itinerary~~ → partly resolved by FEAT-007: the create flow's Plan step seeds a **stub** day skeleton (hardcoded per-place day themes, no places in the days). Real generated content is deferred. The Tokyo demo is intentionally **not** copied into real trips.
 - Itinerary **editing CRUD** not built; owner-only until FEAT-024 adds admins → FEAT-006 follow-up. The create flow's plan preview is read-only (only the trip name is editable) as a result.
-- Seeded days carry **no stops** (so no `place_id`s); real generation and Places enrichment are deferred. The create flow's place search runs over a **hardcoded place catalog**, not Google Places.
+- Seeded days carry **no stops** (so no `place_id`s); real generation is deferred, and live place search is now required by the stop editor (FEAT-006). The create flow's place search runs over a **hardcoded place catalog**, not Google Places.
 - Mock onboarding placeholder only → **FEAT-005**
 - Trip invites / join flow shipped (FEAT-003, PR #96); only universal-link **production delivery** (AASA hosting + iOS Associated Domains on `xplore.olympuslabs.ai`) remains, deferred to launch + >100 users → GitHub #99
 - Gallery Storage rules are owner-scoped (`gallery/{tripId}/{uid}/{imageId}` writable only by `uid`): Storage rules cannot read the named `xplore-app` database, so trip membership is enforced on the Firestore photo doc instead

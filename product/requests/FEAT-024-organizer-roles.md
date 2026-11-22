@@ -45,7 +45,7 @@ Three roles on the trip membership record: `owner`, `admin`, `member`.
 ## Decisions (locked)
 
 - **No cap on admins.** The owner can promote as many members as they like.
-- **Record who edits, do not show it yet.** Every itinerary change stores who made it and when. Nothing in the app displays this for now; it is there so attribution, history and undo can be added later without a gap in the record.
+- **Record who edits, do not show it yet.** Every itinerary change stores who made it and when; the author can be a person or Scout. Nothing in the app displays this for now; it is there so attribution, history and undo can be added later without a gap in the record.
 - **Last write wins.** If two editors change the plan at the same moment, the later save stands. No conflict handling in this version.
 
 ## User stories

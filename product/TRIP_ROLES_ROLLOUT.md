@@ -14,17 +14,29 @@ smallest version worth giving to a real group.
 - Only the owner and admins change the itinerary. Members see it read-only.
 - No cap on the number of admins.
 - Every change records who made it and when. Nothing in the app shows this yet.
+- The plan is assumed to be drafted by Scout and adjusted by people. Stops are real places
+  by default; a custom stop with no place is the fallback.
 - Last write wins if two people edit at the same moment.
 
 ## Stage 1 — The owner can edit the plan
 
-- The owner can add a stop to a day, change it, delete it and reorder stops.
+- The owner can add a stop by searching for a real place, so the stop gets a map pin,
+  opening hours and directions.
+- The owner can add a custom stop for something that is not a place. It is marked as custom
+  and has no pin.
+- The owner can swap a stop for another place, edit its note, delete it and reorder stops.
 - The owner can add, rename and remove days.
 - A failed save shows a clear message with a retry; the plan never disappears while saving.
 - Every change records who made it and when, from the first edit, even though nothing shows it.
+  The author can be a person or Scout.
 
-**Why first:** a new trip is an empty skeleton today, and roles mean nothing until there is
-something to edit.
+**Needs:** live place search, which means turning on Google Places billing.
+
+**Why first:** whoever drafts the plan, a person has to be able to correct it, and roles mean
+nothing until there is something to edit. Until Scout is wired into the app this stage is
+tested against seeded or hand-entered stops.
+
+**Designs:** https://claude.ai/artifact/JpjPa1wEPNsurcpghrpV2r (private canvas).
 
 ## Stage 2 — Members can see who runs the trip
 
