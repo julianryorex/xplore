@@ -14,6 +14,7 @@ import 'package:xplore/features/onboarding/presentation/widgets/onboarding_label
 import 'package:xplore/features/onboarding/presentation/widgets/onboarding_map_art.dart';
 import 'package:xplore/features/onboarding/presentation/widgets/onboarding_rise_in.dart';
 import 'package:xplore/features/onboarding/presentation/widgets/onboarding_scaffold.dart';
+import 'package:xplore/features/trip/models/trip_model.dart';
 import 'package:xplore/features/trip/presentation/trip_invite_sharer.dart';
 
 /// Timings from the design, in seconds, so they read the same as the mockup.
@@ -21,8 +22,11 @@ abstract final class _Motion {
   /// Overline, title, pass and caption arriving.
   static const entrance = 1.0;
 
-  /// Confetti and the stamp, once the trip is saved.
+  /// The stamp, once the trip is saved.
   static const celebration = 1.4;
+
+  /// Long enough for the last piece of confetti to fall off the screen.
+  static const confetti = 3.6;
   static const stampStart = 0.75;
   static const stampLength = 0.45;
 
@@ -49,10 +53,14 @@ abstract final class _Motion {
 /// sign-in as a boarding pass, and asks the user to share an invite link to it.
 /// Shows that save's progress, and a retry through [onRetryTripSetup] when it failed.
 class InviteStep extends StatefulWidget {
-  const InviteStep({required this.onRetryTripSetup, super.key});
+  const InviteStep({required this.onRetryTripSetup, this.shareInvite = shareTripInvite, super.key});
 
   /// Saves the organizer's trip again after a failed attempt.
   final Future<void> Function() onRetryTripSetup;
+
+  /// Opens the share sheet for the trip's invite link and reports whether the
+  /// link was shared. Replaceable so tests need no platform share sheet.
+  final Future<bool> Function(BuildContext context, TripModel trip) shareInvite;
 
   @override
   State<InviteStep> createState() => _InviteStepState();
@@ -67,6 +75,10 @@ class _InviteStepState extends State<InviteStep> with TickerProviderStateMixin {
     vsync: this,
     duration: _Motion.duration(_Motion.celebration),
   )..addListener(_onCelebrationTick);
+  late final AnimationController _confetti = AnimationController(
+    vsync: this,
+    duration: _Motion.duration(_Motion.confetti),
+  );
 
   late final Animation<double> _headingIn = _Motion.slice(_entrance, start: 0, length: 0.5, total: _Motion.entrance);
   late final Animation<double> _passIn = _Motion.slice(
@@ -111,6 +123,7 @@ class _InviteStepState extends State<InviteStep> with TickerProviderStateMixin {
   void dispose() {
     _entrance.dispose();
     _celebration.dispose();
+    _confetti.dispose();
     super.dispose();
   }
 
@@ -123,9 +136,11 @@ class _InviteStepState extends State<InviteStep> with TickerProviderStateMixin {
     }
     _celebrationStarted = true;
     if (_reduceMotion) {
+      // The stamp shows in place; confetti is motion only, so it is left out.
       _celebration.value = 1;
     } else {
       _celebration.forward();
+      _confetti.forward();
     }
   }
 
@@ -139,16 +154,20 @@ class _InviteStepState extends State<InviteStep> with TickerProviderStateMixin {
   Future<void> _share(OnboardingState state) async {
     final cubit = context.read<OnboardingCubit>();
     setState(() => _sharing = true);
+    var shared = false;
     try {
-      await shareTripInvite(context, state.createdTrip!);
+      shared = await widget.shareInvite(context, state.createdTrip!);
     } finally {
       if (mounted) {
         setState(() => _sharing = false);
       }
     }
-    cubit
-      ..inviteShared()
-      ..next();
+    // Backing out of the share sheet leaves the user here to try again or skip.
+    if (shared) {
+      cubit
+        ..inviteShared()
+        ..next();
+    }
   }
 
   @override
@@ -186,16 +205,6 @@ class _InviteStepState extends State<InviteStep> with TickerProviderStateMixin {
         child: Stack(
           clipBehavior: Clip.none,
           children: [
-            // Painted from the screen's left edge, behind the title, as in the design.
-            Positioned(
-              left: -onboardingGutter,
-              right: -onboardingGutter,
-              top: -_ConfettiPainter.contentTop,
-              height: _ConfettiPainter.areaHeight,
-              child: IgnorePointer(
-                child: CustomPaint(painter: _ConfettiPainter(progress: _celebration)),
-              ),
-            ),
             Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
@@ -234,6 +243,17 @@ class _InviteStepState extends State<InviteStep> with TickerProviderStateMixin {
                   ),
                 ),
               ],
+            ),
+            // On top of the content and out to the screen's edges, so the pieces
+            // fall across the pass before leaving the screen.
+            Positioned(
+              left: -onboardingGutter,
+              right: -onboardingGutter,
+              top: -_ConfettiPainter.overhang,
+              bottom: 0,
+              child: IgnorePointer(
+                child: CustomPaint(painter: _ConfettiPainter(progress: _confetti)),
+              ),
             ),
           ],
         ),
@@ -630,72 +650,101 @@ class _EmptySlot extends StatelessWidget {
   }
 }
 
-/// One piece of confetti, in the design's 390pt-wide screen coordinates.
+/// One piece of confetti and how it falls.
 class _ConfettiPiece {
-  const _ConfettiPiece(this.left, this.top, this.width, this.height, this.color, this.duration, this.delay);
+  const _ConfettiPiece({
+    required this.x,
+    required this.width,
+    required this.height,
+    required this.color,
+    required this.delay,
+    required this.fallSeconds,
+    required this.sway,
+    required this.turns,
+  });
 
-  final double left;
-  final double top;
+  /// Horizontal start, as a fraction of the screen's width.
+  final double x;
   final double width;
   final double height;
   final Color color;
-  final double duration;
+
+  /// Seconds after the celebration starts before this piece appears.
   final double delay;
+
+  /// Seconds it takes to fall from the top edge to below the bottom edge.
+  final double fallSeconds;
+
+  /// How far it drifts sideways as it falls, in points.
+  final double sway;
+
+  /// Full rotations over the fall.
+  final double turns;
 
   /// Round dots are as wide as they are tall; the rest are slips.
   bool get isDot => width == height;
 }
 
-/// Confetti that falls and turns into place behind the title, then stays.
+/// Confetti that falls from the top of the step, turning and drifting, until
+/// every piece has left the screen. Nothing is left behind once it finishes.
 class _ConfettiPainter extends CustomPainter {
   _ConfettiPainter({required this.progress}) : super(repaint: progress);
 
   final Animation<double> progress;
 
-  /// Where the step's content starts within the design's confetti area.
-  static const contentTop = 122.0;
-  static const areaHeight = 300.0;
-  static const _designWidth = 390.0;
-  static const _fallDistance = 60.0;
-  static const _turn = 200 * math.pi / 180;
-
-  static const _pieces = [
-    _ConfettiPiece(38, 128, 8, 14, XploreColors.accent, 0.9, 0),
-    _ConfettiPiece(92, 96, 10, 10, OnboardingAvatarColors.sand, 1.1, 0.05),
-    _ConfettiPiece(150, 132, 7, 13, OnboardingAvatarColors.blue, 1, 0.12),
-    _ConfettiPiece(214, 100, 9, 9, XploreColors.accent, 1.2, 0.08),
-    _ConfettiPiece(262, 138, 8, 14, OnboardingAvatarColors.coral, 0.95, 0.16),
-    _ConfettiPiece(318, 104, 10, 10, OnboardingAvatarColors.sand, 1.15, 0.02),
-    _ConfettiPiece(352, 150, 7, 12, XploreColors.accent, 1.05, 0.2),
-    _ConfettiPiece(20, 190, 6, 6, OnboardingAvatarColors.blue, 1.3, 0.1),
-    _ConfettiPiece(340, 214, 6, 6, OnboardingAvatarColors.coral, 1.25, 0.14),
+  /// How far above the step's content the pieces start, so they enter from
+  /// behind the top bar instead of appearing mid-air.
+  static const overhang = 122.0;
+  static const _pieceCount = 28;
+  static const _colors = [
+    XploreColors.accent,
+    OnboardingAvatarColors.sand,
+    OnboardingAvatarColors.blue,
+    OnboardingAvatarColors.coral,
   ];
+
+  /// Seeded so every run of the celebration looks the same.
+  static final List<_ConfettiPiece> _pieces = _buildPieces(math.Random(7));
+
+  static List<_ConfettiPiece> _buildPieces(math.Random random) {
+    return List.generate(_pieceCount, (index) {
+      final isDot = random.nextInt(3) == 0;
+      final width = 6 + random.nextDouble() * 4;
+      return _ConfettiPiece(
+        x: random.nextDouble(),
+        width: width,
+        height: isDot ? width : width + 5,
+        color: _colors[index % _colors.length],
+        delay: random.nextDouble() * 0.9,
+        fallSeconds: 1.8 + random.nextDouble() * 0.9,
+        sway: 10 + random.nextDouble() * 22,
+        turns: 0.8 + random.nextDouble() * 1.6,
+      );
+    });
+  }
 
   @override
   void paint(Canvas canvas, Size size) {
-    if (progress.value == 0) {
-      return;
-    }
-    final elapsed = progress.value * _Motion.celebration;
-    final scaleX = size.width / _designWidth;
+    final elapsed = progress.value * _Motion.confetti;
     for (final piece in _pieces) {
-      final t = Curves.easeOut.transform(((elapsed - piece.delay) / piece.duration).clamp(0.0, 1.0));
-      if (t == 0) {
+      final t = (elapsed - piece.delay) / piece.fallSeconds;
+      if (t <= 0 || t >= 1) {
         continue;
       }
-      final opacity = math.min(t / 0.15, 1.0);
+      // Starts slow and speeds up, like something light being pulled down.
+      final fall = t * (0.55 + 0.45 * t);
       final centre = Offset(
-        (piece.left + piece.width / 2) * scaleX,
-        piece.top + piece.height / 2 - _fallDistance * (1 - t),
+        piece.x * size.width + piece.sway * math.sin(t * 3 * math.pi),
+        -piece.height + (size.height + 2 * piece.height) * fall,
       );
       final rect = Rect.fromCenter(center: Offset.zero, width: piece.width, height: piece.height);
       canvas
         ..save()
         ..translate(centre.dx, centre.dy)
-        ..rotate(_turn * t)
+        ..rotate(piece.turns * 2 * math.pi * t)
         ..drawRRect(
           RRect.fromRectAndRadius(rect, Radius.circular(piece.isDot ? piece.width / 2 : 2)),
-          Paint()..color = piece.color.withValues(alpha: opacity),
+          Paint()..color = piece.color,
         )
         ..restore();
     }
